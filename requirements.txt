@@ -1,0 +1,9 @@
+# Provides the debian.deb822 module. A direct dependency of pkg-deb-tools.
+# These version constraints specifically allow for version 0.1.21 (available on
+# PyPI) and version 0.1.21ubuntu1 (available in Ubuntu 12.04).
+python-debian >= 0.1.21, < 0.1.22
+# Direct dependencies of pkg-deb-tools.
+coloredlogs==0.4.3
+humanfriendly==1.5
+# Undocumented transitive dependency of python-debian...
+chardet
