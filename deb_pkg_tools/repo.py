@@ -48,7 +48,9 @@ def update_repository(directory):
     external programs ``cat``, ``gpg``, ``gzip``, ``mv``, ``rm`` and ``sed``).
 
     Raises :py:exc:`FailedToSignRelease` when GPG fails to sign the ``Release``
-    file (most likely because the currrent user doesn't have a private GPG key).
+    file (most likely because the current user doesn't have a private GPG key;
+    you can generate one using ``gpg --gen-key``, as explained in the error
+    message).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     """

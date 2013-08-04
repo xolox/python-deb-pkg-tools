@@ -10,8 +10,8 @@ Status
 ------
 
 On the one hand the `deb-pkg-tools` package is based on my experiences with
-Debian packages and repositories over the past couple of years, however on the
-other hand `deb-pkg-tools` itself is quite young. However all functionality is
+Debian packages and repositories over the past couple of years, on the other
+hand `deb-pkg-tools` itself is quite young. Then again all functionality is
 covered by automated tests; at the time of writing coverage is around 96% (some
 of the error handling is quite tricky to test if we also want to test the
 non-error case, which is of course the main focus :-)
