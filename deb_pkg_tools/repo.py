@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 26, 2013
+# Last Change: August 4, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -56,10 +56,12 @@ def update_repository(directory):
     logger.info("%s trivial repository: %s", "Updating" if repo_exists else "Creating", directory)
     # Generate the `Packages' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
-    execute("dpkg-scanpackages -m . | sed 's@: \./@: @' > Packages", directory)
+    execute("dpkg-scanpackages -m . > Packages", directory)
+    # Fix the syntax of the `Packages' file using sed.
+    execute("sed -i 's@: \./@: @' Packages", directory)
     # Generate the `Packages.gz' file by compressing the `Packages' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
-    execute("cat Packages | gzip > Packages.gz", directory)
+    execute("gzip < Packages > Packages.gz", directory)
     # Generate the `Release' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
     execute("rm -f Release && LANG= apt-ftparchive release . > Release.tmp && mv Release.tmp Release", directory)
