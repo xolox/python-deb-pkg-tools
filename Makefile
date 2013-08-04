@@ -1,7 +1,7 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 28, 2013
+# Last Change: August 4, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 VIRTUAL_ENV = $(HOME)/.virtualenvs/deb-pkg-tools
@@ -26,11 +26,12 @@ coverage:
 	test -x $(VIRTUAL_ENV)/bin/pip-accel || $(VIRTUAL_ENV)/bin/pip install pip-accel
 	test -x $(VIRTUAL_ENV)/bin/coverage || $(VIRTUAL_ENV)/bin/pip-accel install coverage
 	$(VIRTUAL_ENV)/bin/pip uninstall -y deb-pkg-tools || true
-	$(VIRTUAL_ENV)/bin/python setup.py install
-	$(VIRTUAL_ENV)/bin/coverage run deb_pkg_tools/tests.py
+	$(VIRTUAL_ENV)/bin/pip-accel install -r requirements.txt
+	$(VIRTUAL_ENV)/bin/pip install .
+	$(VIRTUAL_ENV)/bin/coverage run --include='*deb_pkg_tools*' deb_pkg_tools/tests.py
 	$(VIRTUAL_ENV)/bin/coverage html
 	$(VIRTUAL_ENV)/bin/coverage report -m
-	gnome-open htmlcov/index.html
+	if [ "`whoami`" != root ]; then gnome-open htmlcov/index.html; fi
 
 clean:
 	rm -Rf *.egg *.egg-info .coverage build dist docs/build htmlcov
