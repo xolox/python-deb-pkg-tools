@@ -64,6 +64,7 @@ Program                Package
 ``fakeroot``           ``fakeroot``
 ``gpg``                ``gnupg``
 ``gzip``               ``gzip``
+``lintian``            ``lintian``
 ``mv``                 ``coreutils``
 ``sed``                ``sed``
 ``tar``                ``tar``
