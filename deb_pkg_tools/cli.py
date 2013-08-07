@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 26, 2013
+# Last Change: August 7, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Standard library modules.
@@ -24,18 +24,15 @@ from deb_pkg_tools.repo import (update_repository,
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Get a reference to the root logger.
-root_logger = logging.getLogger()
 
 def main():
     """
     Command line interface for the ``deb-pkg-tools`` program.
     """
+    # Configure logging output.
+    coloredlogs.install()
     # Command line option defaults.
     actions = []
-    verbosity = logging.INFO
     # Parse the command line options.
     try:
         long_options = ['inspect=', 'build=', 'update-repo=', 'activate-repo=',
@@ -53,7 +50,7 @@ def main():
             elif option in ('-d', '--deactivate-repo'):
                 actions.append(functools.partial(deactivate_repository, check_directory(value)))
             elif option in ('-v', '--verbose'):
-                verbosity = logging.DEBUG
+                coloredlogs.increase_verbosity()
             elif option in ('-h', '--help'):
                 usage()
                 return
@@ -62,9 +59,6 @@ def main():
         print
         usage()
         sys.exit(1)
-    # Configure logging output.
-    coloredlogs.install()
-    root_logger.setLevel(verbosity)
     # Execute the selected action.
     try:
         if actions:
