@@ -1,16 +1,19 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 4, 2013
+# Last Change: August 10, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
-VIRTUAL_ENV = $(HOME)/.virtualenvs/deb-pkg-tools
+WORKON_HOME := $(HOME)/.virtualenvs
+VIRTUAL_ENV := $(WORKON_HOME)/deb-pkg-tools
 
 default:
 	@echo 'Makefile for deb-pkg-tools'
 	@echo
 	@echo 'Usage:'
 	@echo
+	@echo '    make install    install the package in a virtual environment'
+	@echo '    make reset      recreate the virtual environment'
 	@echo '    make test       run the test suite'
 	@echo '    make coverage   run the tests, report coverage'
 	@echo '    make docs       update documentation using Sphinx'
@@ -18,16 +21,23 @@ default:
 	@echo '    make clean      cleanup all temporary files'
 	@echo
 
-test:
-	python setup.py test
-
-coverage:
+install:
 	test -d $(VIRTUAL_ENV) || virtualenv $(VIRTUAL_ENV)
 	test -x $(VIRTUAL_ENV)/bin/pip-accel || $(VIRTUAL_ENV)/bin/pip install pip-accel
 	test -x $(VIRTUAL_ENV)/bin/coverage || $(VIRTUAL_ENV)/bin/pip-accel install coverage
 	$(VIRTUAL_ENV)/bin/pip uninstall -y deb-pkg-tools || true
 	$(VIRTUAL_ENV)/bin/pip-accel install -r requirements.txt
 	$(VIRTUAL_ENV)/bin/pip install .
+
+reset:
+	rm -Rf $(VIRTUAL_ENV)
+	make --no-print-directory install
+
+test: install
+	$(VIRTUAL_ENV)/bin/python setup.py test
+
+coverage: install
+	test -x $(VIRTUAL_ENV)/bin/coverage || $(VIRTUAL_ENV)/bin/pip-accel install coverage
 	$(VIRTUAL_ENV)/bin/coverage run --include='*deb_pkg_tools*' deb_pkg_tools/tests.py
 	$(VIRTUAL_ENV)/bin/coverage html
 	$(VIRTUAL_ENV)/bin/coverage report -m

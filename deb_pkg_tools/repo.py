@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 4, 2013
+# Last Change: August 10, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -58,19 +58,24 @@ def update_repository(directory):
     logger.info("%s trivial repository: %s", "Updating" if repo_exists else "Creating", directory)
     # Generate the `Packages' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
-    execute("dpkg-scanpackages -m . > Packages", directory)
+    execute("dpkg-scanpackages -m . > Packages",
+            directory=directory)
     # Fix the syntax of the `Packages' file using sed.
-    execute("sed -i 's@: \./@: @' Packages", directory)
+    execute('sed', '-i', 's@: \./@: @', 'Packages',
+            directory=directory)
     # Generate the `Packages.gz' file by compressing the `Packages' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
-    execute("gzip < Packages > Packages.gz", directory)
+    execute("gzip < Packages > Packages.gz",
+            directory=directory)
     # Generate the `Release' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
-    execute("rm -f Release && LANG= apt-ftparchive release . > Release.tmp && mv Release.tmp Release", directory)
+    execute("rm -f Release && LANG= apt-ftparchive release . > Release.tmp && mv Release.tmp Release",
+            directory=directory)
     # Generate the `Release.gpg' file by signing the `Release' file with GPG.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
     try:
-        execute("rm -f Release.gpg && gpg -abs -o Release.gpg Release", directory)
+        execute("rm -f Release.gpg && gpg -abs -o Release.gpg Release",
+                directory=directory)
     except ExternalCommandFailed, e:
         msg = "Failed to sign `Release' file! Most likely you don't have a private GPG key. In that case, please create a private GPG key using 'gpg --gen-key'. Original exception: %s"
         raise FailedToSignRelease, msg % unicode(e)
@@ -90,7 +95,7 @@ def activate_repository(directory):
     logger.debug("Activating repository: %s", directory)
     # Generate the `sources.list' file.
     sources_directory = '/etc/apt/sources.list.d'
-    execute("mkdir -p %s" % pipes.quote(sources_directory))
+    execute('mkdir', '-p', sources_directory)
     sources_file = os.path.join(sources_directory, '%s.list' % sha1(directory))
     sources_entry = 'deb file://%s ./' % directory
     logger.debug("Generating file: %s", sources_file)
@@ -117,7 +122,7 @@ def deactivate_repository(directory):
     # Remove the `sources.list' file.
     sources_file = os.path.join('/etc/apt/sources.list.d', '%s.list' % sha1(directory))
     logger.debug("Removing file: %s", sources_file)
-    execute("rm -f %s" % pipes.quote(sources_file))
+    execute('rm', '-f', sources_file)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
     execute("apt-get update")
