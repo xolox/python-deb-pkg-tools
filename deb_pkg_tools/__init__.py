@@ -5,6 +5,6 @@
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Semi-standard module versioning.
-__version__ = '1.4'
+__version__ = '1.4.1'
 
 # vim: ts=4 sw=4 et
