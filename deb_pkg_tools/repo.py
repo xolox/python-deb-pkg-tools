@@ -56,25 +56,22 @@ def update_repository(directory):
     logger.info("%s trivial repository: %s", "Updating" if repo_exists else "Creating", directory)
     # Generate the `Packages' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
-    execute("dpkg-scanpackages -m . > Packages",
-            directory=directory)
+    execute("dpkg-scanpackages -m . > Packages", directory=directory, logger=logger)
     # Fix the syntax of the `Packages' file using sed.
-    execute('sed', '-i', 's@: \./@: @', 'Packages',
-            directory=directory)
+    execute('sed', '-i', 's@: \./@: @', 'Packages', directory=directory, logger=logger)
     # Generate the `Packages.gz' file by compressing the `Packages' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
-    execute("gzip < Packages > Packages.gz",
-            directory=directory)
+    execute("gzip < Packages > Packages.gz", directory=directory, logger=logger)
     # Generate the `Release' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
     execute("rm -f Release && LANG= apt-ftparchive release . > Release.tmp && mv Release.tmp Release",
-            directory=directory)
+            directory=directory, logger=logger)
     # Generate the `Release.gpg' file by signing the `Release' file with GPG.
     secring, pubring = prepare_automatic_signing_key()
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
     command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secring} --keyring {pubring} -o Release.gpg Release"
     execute(command.format(secring=secring, pubring=pubring),
-            directory=directory)
+            directory=directory, logger=logger)
 
 def activate_repository(directory):
     """
@@ -91,14 +88,15 @@ def activate_repository(directory):
     logger.debug("Activating repository: %s", format_path(directory))
     # Generate the `sources.list' file.
     sources_directory = '/etc/apt/sources.list.d'
-    execute('mkdir', '-p', sources_directory)
+    execute('mkdir', '-p', sources_directory, sudo=True, logger=logger)
     sources_file = os.path.join(sources_directory, '%s.list' % sha1(directory))
     sources_entry = 'deb file://%s ./' % directory
     logger.debug("Generating file: %s", sources_file)
-    execute("echo %s > %s" % (pipes.quote(sources_entry), pipes.quote(sources_file)))
+    execute("echo %s > %s" % (pipes.quote(sources_entry), pipes.quote(sources_file)),
+            sudo=True, logger=logger)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
-    execute("apt-get update")
+    execute("apt-get update", sudo=True, logger=logger)
 
 def deactivate_repository(directory):
     """
@@ -115,10 +113,10 @@ def deactivate_repository(directory):
     # Remove the `sources.list' file.
     sources_file = os.path.join('/etc/apt/sources.list.d', '%s.list' % sha1(directory))
     logger.debug("Removing file: %s", sources_file)
-    execute('rm', '-f', sources_file)
+    execute('rm', '-f', sources_file, sudo=True, logger=logger)
     # Update the package list (cleanup).
     logger.debug("Updating package list ..")
-    execute("apt-get update")
+    execute("apt-get update", sudo=True, logger=logger)
 
 def prepare_automatic_signing_key():
     """
@@ -153,12 +151,11 @@ def prepare_automatic_signing_key():
             ''').format(secring=secring, pubring=pubring))
         # Generate the automatic signing key.
         logger.info("Generating GPG key for automatic signing ..")
-        execute('gpg', '--batch', '--gen-key', pathname)
+        execute('gpg', '--batch', '--gen-key', pathname, logger=logger)
         # Make apt-get accept the automatic signing key.
         logger.info("Installing GPG key for automatic signing ..")
-        command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | {apt_key} add -'
-        apt_key = 'apt-key' if os.getuid() == 0 else 'sudo apt-key'
-        execute(command.format(secring=secring, pubring=pubring, apt_key=apt_key))
+        command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | apt-key add -'
+        execute(command.format(secring=secring, pubring=pubring), sudo=True, logger=logger)
     return secring, pubring
 
 def find_home_directory():
