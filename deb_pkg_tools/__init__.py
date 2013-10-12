@@ -5,7 +5,7 @@
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Semi-standard module versioning.
-__version__ = '1.4.3'
+__version__ = '1.5'
 
 # The following non-essential Debian packages need to be
 # installed in order for deb-pkg-tools to work properly.

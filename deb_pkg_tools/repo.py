@@ -30,12 +30,15 @@ All of the functions in this module can raise
 import logging
 import os.path
 import pipes
+import pwd
+import tempfile
+import textwrap
 
 # External dependencies.
 from humanfriendly import format_path
 
 # Modules included in our package.
-from deb_pkg_tools.utils import execute, sha1, ExternalCommandFailed
+from deb_pkg_tools.utils import execute, sha1
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -46,11 +49,6 @@ def update_repository(directory):
     Create or update a `trivial repository`_ using the Debian
     commands ``dpkg-scanpackages`` and ``apt-ftparchive`` (also uses the
     external programs ``cat``, ``gpg``, ``gzip``, ``mv``, ``rm`` and ``sed``).
-
-    Raises :py:exc:`FailedToSignRelease` when GPG fails to sign the ``Release``
-    file (most likely because the current user doesn't have a private GPG key;
-    you can generate one using ``gpg --gen-key``, as explained in the error
-    message).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     """
@@ -72,13 +70,11 @@ def update_repository(directory):
     execute("rm -f Release && LANG= apt-ftparchive release . > Release.tmp && mv Release.tmp Release",
             directory=directory)
     # Generate the `Release.gpg' file by signing the `Release' file with GPG.
+    secring, pubring = prepare_automatic_signing_key()
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
-    try:
-        execute("rm -f Release.gpg && gpg -abs -o Release.gpg Release",
-                directory=directory)
-    except ExternalCommandFailed, e:
-        msg = "Failed to sign `Release' file! Most likely you don't have a private GPG key. In that case, please create a private GPG key using 'gpg --gen-key'. Original exception: %s"
-        raise FailedToSignRelease, msg % unicode(e)
+    command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secring} --keyring {pubring} -o Release.gpg Release"
+    execute(command.format(secring=secring, pubring=pubring),
+            directory=directory)
 
 def activate_repository(directory):
     """
@@ -100,9 +96,6 @@ def activate_repository(directory):
     sources_entry = 'deb file://%s ./' % directory
     logger.debug("Generating file: %s", sources_file)
     execute("echo %s > %s" % (pipes.quote(sources_entry), pipes.quote(sources_file)))
-    # Make the GPG key pair known to `apt-get'.
-    logger.debug("Installing GPG key ..")
-    execute("gpg --armor --export | apt-key add -")
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
     execute("apt-get update")
@@ -127,10 +120,56 @@ def deactivate_repository(directory):
     logger.debug("Updating package list ..")
     execute("apt-get update")
 
-class FailedToSignRelease(Exception):
+def prepare_automatic_signing_key():
     """
-    Raised by :py:func:`update_repository()` when the signing of the
-    ``Release`` file fails.
+    Generate a GPG key that deb-pkg-tools can use to automatically sign
+    ``Release`` files. This only has to be done once.
     """
+    # Make sure the directory that holds the automatic signing key exists.
+    directory = os.path.join(find_home_directory(), '.deb-pkg-tools')
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    secring = os.path.join(directory, 'automatic-signing-key.sec')
+    pubring = os.path.join(directory, 'automatic-signing-key.pub')
+    # See if the automatic signing key was previously generated.
+    if not (os.path.isfile(secring) and os.path.isfile(pubring)):
+        # Generate batch instructions for `gpg --batch --gen-key'.
+        fd, pathname = tempfile.mkstemp()
+        with open(pathname, 'w') as handle:
+            handle.write(textwrap.dedent('''
+                %echo Generating automatic signing key for deb-pkg-tools (this can take a while, but you only need to do it once)
+                Key-Type: DSA
+                Key-Length: 1024
+                Subkey-Type: ELG-E
+                Subkey-Length: 1024
+                Name-Real: deb-pkg-tools
+                Name-Comment: Automatic signing key for deb-pkg-tools
+                Name-Email: none
+                Expire-Date: 0
+                %pubring {pubring}
+                %secring {secring}
+                %commit
+                %echo Finished generating automatic signing key for deb-pkg-tools!
+            ''').format(secring=secring, pubring=pubring))
+        # Generate the automatic signing key.
+        logger.info("Generating GPG key for automatic signing ..")
+        execute('gpg', '--batch', '--gen-key', pathname)
+        # Make apt-get accept the automatic signing key.
+        logger.info("Installing GPG key for automatic signing ..")
+        command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | {apt_key} add -'
+        apt_key = 'apt-key' if os.getuid() == 0 else 'sudo apt-key'
+        execute(command.format(secring=secring, pubring=pubring, apt_key=apt_key))
+    return secring, pubring
+
+def find_home_directory():
+    """
+    Determine the home directory of the current user.
+    """
+    try:
+        home = os.path.realpath(os.environ['HOME'])
+        assert os.path.isdir(home)
+        return home
+    except Exception:
+        return pwd.getpwuid(os.getuid()).pw_dir
 
 # vim: ts=4 sw=4 et
