@@ -1,7 +1,7 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 10, 2013
+# Last Change: October 12, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 WORKON_HOME := $(HOME)/.virtualenvs
@@ -29,7 +29,7 @@ install:
 	$(VIRTUAL_ENV)/bin/pip-accel install -r requirements.txt
 	$(VIRTUAL_ENV)/bin/pip install .
 
-reset:
+reset: stdeb.cfg
 	rm -Rf $(VIRTUAL_ENV)
 	make --no-print-directory install
 
@@ -52,8 +52,11 @@ docs:
 		gnome-open "docs/build/html/index.html"; \
 	fi
 
-publish:
+publish: stdeb.cfg
 	git push origin && git push --tags origin
 	make clean && python setup.py sdist upload
 
-.PHONY: docs
+stdeb.cfg:
+	python -c 'from deb_pkg_tools import generate_stdeb_cfg; generate_stdeb_cfg()' > stdeb.cfg
+
+.PHONY: default install reset test coverage clean docs publish stdeb.cfg

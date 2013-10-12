@@ -123,7 +123,7 @@ def deactivate_repository(directory):
     sources_file = os.path.join('/etc/apt/sources.list.d', '%s.list' % sha1(directory))
     logger.debug("Removing file: %s", sources_file)
     execute('rm', '-f', sources_file)
-    # Update the package list (make sure it works).
+    # Update the package list (cleanup).
     logger.debug("Updating package list ..")
     execute("apt-get update")
 
