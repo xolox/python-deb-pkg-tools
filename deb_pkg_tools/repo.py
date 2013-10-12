@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 10, 2013
+# Last Change: October 12, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -92,7 +92,7 @@ def activate_repository(directory):
               without root access.
     """
     directory = os.path.realpath(directory)
-    logger.debug("Activating repository: %s", directory)
+    logger.debug("Activating repository: %s", format_path(directory))
     # Generate the `sources.list' file.
     sources_directory = '/etc/apt/sources.list.d'
     execute('mkdir', '-p', sources_directory)
@@ -118,7 +118,7 @@ def deactivate_repository(directory):
               without root access.
     """
     directory = os.path.realpath(directory)
-    logger.debug("Deactivating repository: %s", directory)
+    logger.debug("Deactivating repository: %s", format_path(directory))
     # Remove the `sources.list' file.
     sources_file = os.path.join('/etc/apt/sources.list.d', '%s.list' % sha1(directory))
     logger.debug("Removing file: %s", sources_file)
