@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 12, 2013
+# Last Change: October 13, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -94,6 +94,11 @@ def activate_repository(directory):
     logger.debug("Generating file: %s", sources_file)
     execute("echo %s > %s" % (pipes.quote(sources_entry), pipes.quote(sources_file)),
             sudo=True, logger=logger)
+    # Make apt-get accept the automatic signing key.
+    secring, pubring = prepare_automatic_signing_key()
+    logger.info("Installing GPG key for automatic signing ..")
+    command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | apt-key add -'
+    execute(command.format(secring=secring, pubring=pubring), sudo=True, logger=logger)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=True, logger=logger)
@@ -152,10 +157,6 @@ def prepare_automatic_signing_key():
         # Generate the automatic signing key.
         logger.info("Generating GPG key for automatic signing ..")
         execute('gpg', '--batch', '--gen-key', pathname, logger=logger)
-        # Make apt-get accept the automatic signing key.
-        logger.info("Installing GPG key for automatic signing ..")
-        command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | apt-key add -'
-        execute(command.format(secring=secring, pubring=pubring), sudo=True, logger=logger)
     return secring, pubring
 
 def find_home_directory():
