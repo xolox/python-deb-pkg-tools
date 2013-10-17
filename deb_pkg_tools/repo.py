@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 13, 2013
+# Last Change: October 18, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -44,13 +44,15 @@ from deb_pkg_tools.utils import execute, sha1
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-def update_repository(directory):
+def update_repository(directory, release_fields={}):
     """
     Create or update a `trivial repository`_ using the Debian
     commands ``dpkg-scanpackages`` and ``apt-ftparchive`` (also uses the
     external programs ``cat``, ``gpg``, ``gzip``, ``mv``, ``rm`` and ``sed``).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
+    :param release_fields: An optional dictionary with fields to set inside the
+                           ``Release`` file.
     """
     repo_exists = os.path.isfile(os.path.join(directory, 'Release.gpg'))
     logger.info("%s trivial repository: %s", "Updating" if repo_exists else "Creating", directory)
@@ -64,8 +66,12 @@ def update_repository(directory):
     execute("gzip < Packages > Packages.gz", directory=directory, logger=logger)
     # Generate the `Release' file.
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
-    execute("rm -f Release && LANG= apt-ftparchive release . > Release.tmp && mv Release.tmp Release",
-            directory=directory, logger=logger)
+    options = []
+    for name, value in release_fields.iteritems():
+        name = 'APT::FTPArchive::Release::%s' % name.capitalize()
+        options.append('-o %s' % pipes.quote('%s=%s' % (name, value)))
+    command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
+    execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
     # Generate the `Release.gpg' file by signing the `Release' file with GPG.
     secring, pubring = prepare_automatic_signing_key()
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
