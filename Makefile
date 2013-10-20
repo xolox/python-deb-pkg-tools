@@ -1,7 +1,7 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 12, 2013
+# Last Change: October 20, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 WORKON_HOME := $(HOME)/.virtualenvs
@@ -29,7 +29,7 @@ install:
 	$(VIRTUAL_ENV)/bin/pip-accel install -r requirements.txt
 	$(VIRTUAL_ENV)/bin/pip install .
 
-reset: stdeb.cfg
+reset:
 	rm -Rf $(VIRTUAL_ENV)
 	make --no-print-directory install
 

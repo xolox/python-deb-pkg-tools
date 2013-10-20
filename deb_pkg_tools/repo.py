@@ -30,15 +30,13 @@ All of the functions in this module can raise
 import logging
 import os.path
 import pipes
-import pwd
-import tempfile
-import textwrap
 
 # External dependencies.
 from humanfriendly import format_path
 
 # Modules included in our package.
-from deb_pkg_tools.utils import execute, sha1
+from deb_pkg_tools.utils import execute, find_home_directory, sha1
+from deb_pkg_tools.gpg import generate_gpg_key
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -72,7 +70,7 @@ def update_repository(directory, release_fields={}):
     command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
     execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
     # Generate the `Release.gpg' file by signing the `Release' file with GPG.
-    secring, pubring = prepare_automatic_signing_key()
+    secring, pubring = generate_automatic_signing_key()
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
     command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secring} --keyring {pubring} -o Release.gpg Release"
     execute(command.format(secring=secring, pubring=pubring),
@@ -100,7 +98,7 @@ def activate_repository(directory):
     execute("echo %s > %s" % (pipes.quote(sources_entry), pipes.quote(sources_file)),
             sudo=True, logger=logger)
     # Make apt-get accept the automatic signing key.
-    secring, pubring = prepare_automatic_signing_key()
+    secring, pubring = generate_automatic_signing_key()
     logger.info("Installing GPG key for automatic signing ..")
     command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | apt-key add -'
     execute(command.format(secring=secring, pubring=pubring), sudo=True, logger=logger)
@@ -128,10 +126,11 @@ def deactivate_repository(directory):
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=True, logger=logger)
 
-def prepare_automatic_signing_key():
+def generate_automatic_signing_key():
     """
-    Generate a GPG key that deb-pkg-tools can use to automatically sign
-    ``Release`` files. This only has to be done once.
+    Generate the GPG key pair that deb-pkg-tools will use to automatically sign
+    ``Release`` files in Debian package repositories. The generated public key
+    and secret key are stored in the directory ``~/.deb-pkg-tools``.
     """
     # Make sure the directory that holds the automatic signing key exists.
     directory = os.path.join(find_home_directory(), '.deb-pkg-tools')
@@ -139,40 +138,10 @@ def prepare_automatic_signing_key():
         os.makedirs(directory)
     secring = os.path.join(directory, 'automatic-signing-key.sec')
     pubring = os.path.join(directory, 'automatic-signing-key.pub')
-    # See if the automatic signing key was previously generated.
     if not (os.path.isfile(secring) and os.path.isfile(pubring)):
-        # Generate batch instructions for `gpg --batch --gen-key'.
-        fd, pathname = tempfile.mkstemp()
-        with open(pathname, 'w') as handle:
-            handle.write(textwrap.dedent('''
-                %echo Generating automatic signing key for deb-pkg-tools (this can take a while, but you only need to do it once)
-                Key-Type: DSA
-                Key-Length: 1024
-                Subkey-Type: ELG-E
-                Subkey-Length: 1024
-                Name-Real: deb-pkg-tools
-                Name-Comment: Automatic signing key for deb-pkg-tools
-                Name-Email: none
-                Expire-Date: 0
-                %pubring {pubring}
-                %secring {secring}
-                %commit
-                %echo Finished generating automatic signing key for deb-pkg-tools!
-            ''').format(secring=secring, pubring=pubring))
-        # Generate the automatic signing key.
-        logger.info("Generating GPG key for automatic signing ..")
-        execute('gpg', '--batch', '--gen-key', pathname, logger=logger)
+        generate_gpg_key(name="deb-pkg-tools",
+                         description="Automatic signing key for deb-pkg-tools",
+                         secring=secring, pubring=pubring)
     return secring, pubring
-
-def find_home_directory():
-    """
-    Determine the home directory of the current user.
-    """
-    try:
-        home = os.path.realpath(os.environ['HOME'])
-        assert os.path.isdir(home)
-        return home
-    except Exception:
-        return pwd.getpwuid(os.getuid()).pw_dir
 
 # vim: ts=4 sw=4 et
