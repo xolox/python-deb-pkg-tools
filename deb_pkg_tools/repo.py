@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 18, 2013
+# Last Change: October 20, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -42,7 +42,6 @@ from deb_pkg_tools.utils import execute, sha1
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 def update_repository(directory, release_fields={}):
     """

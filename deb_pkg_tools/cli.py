@@ -1,8 +1,25 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 7, 2013
+# Last Change: October 20, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
+
+"""
+Usage: deb-pkg-tools [OPTIONS]
+
+Supported options:
+
+  -i, --inspect=FILE         inspect the metadata in a *.deb archive
+  -b, --build=DIR            build a Debian package with `dpkg-deb --build'
+  -u, --update-repo=DIR      create/update a trivial package repository
+  -a, --activate-repo=DIR    enable `apt-get' to install packages from a
+                             trivial repository (requires root/sudo privilege)
+  -d, --deactivate-repo=DIR  cleans up after --activate-repo
+                             (requires root/sudo privilege)
+  -I, --install              install system packages required by deb-pkg-tools
+  -v, --verbose              make more noise
+  -h, --help                 show this message and exit
+"""
 
 # Standard library modules.
 import functools
@@ -16,8 +33,7 @@ import coloredlogs
 from humanfriendly import format_path, format_size
 
 # Modules included in our package.
-from deb_pkg_tools.package import (inspect_package,
-                                   build_package)
+from deb_pkg_tools.package import inspect_package, build_package
 from deb_pkg_tools.repo import (update_repository,
                                 activate_repository,
                                 deactivate_repository)
@@ -88,7 +104,7 @@ def check_directory(argument):
     """
     directory = os.path.realpath(os.path.expanduser(argument))
     if not os.path.isdir(directory):
-        msg = "Repository directory doesn't exist! (%s)"
+        msg = "Directory doesn't exist! (%s)"
         raise Exception, msg % directory
     return directory
 
@@ -96,20 +112,6 @@ def usage():
     """
     Print a friendly usage message to the terminal.
     """
-    print """
-Usage: deb-pkg-tools [OPTIONS]
-
-Supported options:
-
-  -i, --inspect=FILE         inspect the metadata in a *.deb archive
-  -b, --build=DIR            build a Debian package with `dpkg-deb --build'
-  -u, --update-repo=DIR      create/update a trivial package repository
-  -a, --activate-repo=DIR    enable `apt-get' to install packages from a
-                             trivial repository (assumes root access)
-  -d, --deactivate-repo=DIR  cleans up after --activate-repo
-                             (assumes root access)
-  -v, --verbose              make more noise
-  -h, --help                 show this message and exit
-""".strip()
+    print __doc__.strip()
 
 # vim: ts=4 sw=4 et
