@@ -54,32 +54,47 @@ def update_repository(directory, release_fields={}, gpg_key=None):
                     sign the repository. Defaults to the automatic signing key
                     managed by deb-pkg-tools.
     """
-    repo_exists = os.path.isfile(os.path.join(directory, 'Release.gpg'))
-    logger.info("%s trivial repository: %s", "Updating" if repo_exists else "Creating", directory)
-    # Generate the `Packages' file.
-    logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
-    execute("dpkg-scanpackages -m . > Packages", directory=directory, logger=logger)
-    # Fix the syntax of the `Packages' file using sed.
-    execute('sed', '-i', 's@: \./@: @', 'Packages', directory=directory, logger=logger)
-    # Generate the `Packages.gz' file by compressing the `Packages' file.
-    logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
-    execute("gzip < Packages > Packages.gz", directory=directory, logger=logger)
-    # Generate the `Release' file.
-    logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
-    options = []
-    for name, value in release_fields.iteritems():
-        name = 'APT::FTPArchive::Release::%s' % name.capitalize()
-        options.append('-o %s' % pipes.quote('%s=%s' % (name, value)))
-    command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
-    execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
-    # Generate the `Release.gpg' file by signing the `Release' file with GPG.
-    if not gpg_key:
-        gpg_key = generate_automatic_signing_key()
-    logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
-    command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secret} --keyring {public} -o Release.gpg Release"
-    execute(command.format(secret=pipes.quote(gpg_key.secret_key_file),
-                           public=pipes.quote(gpg_key.public_key_file)),
-            directory=directory, logger=logger)
+    # Figure out when the repository contents were last updated.
+    contents_last_updated = 0
+    for entry in os.listdir(directory):
+        if entry.endswith('.deb'):
+            pathname = os.path.join(directory, entry)
+            contents_last_updated = max(contents_last_updated, os.path.getmtime(pathname))
+    # Figure out when the repository metadata was last updated.
+    try:
+        metadata_files = ['Packages', 'Packages.gz', 'Release', 'Release.gpg']
+        metadata_last_updated = max(os.path.getmtime(os.path.join(directory, fn)) for fn in metadata_files)
+    except Exception:
+        metadata_last_updated = 0
+    # If the repository doesn't actually need to be updated we'll skip the update.
+    if metadata_last_updated >= contents_last_updated:
+        logger.info("Contents of repository %s didn't change, so no need to update it.")
+    else:
+        logger.info("%s trivial repository: %s", "Updating" if metadata_last_updated else "Creating", directory)
+        # Generate the `Packages' file.
+        logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
+        execute("dpkg-scanpackages -m . > Packages", directory=directory, logger=logger)
+        # Fix the syntax of the `Packages' file using sed.
+        execute('sed', '-i', 's@: \./@: @', 'Packages', directory=directory, logger=logger)
+        # Generate the `Packages.gz' file by compressing the `Packages' file.
+        logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
+        execute("gzip < Packages > Packages.gz", directory=directory, logger=logger)
+        # Generate the `Release' file.
+        logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
+        options = []
+        for name, value in release_fields.iteritems():
+            name = 'APT::FTPArchive::Release::%s' % name.capitalize()
+            options.append('-o %s' % pipes.quote('%s=%s' % (name, value)))
+        command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
+        execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
+        # Generate the `Release.gpg' file by signing the `Release' file with GPG.
+        if not gpg_key:
+            gpg_key = generate_automatic_signing_key()
+        logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
+        command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secret} --keyring {public} -o Release.gpg Release"
+        execute(command.format(secret=pipes.quote(gpg_key.secret_key_file),
+                               public=pipes.quote(gpg_key.public_key_file)),
+                directory=directory, logger=logger)
 
 def activate_repository(directory, gpg_key=None):
     """
