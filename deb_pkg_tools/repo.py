@@ -36,12 +36,12 @@ from humanfriendly import format_path
 
 # Modules included in our package.
 from deb_pkg_tools.utils import execute, find_home_directory, sha1
-from deb_pkg_tools.gpg import generate_gpg_key
+from deb_pkg_tools.gpg import GPGKey
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
-def update_repository(directory, release_fields={}):
+def update_repository(directory, release_fields={}, gpg_key=None):
     """
     Create or update a `trivial repository`_ using the Debian
     commands ``dpkg-scanpackages`` and ``apt-ftparchive`` (also uses the
@@ -50,6 +50,9 @@ def update_repository(directory, release_fields={}):
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param release_fields: An optional dictionary with fields to set inside the
                            ``Release`` file.
+    :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
+                    sign the repository. Defaults to the automatic signing key
+                    managed by deb-pkg-tools.
     """
     repo_exists = os.path.isfile(os.path.join(directory, 'Release.gpg'))
     logger.info("%s trivial repository: %s", "Updating" if repo_exists else "Creating", directory)
@@ -70,22 +73,24 @@ def update_repository(directory, release_fields={}):
     command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
     execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
     # Generate the `Release.gpg' file by signing the `Release' file with GPG.
-    secring, pubring = generate_automatic_signing_key()
+    if not gpg_key:
+        gpg_key = generate_automatic_signing_key()
     logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
-    command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secring} --keyring {pubring} -o Release.gpg Release"
-    execute(command.format(secring=secring, pubring=pubring),
+    command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secret} --keyring {public} -o Release.gpg Release"
+    execute(command.format(secret=pipes.quote(gpg_key.secret_key_file),
+                           public=pipes.quote(gpg_key.public_key_file)),
             directory=directory, logger=logger)
 
-def activate_repository(directory):
+def activate_repository(directory, gpg_key=None):
     """
     Set everything up so that a trivial Debian package repository can be used
     to install packages without a webserver (this uses the ``file://`` URL
     scheme to point ``apt-get`` to a directory on the local file system).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
-
-    .. note:: This function assumes it is running as ``root``; it won't work
-              without root access.
+    :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
+                    sign the repository. Defaults to the automatic signing key
+                    managed by deb-pkg-tools.
     """
     directory = os.path.realpath(directory)
     logger.debug("Activating repository: %s", format_path(directory))
@@ -95,13 +100,18 @@ def activate_repository(directory):
     sources_file = os.path.join(sources_directory, '%s.list' % sha1(directory))
     sources_entry = 'deb file://%s ./' % directory
     logger.debug("Generating file: %s", sources_file)
-    execute("echo %s > %s" % (pipes.quote(sources_entry), pipes.quote(sources_file)),
+    command = "echo {text} > {file}"
+    execute(command.format(text=pipes.quote(sources_entry),
+                           file=pipes.quote(sources_file)),
             sudo=True, logger=logger)
     # Make apt-get accept the automatic signing key.
-    secring, pubring = generate_automatic_signing_key()
     logger.info("Installing GPG key for automatic signing ..")
-    command = 'gpg --armor --export --no-default-keyring --secret-keyring {secring} --keyring {pubring} | apt-key add -'
-    execute(command.format(secring=secring, pubring=pubring), sudo=True, logger=logger)
+    if not gpg_key:
+        gpg_key = generate_automatic_signing_key()
+    command = 'gpg --armor --export --no-default-keyring --secret-keyring {secret} --keyring {public} | apt-key add -'
+    execute(command.format(secret=pipes.quote(gpg_key.secret_key_file),
+                           public=pipes.quote(gpg_key.public_key_file)),
+            sudo=True, logger=logger)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=True, logger=logger)
@@ -132,16 +142,10 @@ def generate_automatic_signing_key():
     ``Release`` files in Debian package repositories. The generated public key
     and secret key are stored in the directory ``~/.deb-pkg-tools``.
     """
-    # Make sure the directory that holds the automatic signing key exists.
     directory = os.path.join(find_home_directory(), '.deb-pkg-tools')
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
-    secring = os.path.join(directory, 'automatic-signing-key.sec')
-    pubring = os.path.join(directory, 'automatic-signing-key.pub')
-    if not (os.path.isfile(secring) and os.path.isfile(pubring)):
-        generate_gpg_key(name="deb-pkg-tools",
-                         description="Automatic signing key for deb-pkg-tools",
-                         secring=secring, pubring=pubring)
-    return secring, pubring
+    return GPGKey(name="deb-pkg-tools",
+                  description="Automatic signing key for deb-pkg-tools",
+                  secret_key_file=os.path.join(directory, 'automatic-signing-key.sec'),
+                  public_key_file=os.path.join(directory, 'automatic-signing-key.pub'))
 
 # vim: ts=4 sw=4 et
