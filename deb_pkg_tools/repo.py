@@ -68,7 +68,7 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         metadata_last_updated = 0
     # If the repository doesn't actually need to be updated we'll skip the update.
     if metadata_last_updated >= contents_last_updated:
-        logger.info("Contents of repository %s didn't change, so no need to update it.")
+        logger.info("Contents of repository %s didn't change, so no need to update it.", directory)
     else:
         logger.info("%s trivial repository: %s", "Updating" if metadata_last_updated else "Creating", directory)
         # Generate the `Packages' file.
