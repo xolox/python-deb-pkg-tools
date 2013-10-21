@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 20, 2013
+# Last Change: October 21, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -36,7 +36,7 @@ from humanfriendly import format_path
 
 # Modules included in our package.
 from deb_pkg_tools.utils import execute, find_home_directory, sha1
-from deb_pkg_tools.gpg import GPGKey
+from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -88,6 +88,7 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
         execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
         # Generate the `Release.gpg' file by signing the `Release' file with GPG.
+        initialize_gnupg()
         if not gpg_key:
             gpg_key = generate_automatic_signing_key()
         logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
@@ -121,6 +122,7 @@ def activate_repository(directory, gpg_key=None):
             sudo=True, logger=logger)
     # Make apt-get accept the automatic signing key.
     logger.info("Installing GPG key for automatic signing ..")
+    initialize_gnupg()
     if not gpg_key:
         gpg_key = generate_automatic_signing_key()
     command = 'gpg --armor --export --no-default-keyring --secret-keyring {secret} --keyring {public} | apt-key add -'

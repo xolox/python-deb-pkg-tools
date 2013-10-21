@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 20, 2013
+# Last Change: October 21, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Standard library modules.
@@ -19,6 +19,19 @@ from deb_pkg_tools.utils import execute
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
+
+def initialize_gnupg():
+    """
+    Older versions of GPG can/will fail when the ``~/.gnupg`` directory doesn't
+    exist (e.g. in a newly created chroot). GPG itself creates the directory
+    after noticing that it's missing, but then still fails! Later runs work
+    fine however. To avoid this problem we make sure ``~/.gnupg`` exists before
+    we run GPG.
+    """
+    gnupg_directory = os.path.expanduser('~/.gnupg')
+    if not os.path.isdir(gnupg_directory):
+        logger.debug("The directory %s doesn't exist yet! I'll create it now before we call GPG to make sure GPG won't complain ..")
+        os.makedirs(gnupg_directory)
 
 class GPGKey(object):
 
@@ -69,6 +82,7 @@ class GPGKey(object):
                         "over SSH, now is a good time to familiarize yourself with "
                         "the concept of entropy and how to make more of it :-)")
             start_time = time.time()
+            initialize_gnupg()
             execute('gpg', '--batch', '--gen-key', gpg_script, logger=logger)
             logger.info("Finished generating GPG key pair in %s.",
                         format_timespan(time.time() - start_time))
