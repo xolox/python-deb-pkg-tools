@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Semi-standard module versioning.
-__version__ = '1.9.8'
+__version__ = '1.9.9'
 
 # The following non-essential Debian packages need to be
 # installed in order for deb-pkg-tools to work properly.
@@ -24,12 +24,6 @@ debian_package_dependencies = (
     'gnupg',     # gpg
     'lintian',   # lintian
 )
-
-# Automatically install the required system packages.
-from deb_pkg_tools.utils import install_dependencies
-install_dependencies(package='deb-pkg-tools',
-                     dependencies=debian_package_dependencies,
-                     logger=logger)
 
 def generate_stdeb_cfg():
     print '[deb-pkg-tools]'
