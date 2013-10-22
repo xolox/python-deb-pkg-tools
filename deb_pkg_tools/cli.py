@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 20, 2013
+# Last Change: October 22, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -9,16 +9,20 @@ Usage: deb-pkg-tools [OPTIONS]
 
 Supported options:
 
-  -i, --inspect=FILE         inspect the metadata in a *.deb archive
-  -b, --build=DIR            build a Debian package with `dpkg-deb --build'
-  -u, --update-repo=DIR      create/update a trivial package repository
-  -a, --activate-repo=DIR    enable `apt-get' to install packages from a
-                             trivial repository (requires root/sudo privilege)
-  -d, --deactivate-repo=DIR  cleans up after --activate-repo
-                             (requires root/sudo privilege)
-  -I, --install              install system packages required by deb-pkg-tools
-  -v, --verbose              make more noise
-  -h, --help                 show this message and exit
+  -i, --inspect=FILE          inspect the metadata in a *.deb archive
+  -b, --build=DIR             build a Debian package with `dpkg-deb --build'
+  -u, --update-repo=DIR       create/update a trivial package repository
+  -a, --activate-repo=DIR     enable `apt-get' to install packages from a
+                              trivial repository (requires root/sudo privilege)
+  -d, --deactivate-repo=DIR   cleans up after --activate-repo
+                              (requires root/sudo privilege)
+  -w, --with-repo=DIR CMD...  create/update a trivial package repository,
+                              activate the repository, run the positional
+                              arguments as an external command (usually `apt-get
+                              install') and finally deactivate the repository
+  -I, --install               install system packages required by deb-pkg-tools
+  -v, --verbose               make more noise
+  -h, --help                  show this message and exit
 """
 
 # Standard library modules.
@@ -37,6 +41,7 @@ from deb_pkg_tools.package import inspect_package, build_package
 from deb_pkg_tools.repo import (update_repository,
                                 activate_repository,
                                 deactivate_repository)
+from deb_pkg_tools.utils import execute
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -52,8 +57,8 @@ def main():
     # Parse the command line options.
     try:
         long_options = ['inspect=', 'build=', 'update-repo=', 'activate-repo=',
-                        'deactivate-repo=', 'verbose', 'help']
-        options, arguments = getopt.getopt(sys.argv[1:], 'i:b:u:a:d:vh', long_options)
+                        'deactivate-repo=', 'with-repo=', 'verbose', 'help']
+        options, arguments = getopt.getopt(sys.argv[1:], 'i:b:u:a:d:w:vh', long_options)
         for option, value in options:
             if option in ('-i', '--inspect'):
                 actions.append(functools.partial(show_package_metadata, value))
@@ -65,6 +70,8 @@ def main():
                 actions.append(functools.partial(activate_repository, check_directory(value)))
             elif option in ('-d', '--deactivate-repo'):
                 actions.append(functools.partial(deactivate_repository, check_directory(value)))
+            elif option in ('-w', '--with-repo'):
+                actions.append(functools.partial(with_repository, check_directory(value), arguments))
             elif option in ('-v', '--verbose'):
                 coloredlogs.increase_verbosity()
             elif option in ('-h', '--help'):
@@ -107,6 +114,25 @@ def check_directory(argument):
         msg = "Directory doesn't exist! (%s)"
         raise Exception, msg % directory
     return directory
+
+def with_repository(directory, command):
+    """
+    Create/update a trivial package repository, activate the repository, run an
+    external command (usually `apt-get install') and finally deactivate the
+    repository again.
+    """
+    update_repository(directory)
+    activate_repository(directory)
+    if not command:
+        # Default to the user's shell (seems like a sensible default?)
+        command = [os.environ.get('SHELL', '/bin/bash')]
+    try:
+        execute(command, logger=logger)
+    except BaseException, e:
+        logger.exception(e)
+        logger.warn("Caught an otherwise unhandled exception! Will deactivate the repository before dying ..")
+    finally:
+        deactivate_repository(directory)
 
 def usage():
     """
