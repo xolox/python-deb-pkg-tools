@@ -127,10 +127,11 @@ def with_repository(directory, command):
         # Default to the user's shell (seems like a sensible default?)
         command = [os.environ.get('SHELL', '/bin/bash')]
     try:
-        execute(command, logger=logger)
+        execute(*command, logger=logger)
     except BaseException, e:
         logger.exception(e)
         logger.warn("Caught an otherwise unhandled exception! Will deactivate the repository before dying ..")
+        sys.exit(1)
     finally:
         deactivate_repository(directory)
 
