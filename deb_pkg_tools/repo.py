@@ -123,6 +123,15 @@ def activate_repository(directory, gpg_key=None):
     :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
                     sign the repository. Defaults to the result of
                     :py:func:`fallback_to_generated_gpg_key()`.
+
+    .. warning:: This function requires ``root`` privileges to:
+
+                 1. create the directory ``/etc/apt/sources.list.d``,
+                 2. create a ``*.list`` file in ``/etc/apt/sources.list.d`` and
+                 3. run ``apt-get update``.
+
+                 This function will use ``sudo`` to gain ``root`` privileges
+                 when it's not already running as ``root``.
     """
     directory = os.path.realpath(directory)
     logger.debug("Activating repository: %s", format_path(directory))
@@ -160,8 +169,13 @@ def deactivate_repository(directory):
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
 
-    .. note:: This function assumes it is running as ``root``; it won't work
-              without root access.
+    .. warning:: This function requires ``root`` privileges to:
+
+                 1. delete a ``*.list`` file in ``/etc/apt/sources.list.d`` and
+                 2. run ``apt-get update``.
+
+                 This function will use ``sudo`` to gain ``root`` privileges
+                 when it's not already running as ``root``.
     """
     directory = os.path.realpath(directory)
     logger.debug("Deactivating repository: %s", format_path(directory))
@@ -179,13 +193,13 @@ trusted_option_supported = None
 
 def apt_supports_trusted_option():
     """
-    Since apt version 0.8.16~exp3 the option ``[trusted]`` can be used in a
+    Since apt version 0.8.16~exp3 the option ``[trusted=yes]`` can be used in a
     ``sources.list`` file to disable GPG key checking (see `Debian bug
     #596498`_). This version of apt is included with Ubuntu 12.04 and later,
     but deb-pkg-tools also has to support older versions of apt. The
     :py:func:`apt_supports_trusted_option()` function checks if the installed
-    version of apt supports the ``[trusted]`` option, so that deb-pkg-tools can
-    use it when possible.
+    version of apt supports the ``[trusted=yes]`` option, so that deb-pkg-tools
+    can use it when possible.
 
     :returns: ``True`` if the option is supported, ``False`` if it is not.
 
@@ -196,8 +210,10 @@ def apt_supports_trusted_option():
         try:
             # Find the installed version of the `apt' package.
             version = execute('dpkg-query','--show', '--showformat=${Version}', 'apt', capture=True)
-            # Check if the version is >= 0.8.16 (which includes [trusted] support).
+            # Check if the version is >= 0.8.16 (which includes [trusted=yes] support).
             execute('dpkg','--compare-versions', version, 'ge', '0.8.16~exp3')
+            # If ExternalCommandFailed  is not raised,
+            # `dpkg --compare-versions' reported succes.
             trusted_option_supported = True
         except ExternalCommandFailed:
             trusted_option_supported = False

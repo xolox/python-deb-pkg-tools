@@ -1,8 +1,17 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 21, 2013
+# Last Change: November 2, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
+
+"""
+GPG key pair handling
+=====================
+
+This module is used to manage GPG key pairs. It allows callers to specify which
+GPG key pair and/or key ID they want to use and will automatically generate GPG
+key pairs that don't exist yet.
+"""
 
 # Standard library modules.
 import logging
