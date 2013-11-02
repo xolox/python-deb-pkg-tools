@@ -47,7 +47,8 @@ coverage: install
 clean:
 	rm -Rf *.egg *.egg-info .coverage build dist docs/build htmlcov
 
-docs:
+docs: install
+	"$(VIRTUAL_ENV)/bin/pip-accel" install sphinx
 	cd docs && make html
 	if which gnome-open >/dev/null 2>&1; then \
 		gnome-open "docs/build/html/index.html"; \

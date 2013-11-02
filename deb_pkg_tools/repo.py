@@ -108,10 +108,8 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         if gpg_key:
             logger.debug("Generating file: %s", format_path(filename))
             initialize_gnupg()
-            command = "rm -f Release.gpg && gpg -abs --no-default-keyring --secret-keyring {secret} --keyring {public} -o Release.gpg Release"
-            execute(command.format(secret=pipes.quote(gpg_key.secret_key_file),
-                                   public=pipes.quote(gpg_key.public_key_file)),
-                    directory=directory, logger=logger)
+            command = "{gpg} --armor --sign --detach-sign --output Release.gpg Release"
+            execute(command.format(gpg=gpg_key.gpg_command), directory=directory, logger=logger)
 
 def activate_repository(directory, gpg_key=None):
     """
@@ -154,10 +152,8 @@ def activate_repository(directory, gpg_key=None):
     if gpg_key:
         logger.info("Installing GPG key for automatic signing ..")
         initialize_gnupg()
-        command = 'gpg --armor --export --no-default-keyring --secret-keyring {secret} --keyring {public} | apt-key add -'
-        execute(command.format(secret=pipes.quote(gpg_key.secret_key_file),
-                               public=pipes.quote(gpg_key.public_key_file)),
-                sudo=True, logger=logger)
+        command = '{gpg} --armor --export | apt-key add -'
+        execute(command.format(gpg=gpg_key.gpg_command), sudo=True, logger=logger)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=True, logger=logger)
