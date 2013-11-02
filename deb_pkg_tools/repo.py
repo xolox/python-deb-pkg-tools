@@ -55,6 +55,7 @@ def update_repository(directory, release_fields={}, gpg_key=None):
                     sign the repository. Defaults to the result of
                     :py:func:`fallback_to_generated_gpg_key()`.
     """
+    gpg_key = fallback_to_generated_gpg_key(gpg_key)
     # Figure out when the repository contents were last updated.
     contents_last_updated = 0
     for entry in os.listdir(directory):
@@ -63,7 +64,13 @@ def update_repository(directory, release_fields={}, gpg_key=None):
             contents_last_updated = max(contents_last_updated, os.path.getmtime(pathname))
     # Figure out when the repository metadata was last updated.
     try:
-        metadata_files = ['Packages', 'Packages.gz', 'Release', 'Release.gpg']
+        metadata_files = ['Packages', 'Packages.gz', 'Release']
+        # XXX If A) no GPG key was specified, B) no default GPG key is required
+        # and C) Release.gpg doesn't exist, it should not cause an unnecessary
+        # repository update. That would turn the conditional update into an
+        # unconditional update, which is not the intention here :-)
+        if os.path.isfile(os.path.join(directory, 'Release.gpg')) or gpg_key:
+            metadata_files.append('Release.gpg')
         metadata_last_updated = max(os.path.getmtime(os.path.join(directory, fn)) for fn in metadata_files)
     except Exception:
         metadata_last_updated = 0
@@ -89,7 +96,6 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
         execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
         # Generate the `Release.gpg' file by signing the `Release' file with GPG?
-        gpg_key = fallback_to_generated_gpg_key(gpg_key)
         if gpg_key:
             logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release.gpg')))
             initialize_gnupg()
