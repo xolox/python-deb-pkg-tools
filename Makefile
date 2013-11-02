@@ -1,11 +1,11 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 20, 2013
+# Last Change: November 2, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
-WORKON_HOME := $(HOME)/.virtualenvs
-VIRTUAL_ENV := $(WORKON_HOME)/deb-pkg-tools
+WORKON_HOME ?= $(HOME)/.virtualenvs
+VIRTUAL_ENV ?= $(WORKON_HOME)/deb-pkg-tools
 
 default:
 	@echo 'Makefile for deb-pkg-tools'
@@ -22,12 +22,13 @@ default:
 	@echo
 
 install:
-	test -d $(VIRTUAL_ENV) || virtualenv $(VIRTUAL_ENV)
-	test -x $(VIRTUAL_ENV)/bin/pip-accel || $(VIRTUAL_ENV)/bin/pip install pip-accel
-	test -x $(VIRTUAL_ENV)/bin/coverage || $(VIRTUAL_ENV)/bin/pip-accel install coverage
-	$(VIRTUAL_ENV)/bin/pip uninstall -y deb-pkg-tools || true
-	$(VIRTUAL_ENV)/bin/pip-accel install -r requirements.txt
-	$(VIRTUAL_ENV)/bin/pip install .
+	test -d "$(VIRTUAL_ENV)" || virtualenv --no-site-packages "$(VIRTUAL_ENV)"
+	test -x "$(VIRTUAL_ENV)/bin/pip" || "$(VIRTUAL_ENV)/bin/easy_install" pip
+	test -x "$(VIRTUAL_ENV)/bin/pip-accel" || "$(VIRTUAL_ENV)/bin/pip" install pip-accel
+	test -x "$(VIRTUAL_ENV)/bin/coverage" || "$(VIRTUAL_ENV)/bin/pip-accel" install coverage
+	"$(VIRTUAL_ENV)/bin/pip-accel" install -r requirements.txt
+	"$(VIRTUAL_ENV)/bin/pip" uninstall -y deb-pkg-tools || true
+	"$(VIRTUAL_ENV)/bin/pip" install --no-deps .
 
 reset:
 	rm -Rf $(VIRTUAL_ENV)
