@@ -1,7 +1,7 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 2, 2013
+# Last Change: November 3, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Standard library modules.
@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Semi-standard module versioning.
-__version__ = '1.11'
+__version__ = '1.12'
 
 # The following non-essential Debian packages need to be
 # installed in order for deb-pkg-tools to work properly.
