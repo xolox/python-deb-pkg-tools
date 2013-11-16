@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 22, 2013
+# Last Change: November 16, 2013
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -94,13 +94,21 @@ def main():
         sys.exit(1)
 
 def show_package_metadata(archive):
-    control_fields = inspect_package(archive)
+    control_fields, contents = inspect_package(archive)
     print "Package metadata from %s:" % format_path(archive)
     for field_name in sorted(control_fields.keys()):
         value = control_fields[field_name]
         if field_name == 'Installed-Size':
             value = format_size(int(value) * 1024)
         print " - %s: %s" % (field_name, value)
+    print "Package contents from %s:" % format_path(archive)
+    for pathname, entry in sorted(contents.items()):
+        size = format_size(entry.size, keep_width=True)
+        if len(size) < 10:
+            size = ' ' * (10 - len(size)) + size
+        if entry.target:
+            pathname += ' -> ' + entry.target
+        print entry.permissions, '%s/%s' % (entry.owner, entry.group), size, entry.modified, pathname
 
 def check_directory(argument):
     """
