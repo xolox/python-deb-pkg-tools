@@ -205,9 +205,9 @@ def apt_supports_trusted_option():
     if trusted_option_supported is None:
         try:
             # Find the installed version of the `apt' package.
-            version = execute('dpkg-query', '--show', '--showformat=${Version}', 'apt', capture=True)
+            version = execute('dpkg-query','--show', '--showformat=${Version}', 'apt', capture=True)
             # Check if the version is >= 0.8.16 (which includes [trusted=yes] support).
-            execute('dpkg', '--compare-versions', version, 'ge', '0.8.16~exp3')
+            execute('dpkg','--compare-versions', version, 'ge', '0.8.16~exp3')
             # If ExternalCommandFailed  is not raised,
             # `dpkg --compare-versions' reported succes.
             trusted_option_supported = True

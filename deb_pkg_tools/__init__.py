@@ -16,13 +16,13 @@ __version__ = '1.13'
 # The following non-essential Debian packages need to be
 # installed in order for deb-pkg-tools to work properly.
 debian_package_dependencies = (
-    'apt', # apt-get
+    'apt',       # apt-get
     'apt-utils', # apt-ftparchive
-    'binutils', # ar
-    'dpkg-dev', # dpkg-scanpackages
-    'fakeroot', # fakeroot
-    'gnupg', # gpg
-    'lintian', # lintian
+    'binutils',  # ar
+    'dpkg-dev',  # dpkg-scanpackages
+    'fakeroot',  # fakeroot
+    'gnupg',     # gpg
+    'lintian',   # lintian
 )
 
 def generate_stdeb_cfg():
