@@ -100,9 +100,9 @@ class GPGKey(object):
         # If the secret or public key file is provided, the other key file must
         # be provided as well.
         if secret_key_file and not public_key_file:
-            raise Exception, "You provided a GPG secret key file without a public key file; please provide both!"
+            raise Exception("You provided a GPG secret key file without a public key file; please provide both!")
         elif public_key_file and not secret_key_file:
-            raise Exception, "You provided a GPG public key file without a secret key file; please provide both!"
+            raise Exception("You provided a GPG public key file without a secret key file; please provide both!")
 
         # If neither of the key files is provided we'll default to the
         # locations that GnuPG uses by default.
@@ -115,10 +115,10 @@ class GPGKey(object):
         # we won't generate them because that makes no sense :-)
         if key_id and not os.path.isfile(secret_key_file):
             text = "The provided GPG secret key file (%s) doesn't exist but a key ID was specified!"
-            raise Exception, text % secret_key_file
+            raise Exception(text % secret_key_file)
         if key_id and not os.path.isfile(public_key_file):
             text = "The provided GPG public key file (%s) doesn't exist but a key ID was specified!"
-            raise Exception, text % public_key_file
+            raise Exception(text % public_key_file)
 
         # If we're going to generate a GPG key for the caller we don't want to
         # overwrite a secret or public key file without its counterpart. We'll
@@ -126,9 +126,9 @@ class GPGKey(object):
         existing_files = filter(os.path.isfile, [secret_key_file, public_key_file])
         if len(existing_files) not in (0, 2):
             text = "Refusing to overwrite existing key file! (%s)"
-            raise Exception, text % existing_files[0]
+            raise Exception(text % existing_files[0])
         elif len(existing_files) == 0 and not (name and description):
-            raise Exception, "To generate a GPG key you must provide a name and description!"
+            raise Exception("To generate a GPG key you must provide a name and description!")
 
         # Store the arguments.
         self.name = name

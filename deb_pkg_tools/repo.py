@@ -91,7 +91,7 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         # Generate the `Release' file.
         logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
         options = []
-        for name, value in release_fields.iteritems():
+        for name, value in release_fields.items():
             name = 'APT::FTPArchive::Release::%s' % name.capitalize()
             options.append('-o %s' % pipes.quote('%s=%s' % (name, value)))
         command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
@@ -205,9 +205,9 @@ def apt_supports_trusted_option():
     if trusted_option_supported is None:
         try:
             # Find the installed version of the `apt' package.
-            version = execute('dpkg-query','--show', '--showformat=${Version}', 'apt', capture=True)
+            version = execute('dpkg-query', '--show', '--showformat=${Version}', 'apt', capture=True)
             # Check if the version is >= 0.8.16 (which includes [trusted=yes] support).
-            execute('dpkg','--compare-versions', version, 'ge', '0.8.16~exp3')
+            execute('dpkg', '--compare-versions', version, 'ge', '0.8.16~exp3')
             # If ExternalCommandFailed  is not raised,
             # `dpkg --compare-versions' reported succes.
             trusted_option_supported = True

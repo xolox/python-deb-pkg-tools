@@ -77,7 +77,7 @@ def main():
             elif option in ('-h', '--help'):
                 usage()
                 return
-    except Exception, e:
+    except Exception as e:
         logger.error(e)
         print
         usage()
@@ -89,26 +89,26 @@ def main():
                 action()
         else:
             usage()
-    except Exception, e:
+    except Exception as e:
         logger.exception(e)
         sys.exit(1)
 
 def show_package_metadata(archive):
     control_fields, contents = inspect_package(archive)
-    print "Package metadata from %s:" % format_path(archive)
+    print("Package metadata from %s:" % format_path(archive))
     for field_name in sorted(control_fields.keys()):
         value = control_fields[field_name]
         if field_name == 'Installed-Size':
             value = format_size(int(value) * 1024)
-        print " - %s: %s" % (field_name, value)
-    print "Package contents from %s:" % format_path(archive)
+        print(" - %s: %s" % (field_name, value))
+    print("Package contents from %s:" % format_path(archive))
     for pathname, entry in sorted(contents.items()):
         size = format_size(entry.size, keep_width=True)
         if len(size) < 10:
             size = ' ' * (10 - len(size)) + size
         if entry.target:
             pathname += ' -> ' + entry.target
-        print entry.permissions, '%s/%s' % (entry.owner, entry.group), size, entry.modified, pathname
+        print(entry.permissions, '%s/%s' % (entry.owner, entry.group), size, entry.modified, pathname)
 
 def check_directory(argument):
     """
@@ -120,7 +120,7 @@ def check_directory(argument):
     directory = os.path.realpath(os.path.expanduser(argument))
     if not os.path.isdir(directory):
         msg = "Directory doesn't exist! (%s)"
-        raise Exception, msg % directory
+        raise Exception(msg % directory)
     return directory
 
 def with_repository(directory, command):
@@ -136,7 +136,7 @@ def with_repository(directory, command):
         command = [os.environ.get('SHELL', '/bin/bash')]
     try:
         execute(*command, logger=logger)
-    except BaseException, e:
+    except BaseException as e:
         logger.exception(e)
         logger.warn("Caught an otherwise unhandled exception! Will deactivate the repository before dying ..")
         sys.exit(1)
@@ -147,6 +147,6 @@ def usage():
     """
     Print a friendly usage message to the terminal.
     """
-    print __doc__.strip()
+    print(__doc__.strip())
 
 # vim: ts=4 sw=4 et
