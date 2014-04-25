@@ -11,8 +11,8 @@ Status
 
 On the one hand the `deb-pkg-tools` package is based on my experiences with
 Debian packages and repositories over the past couple of years, on the other
-hand `deb-pkg-tools` itself is quite young. Then again all functionality is
-covered by automated tests; at the time of writing coverage is around 96% (some
+hand `deb-pkg-tools` itself is quite young. Then again most functionality is
+covered by automated tests; at the time of writing coverage is around 90% (some
 of the error handling is quite tricky to test if we also want to test the
 non-error case, which is of course the main focus :-)
 
@@ -83,7 +83,7 @@ License
 
 This software is licensed under the `MIT license`_.
 
-© 2013 Peter Odding.
+© 2014 Peter Odding.
 
 .. External references:
 .. _GitHub: https://github.com/xolox/python-deb-pkg-tools
