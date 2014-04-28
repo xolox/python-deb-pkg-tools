@@ -28,5 +28,6 @@ debian_package_dependencies = (
 def generate_stdeb_cfg():
     print '[deb-pkg-tools]'
     print 'Depends:', ', '.join(debian_package_dependencies)
+    print 'XS-Python-Version: >= 2.6'
 
 # vim: ts=4 sw=4 et
