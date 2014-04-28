@@ -57,7 +57,7 @@ def update_repository(directory, release_fields={}, gpg_key=None):
     """
     gpg_key = fallback_to_generated_gpg_key(gpg_key)
     # Figure out when the repository contents were last updated.
-    contents_last_updated = 0
+    contents_last_updated = os.path.getmtime(directory)
     for entry in os.listdir(directory):
         if entry.endswith('.deb'):
             pathname = os.path.join(directory, entry)
