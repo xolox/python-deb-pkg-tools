@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 28, 2014
+# Last Change: April 29, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -48,8 +48,9 @@ from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 logger = logging.getLogger(__name__)
 
 # Configuration defaults.
-CONFIG_DIR = os.path.join(find_home_directory(), '.deb-pkg-tools')
-CONFIG_FILE = os.path.join(CONFIG_DIR, 'repos.ini')
+GLOBAL_CONFIG_DIR = '/etc/deb-pkg-tools'
+USER_CONFIG_DIR = os.path.join(find_home_directory(), '.deb-pkg-tools')
+CONFIG_FILE = 'repos.ini'
 
 def update_repository(directory, release_fields={}, gpg_key=None):
     """
@@ -237,9 +238,13 @@ def select_gpg_key(directory):
     """
     Select a suitable GPG key for repository signing (for use in
     :py:func:`update_repository()` and :py:func:`activate_repository()`). First
-    the configuration file ``~/.deb-pkg-tools/repos.ini`` is checked. Here is
-    an example configuration with an explicit repository/key pair and a
-    default key:
+    the following locations are checked for a configuration file:
+
+    1. ``~/.deb-pkg-tools/repos.ini``
+    2. ``/etc/deb-pkg-tools/repos.ini``
+
+    If both files exist the first one is used. Here is an example configuration
+    with an explicit repository/key pair and a default key:
 
     .. code-block:: ini
 
@@ -281,25 +286,29 @@ def select_gpg_key(directory):
         # support the [trusted] option so we'll have to sign the repository
         # anyway.
         logger.debug("No GPG key specified but your version of apt doesn't support the [trusted] option, so I will have to sign the repository anyway ..")
+        # XXX About the choice of USER_CONFIG_DIR here vs. GLOBAL_CONFIG_DIR:
+        # Since we're generating a private key we shouldn't ever store it in a
+        # non-secure location.
         return GPGKey(name="deb-pkg-tools",
                       description="Automatic signing key for deb-pkg-tools",
-                      secret_key_file=os.path.join(CONFIG_DIR, 'automatic-signing-key.sec'),
-                      public_key_file=os.path.join(CONFIG_DIR, 'automatic-signing-key.pub'))
+                      secret_key_file=os.path.join(USER_CONFIG_DIR, 'automatic-signing-key.sec'),
+                      public_key_file=os.path.join(USER_CONFIG_DIR, 'automatic-signing-key.pub'))
 
 def load_config(repository):
-    defaults = {}
-    if os.path.isfile(CONFIG_FILE):
-        logger.debug("Loading configuration file %s ..", format_path(CONFIG_FILE))
-        parser = ConfigParser.RawConfigParser()
-        parser.read(CONFIG_FILE)
-        config = dict((n, dict(parser.items(n))) for n in parser.sections())
-        defaults = config.get('default', {})
-        logger.debug("Found %i sections: %s", len(config), concatenate(parser.sections()))
-        for name, options in config.iteritems():
-            directory = options.get('directory')
-            if directory and os.path.realpath(repository) == os.path.realpath(directory):
-                defaults.update(options)
-                break
-    return defaults
+    for config_dir in (USER_CONFIG_DIR, GLOBAL_CONFIG_DIR):
+        config_file = os.path.join(config_dir, CONFIG_FILE)
+        if os.path.isfile(config_file):
+            logger.debug("Loading configuration from %s ..", format_path(config_file))
+            parser = ConfigParser.RawConfigParser()
+            parser.read(config_file)
+            config = dict((n, dict(parser.items(n))) for n in parser.sections())
+            defaults = config.get('default', {})
+            logger.debug("Found %i sections: %s", len(config), concatenate(parser.sections()))
+            for name, options in config.iteritems():
+                directory = options.get('directory')
+                if directory and os.path.realpath(repository) == os.path.realpath(directory):
+                    defaults.update(options)
+                    return defaults
+    return {}
 
 # vim: ts=4 sw=4 et

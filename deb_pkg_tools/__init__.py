@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Semi-standard module versioning.
-__version__ = '1.14'
+__version__ = '1.14.1'
 
 # The following non-essential Debian packages need to be
 # installed in order for deb-pkg-tools to work properly.
