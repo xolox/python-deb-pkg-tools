@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 2, 2013
+# Last Change: April 28, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -23,16 +23,21 @@ repository:
 All of the functions in this module can raise
 :py:exc:`deb_pkg_tools.utils.ExternalCommandFailed`.
 
+You can configure the GPG key(s) used by this module through a configuration
+file, please refer to the documentation of :py:func:`select_gpg_key()`.
+
 .. _trivial repository: http://www.debian.org/doc/manuals/repository-howto/repository-howto#id443677
 """
 
 # Standard library modules.
+import ConfigParser
 import logging
 import os.path
 import pipes
+import re
 
 # External dependencies.
-from humanfriendly import format_path
+from humanfriendly import concatenate, format_path
 
 # Modules included in our package.
 from deb_pkg_tools.utils import (execute, find_home_directory, sha1,
@@ -41,6 +46,10 @@ from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
+
+# Configuration defaults.
+CONFIG_DIR = os.path.join(find_home_directory(), '.deb-pkg-tools')
+CONFIG_FILE = os.path.join(CONFIG_DIR, 'repos.ini')
 
 def update_repository(directory, release_fields={}, gpg_key=None):
     """
@@ -53,9 +62,9 @@ def update_repository(directory, release_fields={}, gpg_key=None):
                            ``Release`` file.
     :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
                     sign the repository. Defaults to the result of
-                    :py:func:`fallback_to_generated_gpg_key()`.
+                    :py:func:`select_gpg_key()`.
     """
-    gpg_key = fallback_to_generated_gpg_key(gpg_key)
+    gpg_key = gpg_key or select_gpg_key(directory)
     # Figure out when the repository contents were last updated.
     contents_last_updated = os.path.getmtime(directory)
     for entry in os.listdir(directory):
@@ -90,6 +99,15 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         execute("gzip < Packages > Packages.gz", directory=directory, logger=logger)
         # Generate the `Release' file.
         logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
+        # Get APT::FTPArchive::Release::* options from configuration file.
+        release_fields = dict((k.lower(), v) for k, v in release_fields.items())
+        for name, value in load_config(directory).items():
+            if name.startswith('release-'):
+                name = re.sub('^release-', '', name)
+                if name not in release_fields:
+                    release_fields[name] = value
+        # Override APT::FTPArchive::Release::* options from configuration file
+        # with options given to update_repository() explicitly by the caller.
         options = []
         for name, value in release_fields.iteritems():
             name = 'APT::FTPArchive::Release::%s' % name.capitalize()
@@ -120,7 +138,7 @@ def activate_repository(directory, gpg_key=None):
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
                     sign the repository. Defaults to the result of
-                    :py:func:`fallback_to_generated_gpg_key()`.
+                    :py:func:`select_gpg_key()`.
 
     .. warning:: This function requires ``root`` privileges to:
 
@@ -148,7 +166,7 @@ def activate_repository(directory, gpg_key=None):
                            file=pipes.quote(sources_file)),
             sudo=True, logger=logger)
     # Make apt-get accept the repository signing key?
-    gpg_key = fallback_to_generated_gpg_key(gpg_key)
+    gpg_key = gpg_key or select_gpg_key(directory)
     if gpg_key:
         logger.info("Installing GPG key for automatic signing ..")
         initialize_gnupg()
@@ -215,31 +233,73 @@ def apt_supports_trusted_option():
             trusted_option_supported = False
     return trusted_option_supported
 
-def fallback_to_generated_gpg_key(gpg_key):
+def select_gpg_key(directory):
     """
-    Select the automatically generated signing key only when no GPG key was
-    provided by the user yet apt requires the repository to be signed. The
-    generated public key and secret key are stored in the directory
-    ``~/.deb-pkg-tools``.
+    Select a suitable GPG key for repository signing (for use in
+    :py:func:`update_repository()` and :py:func:`activate_repository()`). First
+    the configuration file ``~/.deb-pkg-tools/repos.ini`` is checked. Here is
+    an example configuration with an explicit repository/key pair and a
+    default key:
 
-    :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object provided by
-                    the caller (if any).
-    :returns: A :py:class:`deb_pkg_tools.gpg.GPGKey` object. If the caller
-              provided a GPG key that will be returned. If the caller did not
-              provide a GPG key but apt requires the repository to be signed,
-              the automatic signing key managed by deb-pkg-tools is returned.
-              Otherwise ``None`` is returned.
+    .. code-block:: ini
+
+        [default]
+        public-key-file = ~/.deb-pkg-tools/default.pub
+        secret-key-file = ~/.deb-pkg-tools/default.sec
+
+        [test]
+        public-key-file = ~/.deb-pkg-tools/test.pub
+        secret-key-file = ~/.deb-pkg-tools/test.sec
+        directory = /tmp
+
+    Hopefully this is self explanatory: If the repository directory is ``/tmp``
+    the 'test' key pair is used, otherwise the 'default' key pair is used. Of
+    course you're free to put the actual ``*.pub`` and ``*.sec`` files anywhere
+    you like; that's the point of having them be configurable :-)
+
+    If no GPG keys are configured but apt requires local repositories to be
+    signed then this function falls back to selecting an automatically
+    generated signing key. The generated public key and secret key are stored
+    in the directory ``~/.deb-pkg-tools``.
+
+    :param directory: The pathname of the directory that contains the package
+                      repository to sign.
+    :returns: A :py:class:`deb_pkg_tools.gpg.GPGKey` object or ``None``.
     """
-    if not gpg_key:
-        if apt_supports_trusted_option():
-            logger.debug("No GPG key specified but your version of apt doesn't require signing so I'll just skip it :-)")
-        else:
-            logger.debug("No GPG key specified but your version of apt doesn't support the [trusted] option, so I will have to sign the repository anyway ..")
-            directory = os.path.join(find_home_directory(), '.deb-pkg-tools')
-            gpg_key = GPGKey(name="deb-pkg-tools",
-                             description="Automatic signing key for deb-pkg-tools",
-                             secret_key_file=os.path.join(directory, 'automatic-signing-key.sec'),
-                             public_key_file=os.path.join(directory, 'automatic-signing-key.pub'))
-    return gpg_key
+    # Check if the user has configured one or more GPG keys.
+    options = load_config(directory)
+    if 'secret-key-file' in options and 'public-key-file' in options:
+        return GPGKey(secret_key_file=os.path.expanduser(options['secret-key-file']),
+                      public_key_file=os.path.expanduser(options['public-key-file']))
+    if apt_supports_trusted_option():
+        # No GPG key was given and no GPG key was configured, however apt
+        # supports the [trusted] option so we'll assume the user doesn't care
+        # about signing.
+        logger.debug("No GPG key specified but your version of apt doesn't require signing so I'll just skip it :-)")
+    else:
+        # No GPG key was given and no GPG key was configured, but apt doesn't
+        # support the [trusted] option so we'll have to sign the repository
+        # anyway.
+        logger.debug("No GPG key specified but your version of apt doesn't support the [trusted] option, so I will have to sign the repository anyway ..")
+        return GPGKey(name="deb-pkg-tools",
+                      description="Automatic signing key for deb-pkg-tools",
+                      secret_key_file=os.path.join(CONFIG_DIR, 'automatic-signing-key.sec'),
+                      public_key_file=os.path.join(CONFIG_DIR, 'automatic-signing-key.pub'))
+
+def load_config(repository):
+    defaults = {}
+    if os.path.isfile(CONFIG_FILE):
+        logger.debug("Loading configuration file %s ..", format_path(CONFIG_FILE))
+        parser = ConfigParser.RawConfigParser()
+        parser.read(CONFIG_FILE)
+        config = dict((n, dict(parser.items(n))) for n in parser.sections())
+        defaults = config.get('default', {})
+        logger.debug("Found %i sections: %s", len(config), concatenate(parser.sections()))
+        for name, options in config.iteritems():
+            directory = options.get('directory')
+            if directory and os.path.realpath(repository) == os.path.realpath(directory):
+                defaults.update(options)
+                break
+    return defaults
 
 # vim: ts=4 sw=4 et

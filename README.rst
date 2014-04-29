@@ -44,6 +44,10 @@ After installation you'll have the ``deb-pkg-tools`` program available::
       -v, --verbose               make more noise
       -h, --help                  show this message and exit
 
+One thing to note is that the operation of ``deb-pkg-tools --update-repo`` can
+be influenced by a configuration file. For details about this, please refer to
+the documentation on `deb_pkg_tools.repo.select_gpg_key()`_.
+
 If you're interested in using `deb-pkg-tools` as a Python module, please refer
 to the function reference on `Read the Docs`_.
 
@@ -90,6 +94,7 @@ This software is licensed under the `MIT license`_.
 © 2014 Peter Odding.
 
 .. External references:
+.. _deb_pkg_tools.repo.select_gpg_key: https://deb-pkg-tools.readthedocs.org/en/latest/#deb_pkg_tools.repo.select_gpg_key
 .. _GitHub: https://github.com/xolox/python-deb-pkg-tools
 .. _MIT license: http://en.wikipedia.org/wiki/MIT_License
 .. _peter@peterodding.com: peter@peterodding.com
