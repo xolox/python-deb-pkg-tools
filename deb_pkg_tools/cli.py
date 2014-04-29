@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 16, 2013
+# Last Change: April 29, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -20,7 +20,6 @@ Supported options:
                               activate the repository, run the positional
                               arguments as an external command (usually `apt-get
                               install') and finally deactivate the repository
-  -I, --install               install system packages required by deb-pkg-tools
   -v, --verbose               make more noise
   -h, --help                  show this message and exit
 """

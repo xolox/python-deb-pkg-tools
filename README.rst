@@ -30,15 +30,19 @@ After installation you'll have the ``deb-pkg-tools`` program available::
 
     Supported options:
 
-      -i, --inspect=FILE         inspect the metadata in a *.deb archive
-      -b, --build=DIR            build a Debian package with `dpkg-deb --build'
-      -u, --update-repo=DIR      create/update a trivial package repository
-      -a, --activate-repo=DIR    enable `apt-get' to install packages from a
-                                 trivial repository (assumes root access)
-      -d, --deactivate-repo=DIR  cleans up after --activate-repo
-                                 (assumes root access)
-      -v, --verbose              make more noise
-      -h, --help                 show this message and exit
+      -i, --inspect=FILE          inspect the metadata in a *.deb archive
+      -b, --build=DIR             build a Debian package with `dpkg-deb --build'
+      -u, --update-repo=DIR       create/update a trivial package repository
+      -a, --activate-repo=DIR     enable `apt-get' to install packages from a
+                                  trivial repository (requires root/sudo privilege)
+      -d, --deactivate-repo=DIR   cleans up after --activate-repo
+                                  (requires root/sudo privilege)
+      -w, --with-repo=DIR CMD...  create/update a trivial package repository,
+                                  activate the repository, run the positional
+                                  arguments as an external command (usually `apt-get
+                                  install') and finally deactivate the repository
+      -v, --verbose               make more noise
+      -h, --help                  show this message and exit
 
 If you're interested in using `deb-pkg-tools` as a Python module, please refer
 to the function reference on `Read the Docs`_.
