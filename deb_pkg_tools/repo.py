@@ -332,7 +332,8 @@ def load_config(repository):
             defaults = config.get('default', {})
             logger.debug("Found %i sections: %s", len(config), concatenate(parser.sections()))
             for name, options in config.iteritems():
-                if fnmatch.fnmatch(repository, options.get('directory')):
+                directory = options.get('directory')
+                if directory and fnmatch.fnmatch(repository, directory):
                     defaults.update(options)
                     return defaults
     return {}
