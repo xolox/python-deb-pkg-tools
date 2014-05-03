@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 29, 2014
+# Last Change: May 3, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -10,6 +10,9 @@ Usage: deb-pkg-tools [OPTIONS]
 Supported options:
 
   -i, --inspect=FILE          inspect the metadata in a *.deb archive
+  -p, --patch=FILE            patch fields into an existing control file
+  -s, --set=LINE              a line to patch into the control file
+                              (syntax: "Name: Value")
   -b, --build=DIR             build a Debian package with `dpkg-deb --build'
   -u, --update-repo=DIR       create/update a trivial package repository
   -a, --activate-repo=DIR     enable `apt-get' to install packages from a
@@ -36,6 +39,7 @@ import coloredlogs
 from humanfriendly import format_path, format_size
 
 # Modules included in our package.
+from deb_pkg_tools.control import patch_control_file
 from deb_pkg_tools.package import inspect_package, build_package
 from deb_pkg_tools.repo import (update_repository,
                                 activate_repository,
@@ -53,14 +57,23 @@ def main():
     coloredlogs.install()
     # Command line option defaults.
     actions = []
+    control_file = None
+    control_fields = {}
     # Parse the command line options.
     try:
-        long_options = ['inspect=', 'build=', 'update-repo=', 'activate-repo=',
-                        'deactivate-repo=', 'with-repo=', 'verbose', 'help']
-        options, arguments = getopt.getopt(sys.argv[1:], 'i:b:u:a:d:w:vh', long_options)
+        long_options = ['inspect=', 'patch=', 'set=', 'build=', 'update-repo=',
+                        'activate-repo=', 'deactivate-repo=', 'with-repo=',
+                        'verbose', 'help']
+        options, arguments = getopt.getopt(sys.argv[1:], 'i:p:s:b:u:a:d:w:vh', long_options)
         for option, value in options:
             if option in ('-i', '--inspect'):
                 actions.append(functools.partial(show_package_metadata, value))
+            elif option in ('-p', '--patch'):
+                control_file = os.path.abspath(value)
+                assert os.path.isfile(control_file), "Control file does not exist!"
+            elif option in ('-s', '--set'):
+                name, _, value = value.partition(':')
+                control_fields[name] = value.strip()
             elif option in ('-b', '--build'):
                 actions.append(functools.partial(build_package, check_directory(value)))
             elif option in ('-u', '--update-repo'):
@@ -76,6 +89,9 @@ def main():
             elif option in ('-h', '--help'):
                 usage()
                 return
+        if control_file:
+            assert control_fields, "Please specify one or more control file fields to patch!"
+            actions.append(functools.partial(patch_control_file, control_file, control_fields))
     except Exception, e:
         logger.error(e)
         print
