@@ -36,6 +36,8 @@ import logging
 import os.path
 import pipes
 import re
+import shutil
+import tempfile
 
 # External dependencies.
 from humanfriendly import concatenate, format_path
@@ -55,9 +57,9 @@ CONFIG_FILE = 'repos.ini'
 
 def update_repository(directory, release_fields={}, gpg_key=None):
     """
-    Create or update a `trivial repository`_ using the Debian
-    commands ``dpkg-scanpackages`` and ``apt-ftparchive`` (also uses the
-    external programs ``cat``, ``gpg``, ``gzip``, ``mv``, ``rm`` and ``sed``).
+    Create or update a `trivial repository`_ using the Debian commands
+    ``dpkg-scanpackages`` and ``apt-ftparchive`` (also uses the external
+    programs ``gpg`` and ``gzip``).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param release_fields: An optional dictionary with fields to set inside the
@@ -89,16 +91,31 @@ def update_repository(directory, release_fields={}, gpg_key=None):
     # If the repository doesn't actually need to be updated we'll skip the update.
     if metadata_last_updated >= contents_last_updated:
         logger.info("Contents of repository %s didn't change, so no need to update it.", directory)
-    else:
-        logger.info("%s trivial repository: %s", "Updating" if metadata_last_updated else "Creating", directory)
+        return
+    # The generated files `Packages', `Packages.gz', `Release' and `Release.gpg'
+    # are created in a temporary directory. Only once all of the files have been
+    # successfully generated they are moved to the repository directory. There
+    # are two reasons for this:
+    #
+    # 1. If the repository directory is being served to apt-get clients we
+    #    don't want them to catch us in the middle of updating the repository
+    #    because it will be in an inconsistent state.
+    #
+    # 2. If we fail to generate one of the files it's better not to have
+    #    changed any of them, for the same reason as point one :-)
+    logger.info("%s trivial repository: %s", "Updating" if metadata_last_updated else "Creating", directory)
+    temporary_directory = tempfile.mkdtemp()
+    try:
         # Generate the `Packages' file.
         logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
-        execute("dpkg-scanpackages -m . > Packages", directory=directory, logger=logger)
-        # Fix the syntax of the `Packages' file using sed.
-        execute('sed', '-i', 's@: \./@: @', 'Packages', directory=directory, logger=logger)
+        package_listing = execute("dpkg-scanpackages -m .", capture=True, directory=directory, logger=logger)
+        # Fix the syntax of the `Packages' file.
+        package_listing = re.sub(r'Filename: \./', 'Filename: ', package_listing)
+        with open(os.path.join(temporary_directory, 'Packages'), 'w') as handle:
+            handle.write(package_listing + '\n')
         # Generate the `Packages.gz' file by compressing the `Packages' file.
         logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
-        execute("gzip < Packages > Packages.gz", directory=directory, logger=logger)
+        execute("gzip < Packages > Packages.gz", directory=temporary_directory, logger=logger)
         # Generate the `Release' file.
         logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Release')))
         # Get APT::FTPArchive::Release::* options from configuration file.
@@ -114,22 +131,29 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         for name, value in release_fields.iteritems():
             name = 'APT::FTPArchive::Release::%s' % name.capitalize()
             options.append('-o %s' % pipes.quote('%s=%s' % (name, value)))
-        command = "rm -f Release && LANG= apt-ftparchive {options} release . > Release.tmp && mv Release.tmp Release"
-        execute(command.format(options=' '.join(options)), directory=directory, logger=logger)
+        command = "LANG= apt-ftparchive %s release ." % ' '.join(options)
+        release_listing = execute(command, capture=True, directory=temporary_directory, logger=logger)
+        with open(os.path.join(temporary_directory, 'Release'), 'w') as handle:
+            handle.write(release_listing + '\n')
         # Generate the `Release.gpg' file by signing the `Release' file with GPG?
-        filename = os.path.join(directory, 'Release.gpg')
-        if os.path.isfile(filename):
+        gpg_key_file = os.path.join(directory, 'Release.gpg')
+        if gpg_key:
+            logger.debug("Generating file: %s", format_path(gpg_key_file))
+            initialize_gnupg()
+            command = "{gpg} --armor --sign --detach-sign --output Release.gpg Release"
+            execute(command.format(gpg=gpg_key.gpg_command), directory=temporary_directory, logger=logger)
+        elif os.path.isfile(gpg_key_file):
             # XXX If 1) no GPG key was provided, 2) apt doesn't require the
             # repository to be signed and 3) `Release.gpg' exists from a
             # previous run, this file should be removed so we don't create an
             # inconsistent repository index (when `Release' is updated but
             # `Release.gpg' is not updated the signature becomes invalid).
-            execute("rm -f Release.gpg", directory=directory, logger=logger)
-        if gpg_key:
-            logger.debug("Generating file: %s", format_path(filename))
-            initialize_gnupg()
-            command = "{gpg} --armor --sign --detach-sign --output Release.gpg Release"
-            execute(command.format(gpg=gpg_key.gpg_command), directory=directory, logger=logger)
+            os.unlink(gpg_key_file)
+        # Move the generated files into the repository directory.
+        for entry in os.listdir(temporary_directory):
+            shutil.copy(os.path.join(temporary_directory, entry), os.path.join(directory, entry))
+    finally:
+        shutil.rmtree(temporary_directory)
 
 def activate_repository(directory, gpg_key=None):
     """
