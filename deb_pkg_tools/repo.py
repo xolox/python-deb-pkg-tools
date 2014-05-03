@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 29, 2014
+# Last Change: May 3, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -31,6 +31,7 @@ file, please refer to the documentation of :py:func:`select_gpg_key()`.
 
 # Standard library modules.
 import ConfigParser
+import fnmatch
 import logging
 import os.path
 import pipes
@@ -258,7 +259,8 @@ def select_gpg_key(directory):
         directory = /tmp
 
     Hopefully this is self explanatory: If the repository directory is ``/tmp``
-    the 'test' key pair is used, otherwise the 'default' key pair is used. Of
+    the 'test' key pair is used, otherwise the 'default' key pair is used. The
+    'directory' field can contain globbing wildcards like ``?`` and ``*``. Of
     course you're free to put the actual ``*.pub`` and ``*.sec`` files anywhere
     you like; that's the point of having them be configurable :-)
 
@@ -295,6 +297,7 @@ def select_gpg_key(directory):
                       public_key_file=os.path.join(USER_CONFIG_DIR, 'automatic-signing-key.pub'))
 
 def load_config(repository):
+    repository = os.path.abspath(repository)
     for config_dir in (USER_CONFIG_DIR, GLOBAL_CONFIG_DIR):
         config_file = os.path.join(config_dir, CONFIG_FILE)
         if os.path.isfile(config_file):
@@ -305,8 +308,7 @@ def load_config(repository):
             defaults = config.get('default', {})
             logger.debug("Found %i sections: %s", len(config), concatenate(parser.sections()))
             for name, options in config.iteritems():
-                directory = options.get('directory')
-                if directory and os.path.realpath(repository) == os.path.realpath(directory):
+                if fnmatch.fnmatch(repository, options.get('directory')):
                     defaults.update(options)
                     return defaults
     return {}
