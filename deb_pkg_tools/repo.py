@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 3, 2014
+# Last Change: May 4, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -20,8 +20,7 @@ repository:
 - :py:func:`deactivate_repository()` cleans up after
   :py:func:`activate_repository()`
 
-All of the functions in this module can raise
-:py:exc:`deb_pkg_tools.utils.ExternalCommandFailed`.
+All of the functions in this module can raise :py:exc:`executor.ExternalCommandFailed`.
 
 You can configure the GPG key(s) used by this module through a configuration
 file, please refer to the documentation of :py:func:`select_gpg_key()`.
@@ -40,11 +39,11 @@ import shutil
 import tempfile
 
 # External dependencies.
+from executor import execute, ExternalCommandFailed
 from humanfriendly import concatenate, format_path
 
 # Modules included in our package.
-from deb_pkg_tools.utils import (execute, find_home_directory, sha1,
-                                 ExternalCommandFailed)
+from deb_pkg_tools.utils import find_home_directory, sha1
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 
 # Initialize a logger.

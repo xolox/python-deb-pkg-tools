@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 3, 2014
+# Last Change: May 4, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -36,6 +36,7 @@ import sys
 
 # External dependencies.
 import coloredlogs
+from executor import execute
 from humanfriendly import format_path, format_size
 
 # Modules included in our package.
@@ -44,7 +45,6 @@ from deb_pkg_tools.package import inspect_package, build_package
 from deb_pkg_tools.repo import (update_repository,
                                 activate_repository,
                                 deactivate_repository)
-from deb_pkg_tools.utils import execute
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

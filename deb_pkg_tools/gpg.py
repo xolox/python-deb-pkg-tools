@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 25, 2014
+# Last Change: May 4, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -22,10 +22,11 @@ import textwrap
 import time
 
 # External dependencies.
+from executor import execute
 from humanfriendly import format_path, format_timespan
 
 # Modules included in our package.
-from deb_pkg_tools.utils import execute, find_home_directory
+from deb_pkg_tools.utils import find_home_directory
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
