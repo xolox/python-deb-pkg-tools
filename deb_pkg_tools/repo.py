@@ -127,7 +127,7 @@ def update_repository(directory, release_fields={}, gpg_key=None):
         # Override APT::FTPArchive::Release::* options from configuration file
         # with options given to update_repository() explicitly by the caller.
         options = []
-        for name, value in release_fields.iteritems():
+        for name, value in release_fields.items():
             name = 'APT::FTPArchive::Release::%s' % name.capitalize()
             options.append('-o %s' % pipes.quote('%s=%s' % (name, value)))
         command = "LANG= apt-ftparchive %s release ." % ' '.join(options)

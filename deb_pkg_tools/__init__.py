@@ -1,7 +1,7 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 4, 2014
+# Last Change: May 10, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Standard library modules.
@@ -26,8 +26,8 @@ debian_package_dependencies = (
 )
 
 def generate_stdeb_cfg():
-    print '[deb-pkg-tools]'
-    print 'Depends:', ', '.join(debian_package_dependencies)
-    print 'XS-Python-Version: >= 2.6'
+    print('[deb-pkg-tools]')
+    print('Depends:', ', '.join(debian_package_dependencies))
+    print('XS-Python-Version: >= 2.6')
 
 # vim: ts=4 sw=4 et

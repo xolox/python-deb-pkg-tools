@@ -21,7 +21,7 @@ for line in open(module, 'r'):
         version_string = match.group(1)
         break
 else:
-    raise Exception, "Failed to extract version from deb_pkg_tools/__init__.py!"
+    raise Exception("Failed to extract version from deb_pkg_tools/__init__.py!")
 
 # Fill in the long description (for the benefit of PyPi)
 # with the contents of README.rst (rendered by GitHub).
