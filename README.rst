@@ -55,8 +55,9 @@ Dependencies
 ------------
 
 The `deb-pkg-tools` package depends on the python-debian_ package for control
-file parsing. The following external programs are also required (depending on
-which functionality you need of course):
+file parsing (it will be automatically installed as a dependency). The
+following external programs are also required (depending on which functionality
+you need of course):
 
 =====================  =============
 Program                Package
@@ -64,7 +65,6 @@ Program                Package
 ``apt-ftparchive``     ``apt-utils``
 ``apt-get``            ``apt``
 ``ar``                 ``binutils``
-``cat``                ``coreutils``
 ``cp``                 ``coreutils``
 ``dpkg-deb``           ``dpkg``
 ``dpkg-scanpackages``  ``dpkg-dev``
@@ -73,10 +73,13 @@ Program                Package
 ``gpg``                ``gnupg``
 ``gzip``               ``gzip``
 ``lintian``            ``lintian``
-``mv``                 ``coreutils``
-``sed``                ``sed``
 ``tar``                ``tar``
 =====================  =============
+
+The majority of these programs/packages will already be installed on most
+Debian based systems so you should only need the following to get started::
+
+    $ sudo apt-get install binutils dpkg-dev fakeroot lintian
 
 Contact
 -------
