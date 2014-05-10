@@ -4,6 +4,9 @@ deb-pkg-tools: Debian packaging tools
 .. image:: https://travis-ci.org/xolox/python-deb-pkg-tools.svg?branch=master
    :target: https://travis-ci.org/xolox/python-deb-pkg-tools
 
+.. image:: https://coveralls.io/repos/xolox/python-deb-pkg-tools/badge.png?branch=master
+   :target: https://coveralls.io/r/xolox/python-deb-pkg-tools?branch=master
+
 The Python package `deb-pkg-tools` is a collection of functions to work with
 Debian packages and repositories. Some of those functions have a command line
 interface (see below) because they're very convenient to use in shell scripts,
