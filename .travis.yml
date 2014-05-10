@@ -10,6 +10,6 @@ install:
   - pip install coveralls
   - python setup.py install
 script:
-  sudo coverage run --source=deb_pkg_tools setup.py test
+  sudo -E coverage run --source=deb_pkg_tools setup.py test
 after_success:
   coveralls
