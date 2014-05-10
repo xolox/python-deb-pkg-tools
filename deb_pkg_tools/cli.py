@@ -36,7 +36,6 @@ import sys
 
 # External dependencies.
 import coloredlogs
-from executor import execute
 from humanfriendly import format_path, format_size
 
 # Modules included in our package.
@@ -44,7 +43,8 @@ from deb_pkg_tools.control import patch_control_file
 from deb_pkg_tools.package import inspect_package, build_package
 from deb_pkg_tools.repo import (update_repository,
                                 activate_repository,
-                                deactivate_repository)
+                                deactivate_repository,
+                                with_repository)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ def main():
             elif option in ('-d', '--deactivate-repo'):
                 actions.append(functools.partial(deactivate_repository, check_directory(value)))
             elif option in ('-w', '--with-repo'):
-                actions.append(functools.partial(with_repository, check_directory(value), arguments))
+                actions.append(functools.partial(with_repository_wrapper, check_directory(value), arguments))
             elif option in ('-v', '--verbose'):
                 coloredlogs.increase_verbosity()
             elif option in ('-h', '--help'):
@@ -138,25 +138,22 @@ def check_directory(argument):
         raise Exception(msg % directory)
     return directory
 
-def with_repository(directory, command):
+def with_repository_wrapper(directory, command):
     """
-    Create/update a trivial package repository, activate the repository, run an
-    external command (usually `apt-get install') and finally deactivate the
-    repository again.
+    Command line wrapper for :py:func:`deb_pkg_tools.repo.with_repository()`.
+
+    :param directory: The pathname of a directory with ``*.deb`` archives (a
+                      string).
+    :param command: The command to execute (a list of strings).
     """
-    update_repository(directory)
-    activate_repository(directory)
     if not command:
         # Default to the user's shell (seems like a sensible default?)
         command = [os.environ.get('SHELL', '/bin/bash')]
     try:
-        execute(*command, logger=logger)
-    except BaseException as e:
-        logger.exception(e)
-        logger.warn("Caught an otherwise unhandled exception! Will deactivate the repository before dying ..")
+        with_repository(directory, *command)
+    except Exception:
+        logger.exception("Caught an unhandled exception!")
         sys.exit(1)
-    finally:
-        deactivate_repository(directory)
 
 def usage():
     """

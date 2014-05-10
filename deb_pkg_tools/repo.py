@@ -231,6 +231,25 @@ def deactivate_repository(directory):
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=True, logger=logger)
 
+def with_repository(directory, *command):
+    """
+    Create/update a trivial package repository, activate the repository, run an
+    external command (usually ``apt-get install``) and finally deactivate the
+    repository again. Also deactivates the repository when the external command
+    fails and :py:exc:`executor.ExternalCommandFailed` is raised.
+
+    :param directory: The pathname of a directory containing ``*.deb`` archives
+                      (a string).
+    :param command: The command to execute (a tuple of strings, passed verbatim
+                    to :py:func:`executor.execute()`).
+    """
+    update_repository(directory)
+    activate_repository(directory)
+    try:
+        execute(*command, logger=logger)
+    finally:
+        deactivate_repository(directory)
+
 # Use a global to cache the answer of apt_supports_trusted_option() so we don't
 # execute `dpkg-query --show' and `dpkg --compare-versions' more than once.
 trusted_option_supported = None
