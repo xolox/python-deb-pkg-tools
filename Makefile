@@ -1,7 +1,7 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 2, 2013
+# Last Change: May 10, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 WORKON_HOME ?= $(HOME)/.virtualenvs
@@ -23,12 +23,12 @@ default:
 
 install:
 	test -d "$(VIRTUAL_ENV)" || virtualenv --no-site-packages "$(VIRTUAL_ENV)"
-	test -x "$(VIRTUAL_ENV)/bin/pip" || "$(VIRTUAL_ENV)/bin/easy_install" pip
-	test -x "$(VIRTUAL_ENV)/bin/pip-accel" || "$(VIRTUAL_ENV)/bin/pip" install pip-accel
-	test -x "$(VIRTUAL_ENV)/bin/coverage" || "$(VIRTUAL_ENV)/bin/pip-accel" install coverage
-	"$(VIRTUAL_ENV)/bin/pip-accel" install -r requirements.txt
-	"$(VIRTUAL_ENV)/bin/pip" uninstall -y deb-pkg-tools || true
-	"$(VIRTUAL_ENV)/bin/pip" install --no-deps .
+	test -x "$(VIRTUAL_ENV)/bin/pip"       || (. $(VIRTUAL_ENV)/bin/activate && easy_install pip)
+	test -x "$(VIRTUAL_ENV)/bin/pip-accel" || (. $(VIRTUAL_ENV)/bin/activate && pip install pip-accel)
+	test -x "$(VIRTUAL_ENV)/bin/coverage"  || (. $(VIRTUAL_ENV)/bin/activate && pip-accel install coverage)
+	. "$(VIRTUAL_ENV)/bin/activate" && pip-accel install -r requirements.txt
+	. "$(VIRTUAL_ENV)/bin/activate" && pip uninstall -y deb-pkg-tools || true
+	. "$(VIRTUAL_ENV)/bin/activate" && pip install --no-deps .
 
 reset:
 	rm -Rf $(VIRTUAL_ENV)
@@ -38,17 +38,17 @@ test: install
 	$(VIRTUAL_ENV)/bin/python setup.py test
 
 coverage: install
-	test -x $(VIRTUAL_ENV)/bin/coverage || $(VIRTUAL_ENV)/bin/pip-accel install coverage
-	$(VIRTUAL_ENV)/bin/coverage run --include='*deb_pkg_tools*' deb_pkg_tools/tests.py
-	$(VIRTUAL_ENV)/bin/coverage html
-	$(VIRTUAL_ENV)/bin/coverage report -m
+	test -x $(VIRTUAL_ENV)/bin/coverage || (. "$(VIRTUAL_ENV)/bin/activate" && pip-accel install coverage)
+	. "$(VIRTUAL_ENV)/bin/activate" && coverage run --source=deb_pkg_tools setup.py test
+	. "$(VIRTUAL_ENV)/bin/activate" && coverage html
+	. "$(VIRTUAL_ENV)/bin/activate" && coverage report -m
 	if [ "`whoami`" != root ]; then gnome-open htmlcov/index.html; fi
 
 clean:
 	rm -Rf *.egg *.egg-info .coverage build dist docs/build htmlcov
 
 docs: install
-	"$(VIRTUAL_ENV)/bin/pip-accel" install sphinx
+	. "$(VIRTUAL_ENV)/bin/activate" && pip-accel install sphinx
 	cd docs && make html
 	if which gnome-open >/dev/null 2>&1; then \
 		gnome-open "docs/build/html/index.html"; \
