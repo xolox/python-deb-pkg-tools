@@ -7,7 +7,8 @@ deb-pkg-tools: Debian packaging tools
 The Python package `deb-pkg-tools` is a collection of functions to work with
 Debian packages and repositories. Some of those functions have a command line
 interface (see below) because they're very convenient to use in shell scripts,
-while other functions are meant to be called directly from Python code.
+while other functions are meant to be called directly from Python code. It's
+currently tested on Python 2.6, 2.7 and 3.4.
 
 Status
 ------
