@@ -124,7 +124,7 @@ class GPGKey(object):
         # If we're going to generate a GPG key for the caller we don't want to
         # overwrite a secret or public key file without its counterpart. We'll
         # also need a name and description for the generated key.
-        existing_files = filter(os.path.isfile, [secret_key_file, public_key_file])
+        existing_files = list(filter(os.path.isfile, [secret_key_file, public_key_file]))
         if len(existing_files) not in (0, 2):
             text = "Refusing to overwrite existing key file! (%s)"
             raise Exception(text % existing_files[0])

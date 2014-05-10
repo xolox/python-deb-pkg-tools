@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 4, 2014
+# Last Change: May 10, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -29,7 +29,6 @@ file, please refer to the documentation of :py:func:`select_gpg_key()`.
 """
 
 # Standard library modules.
-import ConfigParser
 import fnmatch
 import logging
 import os.path
@@ -37,6 +36,12 @@ import pipes
 import re
 import shutil
 import tempfile
+
+# Python 2/3 compatibility.
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 # External dependencies.
 from executor import execute, ExternalCommandFailed
@@ -325,12 +330,12 @@ def load_config(repository):
         config_file = os.path.join(config_dir, CONFIG_FILE)
         if os.path.isfile(config_file):
             logger.debug("Loading configuration from %s ..", format_path(config_file))
-            parser = ConfigParser.RawConfigParser()
+            parser = configparser.RawConfigParser()
             parser.read(config_file)
             config = dict((n, dict(parser.items(n))) for n in parser.sections())
             defaults = config.get('default', {})
             logger.debug("Found %i sections: %s", len(config), concatenate(parser.sections()))
-            for name, options in config.iteritems():
+            for name, options in config.items():
                 directory = options.get('directory')
                 if directory and fnmatch.fnmatch(repository, directory):
                     defaults.update(options)
