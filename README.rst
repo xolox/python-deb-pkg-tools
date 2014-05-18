@@ -71,7 +71,6 @@ Program                Package
 =====================  =============
 ``apt-ftparchive``     ``apt-utils``
 ``apt-get``            ``apt``
-``ar``                 ``binutils``
 ``cp``                 ``coreutils``
 ``dpkg-deb``           ``dpkg``
 ``dpkg-scanpackages``  ``dpkg-dev``
@@ -80,13 +79,12 @@ Program                Package
 ``gpg``                ``gnupg``
 ``gzip``               ``gzip``
 ``lintian``            ``lintian``
-``tar``                ``tar``
 =====================  =============
 
 The majority of these programs/packages will already be installed on most
 Debian based systems so you should only need the following to get started::
 
-    $ sudo apt-get install binutils dpkg-dev fakeroot lintian
+    $ sudo apt-get install dpkg-dev fakeroot lintian
 
 Contact
 -------

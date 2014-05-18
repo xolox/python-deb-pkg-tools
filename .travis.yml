@@ -5,7 +5,7 @@ python:
   - "3.4"
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y binutils dpkg-dev fakeroot lintian
+  - sudo apt-get install -y dpkg-dev fakeroot lintian
 install:
   - pip install coveralls
   - python setup.py install
