@@ -132,7 +132,10 @@ def show_package_metadata(archive):
             size = ' ' * (10 - len(size)) + size
         if entry.target:
             pathname += ' -> ' + entry.target
-        print(entry.permissions, '%s/%s' % (entry.owner, entry.group), size, entry.modified, pathname)
+        print('{permissions} {owner} {group} {size} {modified} {pathname}'.format(
+            permissions=entry.permissions, owner=entry.owner,
+            group=entry.group, size=size, modified=entry.modified,
+            pathname=pathname.encode('utf-8')))
 
 def collect_packages(archives, directory):
     related_archives = set()
