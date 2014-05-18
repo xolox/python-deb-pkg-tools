@@ -1,15 +1,18 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 10, 2014
+# Last Change: May 18, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
-Usage: deb-pkg-tools [OPTIONS]
+Usage: deb-pkg-tools [OPTIONS] ...
 
 Supported options:
 
   -i, --inspect=FILE          inspect the metadata in a *.deb archive
+  -c, --collect=DIR           copy the package archive(s) given as positional
+                              arguments and all packages archives required by
+                              the given package archives into a directory
   -p, --patch=FILE            patch fields into an existing control file
   -s, --set=LINE              a line to patch into the control file
                               (syntax: "Name: Value")
@@ -32,15 +35,17 @@ import functools
 import getopt
 import logging
 import os.path
+import shutil
 import sys
 
 # External dependencies.
 import coloredlogs
-from humanfriendly import format_path, format_size
+from humanfriendly import format_path, format_size, pluralize
 
 # Modules included in our package.
 from deb_pkg_tools.control import patch_control_file
-from deb_pkg_tools.package import inspect_package, build_package
+from deb_pkg_tools.package import (build_package, collect_related_packages,
+                                   inspect_package, parse_filename)
 from deb_pkg_tools.repo import (update_repository,
                                 activate_repository,
                                 deactivate_repository,
@@ -61,13 +66,17 @@ def main():
     control_fields = {}
     # Parse the command line options.
     try:
-        long_options = ['inspect=', 'patch=', 'set=', 'build=', 'update-repo=',
-                        'activate-repo=', 'deactivate-repo=', 'with-repo=',
-                        'verbose', 'help']
-        options, arguments = getopt.getopt(sys.argv[1:], 'i:p:s:b:u:a:d:w:vh', long_options)
+        options, arguments = getopt.getopt(sys.argv[1:], 'i:c:p:s:b:u:a:d:w:vh', [
+            'inspect=', 'collect=', 'patch=', 'set=', 'build=', 'update-repo=',
+            'activate-repo=', 'deactivate-repo=', 'with-repo=', 'verbose',
+            'help'
+        ])
         for option, value in options:
             if option in ('-i', '--inspect'):
                 actions.append(functools.partial(show_package_metadata, value))
+            elif option in ('-c', '--collect'):
+                actions.append(functools.partial(collect_packages, arguments, check_directory(value)))
+                arguments = []
             elif option in ('-p', '--patch'):
                 control_file = os.path.abspath(value)
                 assert os.path.isfile(control_file), "Control file does not exist!"
@@ -124,6 +133,35 @@ def show_package_metadata(archive):
         if entry.target:
             pathname += ' -> ' + entry.target
         print(entry.permissions, '%s/%s' % (entry.owner, entry.group), size, entry.modified, pathname)
+
+def collect_packages(archives, directory):
+    related_archives = set()
+    for given_filename in archives:
+        related_archives.add(parse_filename(given_filename))
+        related_archives.update(collect_related_packages(given_filename))
+    if related_archives:
+        related_archives = sorted(related_archives)
+        pluralized = pluralize(len(related_archives), "package archive", "package archives")
+        print("Found %s:" % pluralized)
+        for file_to_collect in related_archives:
+            print(" - %s" % format_path(file_to_collect.filename))
+        try:
+            # Ask permission to copy the file(s).
+            prompt = "Copy %s to %s? [Y/n] " % (pluralized, format_path(directory))
+            assert raw_input(prompt).lower() in ('', 'y', 'yes')
+            # Copy the file(s).
+            for file_to_collect in related_archives:
+                copy_from = file_to_collect.filename
+                copy_to = os.path.join(directory, os.path.basename(copy_from))
+                logger.debug("Copying %s -> %s ..", format_path(copy_from), format_path(copy_to))
+                shutil.copy(copy_from, copy_to)
+            logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
+        except (AssertionError, KeyboardInterrupt) as e:
+            if isinstance(e, KeyboardInterrupt):
+                # Control-C interrupts the prompt without emitting a newline. We'll
+                # print one manually so the console output doesn't look funny.
+                sys.stderr.write('\n')
+            logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
 
 def check_directory(argument):
     """
