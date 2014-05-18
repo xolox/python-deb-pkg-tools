@@ -159,7 +159,7 @@ def collect_packages(archives, directory):
                 logger.debug("Copying %s -> %s ..", format_path(copy_from), format_path(copy_to))
                 shutil.copy(copy_from, copy_to)
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
-        except (AssertionError, KeyboardInterrupt) as e:
+        except (AssertionError, KeyboardInterrupt, EOFError) as e:
             if isinstance(e, KeyboardInterrupt):
                 # Control-C interrupts the prompt without emitting a newline. We'll
                 # print one manually so the console output doesn't look funny.
