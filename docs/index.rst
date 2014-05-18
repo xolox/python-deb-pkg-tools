@@ -16,6 +16,9 @@ the `deb-pkg-tools` package.
 .. automodule:: deb_pkg_tools.control
    :members:
 
+.. automodule:: deb_pkg_tools.deps
+   :members:
+
 .. automodule:: deb_pkg_tools.repo
    :members:
 
