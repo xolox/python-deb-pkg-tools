@@ -1,7 +1,7 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 18, 2014
+# Last Change: May 25, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 WORKON_HOME ?= $(HOME)/.virtualenvs
@@ -30,10 +30,13 @@ install:
 	. "$(VIRTUAL_ENV)/bin/activate" && pip install --no-deps --editable .
 
 reset:
-	rm -Rf $(VIRTUAL_ENV)
+	rm -Rf "$(VIRTUAL_ENV)"
 	make --no-print-directory install
 
-test: install
+doctest: install
+	"$(VIRTUAL_ENV)/bin/python" check_doctest_examples.py
+
+test: install doctest
 	"$(VIRTUAL_ENV)/bin/python" setup.py test
 
 coverage: install
