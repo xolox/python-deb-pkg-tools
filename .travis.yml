@@ -3,13 +3,22 @@ python:
   - "2.6"
   - "2.7"
   - "3.4"
+# In the (Ubuntu 12.04, Python 2.7) environment we will test the python-apt
+# binding (installed as a system package), so the Python virtual environment
+# needs to be created with the `--system-site-packages' option.
+virtualenv:
+  system_site_packages: true
+# Install the dependencies of deb-pkg-tools before running the test suite.
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y dpkg-dev fakeroot lintian
+  - sudo apt-get install -y dpkg-dev fakeroot lintian python-apt
+# Prepare to submit coverage statistics to coveralls.io.
 install:
   - pip install coveralls
   - python setup.py install
+# Run the test suite as root so that all tests run (even the `dangerous ones').
 script:
   sudo "$VIRTUAL_ENV/bin/coverage" run --source=deb_pkg_tools setup.py test
+# Submit coverage statistics to coveralls.io after successful runs.
 after_success:
   coveralls
