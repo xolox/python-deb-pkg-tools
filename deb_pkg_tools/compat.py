@@ -1,17 +1,17 @@
 # Debian packaging tools: Compatibility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 18, 2014
+# Last Change: May 24, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
 Compatibility functions
 =======================
 
-The functions in the :py:mod:`deb_pkg_tools.compat` module make it easier to
-write Python code that is compatible with Python 2.x and Python 3.x. Think of
-it as a very lightweight six_, except this module implements similar but
-different shortcuts (the ones I need :-).
+The :py:mod:`deb_pkg_tools.compat` module makes it easier to write Python code
+that is compatible with Python 2.x and Python 3.x. Think of it as a very
+lightweight six_, except this module implements similar but different shortcuts
+(the ones I need :-).
 
 .. _six: http://six.readthedocs.org/
 """
