@@ -1,7 +1,7 @@
 # Debian packaging tools: Compatibility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 24, 2014
+# Last Change: May 26, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -31,6 +31,12 @@ try:
     unicode = unicode
 except NameError:
     unicode = str
+
+# str() vs basestring().
+try:
+    basestring = basestring
+except NameError:
+    basestring = str
 
 def str_compatible(cls):
     """
