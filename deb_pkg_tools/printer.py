@@ -1,7 +1,7 @@
 # Debian packaging tools: Custom pretty printer.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 18, 2014
+# Last Change: May 28, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -38,7 +38,7 @@ class CustomPrettyPrinter(pprint.PrettyPrinter):
 
     def _format(self, obj, stream, indent, *args):
         if isinstance(obj, RelationshipSet):
-            stream.write(obj.__repr__(indent=indent))
+            stream.write(obj.__repr__(indent=indent, pretty=True))
         elif isinstance(obj, Deb822):
             pprint.PrettyPrinter._format(self, dict(obj), stream, indent, *args)
         else:
