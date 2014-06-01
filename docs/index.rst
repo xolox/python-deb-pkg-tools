@@ -10,6 +10,9 @@ the `deb-pkg-tools` package.
    programs. If these programs fail unexpectedly (end with a nonzero exit code)
    :py:exc:`executor.ExternalCommandFailed` is raised.
 
+.. automodule:: deb_pkg_tools.config
+   :members:
+
 .. automodule:: deb_pkg_tools.package
    :members:
 

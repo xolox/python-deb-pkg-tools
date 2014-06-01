@@ -1,7 +1,7 @@
 # Direct dependencies of deb-pkg-tools.
 coloredlogs >= 0.4.6
 executor >= 1.1
-humanfriendly >= 1.7.1
+humanfriendly >= 1.8.2
 python-debian >= 0.1.21-nmu2
 # Undocumented transitive dependency of python-debian...
 chardet
