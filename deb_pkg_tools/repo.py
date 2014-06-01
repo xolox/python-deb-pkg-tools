@@ -97,11 +97,11 @@ class scan_packages(object):
             num_packages = 0
             timer = Timer()
             spinner = Spinner("Scanning package metadata ..")
-            with open(packages_file, 'w') as handle:
+            with open(packages_file, 'wb') as handle:
                 for archive in find_package_archives(repository):
                     fields = self.find_in_cache(archive.filename)
                     unparse_control_fields(fields).dump(handle)
-                    handle.write('\n')
+                    handle.write(b'\n')
                     spinner.step()
                     num_packages += 1
             spinner.clear()
@@ -167,8 +167,8 @@ class scan_packages(object):
             sha1_sum = hashlib.sha1()
             sha256_sum = hashlib.sha256()
             # Read the file once in blocks, calculating all hashes at once.
-            with open(filename) as handle:
-                for chunk in iter(functools.partial(handle.read, 1024), ''):
+            with open(filename, 'rb') as handle:
+                for chunk in iter(functools.partial(handle.read, 1024), b''):
                     md5_sum.update(chunk)
                     sha1_sum.update(chunk)
                     sha256_sum.update(chunk)
