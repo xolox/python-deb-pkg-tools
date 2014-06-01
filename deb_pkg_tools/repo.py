@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 10, 2014
+# Last Change: June 1, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -48,8 +48,9 @@ from executor import execute, ExternalCommandFailed
 from humanfriendly import concatenate, format_path
 
 # Modules included in our package.
-from deb_pkg_tools.utils import find_home_directory, sha1
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
+from deb_pkg_tools.package import find_package_archives
+from deb_pkg_tools.utils import find_home_directory, sha1
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -75,10 +76,8 @@ def update_repository(directory, release_fields={}, gpg_key=None):
     gpg_key = gpg_key or select_gpg_key(directory)
     # Figure out when the repository contents were last updated.
     contents_last_updated = os.path.getmtime(directory)
-    for entry in os.listdir(directory):
-        if entry.endswith('.deb'):
-            pathname = os.path.join(directory, entry)
-            contents_last_updated = max(contents_last_updated, os.path.getmtime(pathname))
+    for archive in find_package_archives(directory):
+        contents_last_updated = max(contents_last_updated, os.path.getmtime(archive.filename))
     # Figure out when the repository metadata was last updated.
     try:
         metadata_files = ['Packages', 'Packages.gz', 'Release']
