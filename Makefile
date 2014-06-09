@@ -44,7 +44,7 @@ test: install doctest
 coverage: install
 	test -x "$(VIRTUAL_ENV)/bin/coverage" || ($(ACTIVATE) && pip-accel install coverage)
 	$(ACTIVATE) && coverage run --source=deb_pkg_tools setup.py test
-	$(ACTIVATE) && coverage html
+	$(ACTIVATE) && coverage html --omit=deb_pkg_tools/tests.py
 	if [ "`whoami`" != root ] && which gnome-open >/dev/null 2>&1; then gnome-open htmlcov/index.html; fi
 
 clean:

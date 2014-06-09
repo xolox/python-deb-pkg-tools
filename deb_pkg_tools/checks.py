@@ -36,13 +36,16 @@ def check_duplicate_files(package_archives, cache=None):
 
     :param package_archives: A list of filenames (strings) of ``*.deb`` files.
     :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :raises: :py:class:`exceptions.ValueError` when less than two package
+             archives are given (the duplicate check obviously only works if
+             there are packages to compare :-).
     """
     package_archives = list(map(parse_filename, package_archives))
     # Make sure we have something useful to work with.
     num_archives = len(package_archives)
     if num_archives < 2:
         msg = "To check for duplicate files you need to provide two or more packages archives! (%i given)"
-        raise Exception(msg % num_archives)
+        raise ValueError(msg % num_archives)
     # Build up a global map of all files contained in the given package archives.
     global_contents = collections.defaultdict(set)
     global_fields = {}
