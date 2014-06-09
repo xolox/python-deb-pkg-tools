@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2014
+# Last Change: June 9, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -31,8 +31,8 @@ file, please refer to the documentation of :py:func:`select_gpg_key()`.
 # Standard library modules.
 import fnmatch
 import functools
+import glob
 import hashlib
-import json
 import logging
 import os.path
 import pipes
@@ -54,148 +54,123 @@ from humanfriendly import concatenate, format_path, Spinner, Timer
 from deb_pkg_tools import config
 from deb_pkg_tools.control import unparse_control_fields
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
-from deb_pkg_tools.package import inspect_package_fields, find_package_archives
+from deb_pkg_tools.package import find_package_archives, inspect_package_fields
 from deb_pkg_tools.utils import atomic_lock, sha1
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
-class scan_packages(object):
-
+def scan_packages(repository, packages_file=None, cache=None):
     """
-    A reimplementation of the ``dpkg-scanpackages -m`` command in Python that
-    caches package archive metadata and hashes on disk to speed things up
-    significantly. The location of the cache is currently hard coded as
-    :py:data:`deb_pkg_tools.package_cache_file`.
+    A reimplementation of the ``dpkg-scanpackages -m`` command in Python.
 
-    .. note:: This implementation currently uses an exclusive lock on the
-              package cache file so that only one process can update the cache
-              at the same time. Serializing all ``Packages`` file generation
-              may not sound like the smartest idea, but given the speedup that
-              :py:class:`scan_packages()` gives it's more than worth it.
+    Updates a ``Packages`` file based on the Debian package archive(s) found in
+    the given directory. Uses :py:class:`.PackageCache` to (optionally) speed
+    up the process significantly by caching package metadata and hashes on
+    disk. This explains why this function can be much faster than
+    ``dpkg-scanpackages -m``.
+
+    :param repository: The pathname of a directory containing Debian
+                       package archives (a string).
+    :param packages_file: The pathname of the ``Packages`` file to update
+                          (a string). Defaults to the ``Packages`` file in
+                          the given directory.
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
     """
+    # By default the `Packages' file inside the repository is updated.
+    if not packages_file:
+        packages_file = os.path.join(repository, 'Packages')
+    # Update the `Packages' file.
+    timer = Timer()
+    package_archives = glob.glob(os.path.join(repository, '*.deb'))
+    num_packages = len(package_archives)
+    spinner = Spinner(total=num_packages)
+    with open(packages_file, 'wb') as handle:
+        for i, archive in enumerate(package_archives, start=1):
+            fields = dict(inspect_package_fields(archive, cache=cache))
+            fields.update(get_packages_entry(archive, cache=cache))
+            deb822_dict = unparse_control_fields(fields)
+            deb822_dict.dump(handle)
+            handle.write(b'\n')
+            spinner.step(label="Scanning package metadata", progress=i)
+    spinner.clear()
+    logger.debug("Wrote %i entries to output Packages file in %s.", num_packages, timer)
 
-    def __init__(self, repository, packages_file=None):
-        """
-        Update a ``Packages`` file based on the Debian package archives found
-        in the given directory. Raises :py:exc:`deb_pkg_tools.utils.ResourceLockedException`
-        when another process is currently using the package cache.
+def get_packages_entry(pathname, cache=None):
+    """
+    Get a dictionary with the control fields required in a ``Packages`` file.
 
-        :param repository: The pathname of a directory containing Debian
-                           package archives (a string).
-        :param packages_file: The pathname of the ``Packages`` file to update
-                              (a string). Defaults to the ``Packages`` file in
-                              the given directory.
-        """
-        with atomic_lock(config.package_cache_file):
-            # Initialize internal state.
-            self.load_cache()
-            # By default the `Packages' file inside the repository is updated.
-            if not packages_file:
-                packages_file = os.path.join(repository, 'Packages')
-            # Update the `Packages' file.
-            num_packages = 0
-            timer = Timer()
-            spinner = Spinner("Scanning package metadata ..")
-            with open(packages_file, 'wb') as handle:
-                for archive in find_package_archives(repository):
-                    fields = self.find_in_cache(archive.filename)
-                    unparse_control_fields(fields).dump(handle)
-                    handle.write(b'\n')
-                    spinner.step()
-                    num_packages += 1
-            spinner.clear()
-            # Save the updated cache to disk.
-            self.save_cache()
-            logger.debug("Wrote %i entries to output Packages file in %s.", num_packages, timer)
+    :param pathname: The pathname of the package archive (a string).
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :returns: A dictionary with control fields (see below).
 
-    def load_cache(self):
-        """
-        Load the package archive cache from disk.
-        """
-        timer = Timer()
-        try:
-            with open(config.package_cache_file) as handle:
-                self.packages = json.load(handle)
-                logger.debug("Loaded %i cached package(s) from %s in %s.", len(self.packages), format_path(config.package_cache_file), timer)
-        except Exception:
-            logger.debug("Failed to load package cache from disk (probably it wasn't initialized yet).")
-            self.packages = {}
+    Used by :py:func:`.scan_packages()` to generate ``Packages`` files. The
+    format of ``Packages`` files (part of the Debian binary package repository
+    format) is fairly simple:
 
-    def save_cache(self):
-        """
-        Save the package archive cache to disk.
-        """
-        self.collect_garbage()
-        with open(config.package_cache_file, 'w') as handle:
-            logger.debug("Saving %i cached package(s) to %s ..", len(self.packages), format_path(config.package_cache_file))
-            json.dump(self.packages, handle)
+    - All of the fields extracted from a package archive's control file using
+      :py:func:`.inspect_package_fields()` are listed (you have to get these
+      fields yourself and combine the dictionaries returned by
+      :py:func:`.inspect_package_fields()` and
+      :py:func:`.get_packages_entry()`);
 
-    def collect_garbage(self):
-        """
-        Remove cache entries referring to non existing package archives.
-        """
-        garbage = []
-        for filename in self.packages.keys():
-            if not os.path.isfile(filename):
-                garbage.append(filename)
-        for filename in garbage:
-            del self.packages[filename]
+    - The field ``Filename`` contains the filename of the package archive
+      relative to the ``Packages`` file (which is in the same directory in our
+      case, because :py:func:`update_repository()` generates trivial
+      repositories);
 
-    def find_in_cache(self, filename):
-        """
-        Find the ``Packages`` file entry for the given Debian package archive.
+    - The field ``Size`` contains the size of the package archive in bytes;
 
-        :param filename: The pathname of a Debian package archive (a string).
-        :returns: A dictionary of control file and ``Packages`` file fields.
-        """
-        # Normalize the filename so we can use it as a dictionary key.
-        filename = os.path.realpath(filename)
-        # Find the package archive's last modified time.
-        last_modified = os.path.getmtime(filename)
-        # Check if the package archive was previously cached and if so
-        # then make sure the cached data has not been invalidated.
-        metadata = self.packages.get(filename, {})
-        if metadata.get('last-modified') != last_modified:
-            # Get the control file fields.
-            fields = dict(unparse_control_fields(inspect_package_fields(filename)))
-            fields['Version'] = str(fields['Version'])
-            fields['Filename'] = os.path.basename(filename)
-            fields['Size'] = str(os.path.getsize(filename))
-            # Prepare to calculate the MD5, SHA1 and SHA256 hashes of the archive.
-            md5_sum = hashlib.md5()
-            sha1_sum = hashlib.sha1()
-            sha256_sum = hashlib.sha256()
-            # Read the file once in blocks, calculating all hashes at once.
-            with open(filename, 'rb') as handle:
-                for chunk in iter(functools.partial(handle.read, 1024), b''):
-                    md5_sum.update(chunk)
-                    sha1_sum.update(chunk)
-                    sha256_sum.update(chunk)
-            # Store the hashes with the control file fields.
-            fields['MD5sum'] = md5_sum.hexdigest()
-            fields['SHA1'] = sha1_sum.hexdigest()
-            fields['SHA256'] = sha256_sum.hexdigest()
-            # Store the control file fields in the cache.
-            metadata['control-fields'] = fields
-            metadata['last-modified'] = last_modified
-            self.packages[filename] = metadata
-        return metadata['control-fields']
+    - The following fields contain package archive checksums:
 
-def update_repository(directory, release_fields={}, gpg_key=None):
+      ``MD5sum``
+        Calculated using :py:func:`hashlib.md5()`.
+
+      ``SHA1``
+        Calculated using :py:func:`hashlib.sha1()`.
+
+      ``SHA256``
+        Calculated using :py:func:`hashlib.sha256()`.
+
+    The three checksums are calculated simultaneously by reading the package
+    archive once, in blocks of a kilobyte. This is probably why this function
+    seems to be faster than ``dpkg-scanpackages -m`` (even when used without
+    caching).
+    """
+    if cache:
+        return cache[pathname].package_fields
+    # Prepare to calculate the MD5, SHA1 and SHA256 hashes.
+    md5_state = hashlib.md5()
+    sha1_state = hashlib.sha1()
+    sha256_state = hashlib.sha256()
+    # Read the file once, in blocks, calculating all hashes at once.
+    with open(pathname, 'rb') as handle:
+        for chunk in iter(functools.partial(handle.read, 1024), b''):
+            md5_state.update(chunk)
+            sha1_state.update(chunk)
+            sha256_state.update(chunk)
+    # Convert the hashes to hexadecimal strings and return the required fields
+    # in a dictionary.
+    return dict(Filename=os.path.basename(pathname),
+                Size=str(os.path.getsize(pathname)),
+                MD5sum=md5_state.hexdigest(),
+                SHA1=sha1_state.hexdigest(),
+                SHA256=sha256_state.hexdigest())
+
+def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
     """
     Create or update a `trivial repository`_ using the Debian commands
     ``dpkg-scanpackages`` (reimplemented as :py:class:`scan_packages()`) and
-    ``apt-ftparchive`` (also uses the external programs ``gpg`` and
-    ``gzip``).  Raises :py:exc:`deb_pkg_tools.utils.ResourceLockedException`
-    when the given repository directory is being updated by another process.
+    ``apt-ftparchive`` (also uses the external programs ``gpg`` and ``gzip``).
+    Raises :py:exc:`.ResourceLockedException` when the given repository
+    directory is being updated by another process.
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param release_fields: An optional dictionary with fields to set inside the
                            ``Release`` file.
-    :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
-                    sign the repository. Defaults to the result of
-                    :py:func:`select_gpg_key()`.
+    :param gpg_key: The :py:class:`.GPGKey` object used to sign the repository.
+                    Defaults to the result of :py:func:`select_gpg_key()`.
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
     """
     with atomic_lock(directory):
         timer = Timer()
@@ -238,7 +213,8 @@ def update_repository(directory, release_fields={}, gpg_key=None):
             # Generate the `Packages' file.
             logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages')))
             scan_packages(repository=directory,
-                          packages_file=os.path.join(temporary_directory, 'Packages'))
+                          packages_file=os.path.join(temporary_directory, 'Packages'),
+                          cache=cache)
             # Generate the `Packages.gz' file by compressing the `Packages' file.
             logger.debug("Generating file: %s", format_path(os.path.join(directory, 'Packages.gz')))
             execute("gzip < Packages > Packages.gz", directory=temporary_directory, logger=logger)
@@ -289,9 +265,8 @@ def activate_repository(directory, gpg_key=None):
     scheme to point ``apt-get`` to a directory on the local file system).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
-    :param gpg_key: The :py:class:`deb_pkg_tools.gpg.GPGKey` object used to
-                    sign the repository. Defaults to the result of
-                    :py:func:`select_gpg_key()`.
+    :param gpg_key: The :py:class:`.GPGKey` object used to sign the repository.
+                    Defaults to the result of :py:func:`select_gpg_key()`.
 
     .. warning:: This function requires ``root`` privileges to:
 
@@ -354,7 +329,7 @@ def deactivate_repository(directory):
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=True, logger=logger)
 
-def with_repository(directory, *command):
+def with_repository(directory, *command, **kw):
     """
     Create/update a trivial package repository, activate the repository, run an
     external command (usually ``apt-get install``) and finally deactivate the
@@ -365,8 +340,10 @@ def with_repository(directory, *command):
                       (a string).
     :param command: The command to execute (a tuple of strings, passed verbatim
                     to :py:func:`executor.execute()`).
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
     """
-    update_repository(directory)
+    update_repository(directory=directory,
+                      cache=kw.get('cache'))
     activate_repository(directory)
     try:
         execute(*command, logger=logger)
@@ -441,7 +418,7 @@ def select_gpg_key(directory):
 
     :param directory: The pathname of the directory that contains the package
                       repository to sign.
-    :returns: A :py:class:`deb_pkg_tools.gpg.GPGKey` object or ``None``.
+    :returns: A :py:class:`.GPGKey` object or ``None``.
     """
     # Check if the user has configured one or more GPG keys.
     options = load_config(directory)

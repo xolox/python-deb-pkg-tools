@@ -1,7 +1,7 @@
 # Debian packaging tools: Configuration defaults.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 1, 2014
+# Last Change: June 9, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -24,10 +24,10 @@ Configuration defaults
 
 .. data:: package_cache_file
 
-   The pathname of the file containing the package cache used by
-   :py:class:`deb_pkg_tools.repo.scan_packages()`.
+   The pathname of the SQLite 3.x database containing the package cache
+   used by :py:class:`.PackageCache()`.
 
-   :default: The expanded value of ``~/.deb-pkg-tools/package-cache.json``.
+   :default: The expanded value of ``~/.deb-pkg-tools/package-cache.sqlite3``.
 
 .. data:: repo_config_file
 
@@ -46,7 +46,7 @@ from deb_pkg_tools.utils import find_home_directory
 
 system_config_directory = '/etc/deb-pkg-tools'
 user_config_directory = os.path.join(find_home_directory(), '.deb-pkg-tools')
-package_cache_file = os.path.join(user_config_directory, 'package-cache.json')
+package_cache_file = os.path.join(user_config_directory, 'package-cache.sqlite3')
 repo_config_file = 'repos.ini'
 
 # vim: ts=4 sw=4 et

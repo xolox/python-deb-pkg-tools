@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 18, 2014
+# Last Change: June 9, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -43,6 +43,7 @@ import coloredlogs
 from humanfriendly import format_path, format_size, pluralize
 
 # Modules included in our package.
+from deb_pkg_tools.cache import get_default_cache
 from deb_pkg_tools.control import patch_control_file
 from deb_pkg_tools.package import (build_package, collect_related_packages,
                                    inspect_package, parse_filename)
@@ -64,6 +65,8 @@ def main():
     actions = []
     control_file = None
     control_fields = {}
+    # Initialize the package cache.
+    cache = get_default_cache()
     # Parse the command line options.
     try:
         options, arguments = getopt.getopt(sys.argv[1:], 'i:c:p:s:b:u:a:d:w:vh', [
@@ -73,9 +76,12 @@ def main():
         ])
         for option, value in options:
             if option in ('-i', '--inspect'):
-                actions.append(functools.partial(show_package_metadata, value))
+                actions.append(functools.partial(show_package_metadata, archive=value))
             elif option in ('-c', '--collect'):
-                actions.append(functools.partial(collect_packages, arguments, check_directory(value)))
+                actions.append(functools.partial(collect_packages,
+                                                 archives=arguments,
+                                                 directory=check_directory(value),
+                                                 cache=cache))
                 arguments = []
             elif option in ('-p', '--patch'):
                 control_file = os.path.abspath(value)
@@ -86,13 +92,18 @@ def main():
             elif option in ('-b', '--build'):
                 actions.append(functools.partial(build_package, check_directory(value)))
             elif option in ('-u', '--update-repo'):
-                actions.append(functools.partial(update_repository, check_directory(value)))
+                actions.append(functools.partial(update_repository,
+                                                 directory=check_directory(value),
+                                                 cache=cache))
             elif option in ('-a', '--activate-repo'):
                 actions.append(functools.partial(activate_repository, check_directory(value)))
             elif option in ('-d', '--deactivate-repo'):
                 actions.append(functools.partial(deactivate_repository, check_directory(value)))
             elif option in ('-w', '--with-repo'):
-                actions.append(functools.partial(with_repository_wrapper, check_directory(value), arguments))
+                actions.append(functools.partial(with_repository_wrapper,
+                                                 directory=check_directory(value),
+                                                 command=arguments,
+                                                 cache=cache))
             elif option in ('-v', '--verbose'):
                 coloredlogs.increase_verbosity()
             elif option in ('-h', '--help'):
@@ -111,6 +122,7 @@ def main():
         if actions:
             for action in actions:
                 action()
+            cache.collect_garbage()
         else:
             usage()
     except Exception as e:
@@ -137,11 +149,11 @@ def show_package_metadata(archive):
             group=entry.group, size=size, modified=entry.modified,
             pathname=pathname.encode('utf-8')))
 
-def collect_packages(archives, directory):
+def collect_packages(archives, directory, cache):
     related_archives = set()
     for given_filename in archives:
         related_archives.add(parse_filename(given_filename))
-        related_archives.update(collect_related_packages(given_filename))
+        related_archives.update(collect_related_packages(given_filename, cache=cache))
     if related_archives:
         related_archives = sorted(related_archives)
         pluralized = pluralize(len(related_archives), "package archive", "package archives")
@@ -166,6 +178,24 @@ def collect_packages(archives, directory):
                 sys.stderr.write('\n')
             logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
 
+def with_repository_wrapper(directory, command, cache):
+    """
+    Command line wrapper for :py:func:`deb_pkg_tools.repo.with_repository()`.
+
+    :param directory: The pathname of a directory with ``*.deb`` archives (a
+                      string).
+    :param command: The command to execute (a list of strings).
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    """
+    if not command:
+        # Default to the user's shell (seems like a sensible default?)
+        command = [os.environ.get('SHELL', '/bin/bash')]
+    try:
+        with_repository(directory, *command, cache=cache)
+    except Exception:
+        logger.exception("Caught an unhandled exception!")
+        sys.exit(1)
+
 def check_directory(argument):
     """
     Make sure a command line argument points to an existing directory.
@@ -178,23 +208,6 @@ def check_directory(argument):
         msg = "Directory doesn't exist! (%s)"
         raise Exception(msg % directory)
     return directory
-
-def with_repository_wrapper(directory, command):
-    """
-    Command line wrapper for :py:func:`deb_pkg_tools.repo.with_repository()`.
-
-    :param directory: The pathname of a directory with ``*.deb`` archives (a
-                      string).
-    :param command: The command to execute (a list of strings).
-    """
-    if not command:
-        # Default to the user's shell (seems like a sensible default?)
-        command = [os.environ.get('SHELL', '/bin/bash')]
-    try:
-        with_repository(directory, *command)
-    except Exception:
-        logger.exception("Caught an unhandled exception!")
-        sys.exit(1)
 
 def usage():
     """
