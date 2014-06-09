@@ -55,9 +55,11 @@ pygments_style = 'sphinx'
 
 # Refer to the Python standard library.
 # From: http://twistedmatrix.com/trac/ticket/4582.
-intersphinx_mapping = {'python': ('http://docs.python.org', None),
-                       'executor': ('http://executor.readthedocs.org/en/latest', None),
-                       'python-apt': ('http://apt.alioth.debian.org/python-apt-doc', None)}
+intersphinx_mapping = dict(
+    executor=('http://executor.readthedocs.org/en/latest', None),
+    humanfriendly=('http://humanfriendly.readthedocs.org/en/latest', None),
+    python=('http://docs.python.org', None),
+    pythonapt=('http://apt.alioth.debian.org/python-apt-doc', None))
 
 # -- Options for HTML output ---------------------------------------------------
 

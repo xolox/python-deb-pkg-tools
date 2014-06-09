@@ -13,6 +13,9 @@ the `deb-pkg-tools` package.
 .. automodule:: deb_pkg_tools.cache
    :members:
 
+.. automodule:: deb_pkg_tools.checks
+   :members:
+
 .. automodule:: deb_pkg_tools.config
    :members:
 

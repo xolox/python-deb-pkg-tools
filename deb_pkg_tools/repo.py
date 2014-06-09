@@ -55,7 +55,7 @@ from deb_pkg_tools import config
 from deb_pkg_tools.control import unparse_control_fields
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 from deb_pkg_tools.package import find_package_archives, inspect_package_fields
-from deb_pkg_tools.utils import atomic_lock, sha1
+from deb_pkg_tools.utils import atomic_lock, optimize_order, sha1
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -86,7 +86,7 @@ def scan_packages(repository, packages_file=None, cache=None):
     num_packages = len(package_archives)
     spinner = Spinner(total=num_packages)
     with open(packages_file, 'wb') as handle:
-        for i, archive in enumerate(package_archives, start=1):
+        for i, archive in enumerate(optimize_order(package_archives), start=1):
             fields = dict(inspect_package_fields(archive, cache=cache))
             fields.update(get_packages_entry(archive, cache=cache))
             deb822_dict = unparse_control_fields(fields)
