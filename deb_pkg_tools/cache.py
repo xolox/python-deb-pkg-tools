@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 9, 2014
+# Last Change: June 19, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -296,12 +296,14 @@ class CachedPackage(sqlite3.Row):
                   :py:func:`.inspect_package_fields()`.
         """
         if self['control_fields']:
-            return self.cache.decode(self['control_fields'])
-        else:
-            control_fields = inspect_package_fields(self.pathname)
-            update_query = 'update package_cache set control_fields = ? where pathname = ?'
-            self.cache.execute(update_query, self.cache.encode(control_fields), self.pathname)
-            return control_fields
+            try:
+                return self.cache.decode(self['control_fields'])
+            except Exception, e:
+                logger.warning("Failed to load cached control fields of %s! (%s)", self.pathname, e)
+        control_fields = inspect_package_fields(self.pathname)
+        update_query = 'update package_cache set control_fields = ? where pathname = ?'
+        self.cache.execute(update_query, self.cache.encode(control_fields), self.pathname)
+        return control_fields
 
     @cached_property
     def package_fields(self):
@@ -312,12 +314,14 @@ class CachedPackage(sqlite3.Row):
                   :py:func:`.get_packages_entry()`.
         """
         if self['package_fields']:
-            return self.cache.decode(self['package_fields'])
-        else:
-            package_fields = get_packages_entry(self.pathname)
-            update_query = 'update package_cache set package_fields = ? where pathname = ?'
-            self.cache.execute(update_query, self.cache.encode(package_fields), self.pathname)
-            return package_fields
+            try:
+                return self.cache.decode(self['package_fields'])
+            except Exception, e:
+                logger.warning("Failed to load cached package fields of %s! (%s)", self.pathname, e)
+        package_fields = get_packages_entry(self.pathname)
+        update_query = 'update package_cache set package_fields = ? where pathname = ?'
+        self.cache.execute(update_query, self.cache.encode(package_fields), self.pathname)
+        return package_fields
 
     @cached_property
     def contents(self):
@@ -328,11 +332,13 @@ class CachedPackage(sqlite3.Row):
                   by :py:func:`.inspect_package_contents()`.
         """
         if self['contents']:
-            return self.cache.decode(self['contents'])
-        else:
-            contents = inspect_package_contents(self.pathname)
-            update_query = 'update package_cache set contents = ? where pathname = ?'
-            self.cache.execute(update_query, self.cache.encode(contents), self.pathname)
-            return contents
+            try:
+                return self.cache.decode(self['contents'])
+            except Exception, e:
+                logger.warning("Failed to load cached contents of %s! (%s)", self.pathname, e)
+        contents = inspect_package_contents(self.pathname)
+        update_query = 'update package_cache set contents = ? where pathname = ?'
+        self.cache.execute(update_query, self.cache.encode(contents), self.pathname)
+        return contents
 
 # vim: ts=4 sw=4 et
