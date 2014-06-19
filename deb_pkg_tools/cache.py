@@ -298,7 +298,7 @@ class CachedPackage(sqlite3.Row):
         if self['control_fields']:
             try:
                 return self.cache.decode(self['control_fields'])
-            except Exception, e:
+            except Exception as e:
                 logger.warning("Failed to load cached control fields of %s! (%s)", self.pathname, e)
         control_fields = inspect_package_fields(self.pathname)
         update_query = 'update package_cache set control_fields = ? where pathname = ?'
@@ -316,7 +316,7 @@ class CachedPackage(sqlite3.Row):
         if self['package_fields']:
             try:
                 return self.cache.decode(self['package_fields'])
-            except Exception, e:
+            except Exception as e:
                 logger.warning("Failed to load cached package fields of %s! (%s)", self.pathname, e)
         package_fields = get_packages_entry(self.pathname)
         update_query = 'update package_cache set package_fields = ? where pathname = ?'
@@ -334,7 +334,7 @@ class CachedPackage(sqlite3.Row):
         if self['contents']:
             try:
                 return self.cache.decode(self['contents'])
-            except Exception, e:
+            except Exception as e:
                 logger.warning("Failed to load cached contents of %s! (%s)", self.pathname, e)
         contents = inspect_package_contents(self.pathname)
         update_query = 'update package_cache set contents = ? where pathname = ?'
