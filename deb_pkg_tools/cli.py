@@ -64,10 +64,13 @@ def main():
     """
     # Configure logging output.
     coloredlogs.install()
-    # Enable printing of Unicode strings even when our standard output
-    # and/or standard error streams are not connected to a terminal.
-    sys.stdout = codecs.getwriter(OUTPUT_ENCODING)(sys.stdout)
-    sys.stderr = codecs.getwriter(OUTPUT_ENCODING)(sys.stderr)
+    # Enable printing of Unicode strings even when our standard output and/or
+    # standard error streams are not connected to a terminal. This is required
+    # on Python 2.x but will break on Python 3.x which explains the ugly
+    # version check. See also: http://stackoverflow.com/q/4374455/788200.
+    if sys.version_info[0] == 2:
+        sys.stdout = codecs.getwriter(OUTPUT_ENCODING)(sys.stdout)
+        sys.stderr = codecs.getwriter(OUTPUT_ENCODING)(sys.stderr)
     # Command line option defaults.
     actions = []
     control_file = None
