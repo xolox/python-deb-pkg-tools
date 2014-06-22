@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 9, 2014
+# Last Change: June 22, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -31,6 +31,7 @@ Supported options:
 """
 
 # Standard library modules.
+import codecs
 import functools
 import getopt
 import logging
@@ -55,12 +56,18 @@ from deb_pkg_tools.repo import (update_repository,
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
+OUTPUT_ENCODING = 'UTF-8'
+
 def main():
     """
     Command line interface for the ``deb-pkg-tools`` program.
     """
     # Configure logging output.
     coloredlogs.install()
+    # Enable printing of Unicode strings even when our standard output
+    # and/or standard error streams are not connected to a terminal.
+    sys.stdout = codecs.getwriter(OUTPUT_ENCODING)(sys.stdout)
+    sys.stderr = codecs.getwriter(OUTPUT_ENCODING)(sys.stderr)
     # Command line option defaults.
     actions = []
     control_file = None
@@ -144,10 +151,10 @@ def show_package_metadata(archive):
             size = ' ' * (10 - len(size)) + size
         if entry.target:
             pathname += ' -> ' + entry.target
-        print('{permissions} {owner} {group} {size} {modified} {pathname}'.format(
+        print("{permissions} {owner} {group} {size} {modified} {pathname}".format(
             permissions=entry.permissions, owner=entry.owner,
             group=entry.group, size=size, modified=entry.modified,
-            pathname=pathname.encode('utf-8')))
+            pathname=pathname))
 
 def collect_packages(archives, directory, cache):
     related_archives = set()
