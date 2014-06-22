@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 19, 2014
+# Last Change: June 22, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -117,9 +117,9 @@ class PackageCache(object):
                     create table package_cache (
                         pathname text primary key,
                         timestamp real not null,
-                        control_fields text null,
-                        package_fields text null,
-                        contents text null
+                        control_fields blob null,
+                        package_fields blob null,
+                        contents blob null
                     );
                 ''')
             # Enable 8-bit bytestrings so we can store binary data.
@@ -237,7 +237,9 @@ class PackageCache(object):
         :param python_value: Any Python value that can be pickled.
         """
         with self.encode_timer:
-            return zlib.compress(pickle.dumps(python_value, pickle.HIGHEST_PROTOCOL))
+            pickled_data = pickle.dumps(python_value, pickle.HIGHEST_PROTOCOL)
+            compressed_data = zlib.compress(pickled_data)
+            return sqlite3.Binary(compressed_data)
 
     def decode(self, database_value):
         """
