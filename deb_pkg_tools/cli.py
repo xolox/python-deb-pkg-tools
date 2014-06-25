@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 22, 2014
+# Last Change: June 25, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -136,7 +136,10 @@ def main():
         else:
             usage()
     except Exception as e:
-        logger.exception(e)
+        if isinstance(e, KeyboardInterrupt):
+            logger.error("Interrupted by Control-C, aborting!")
+        else:
+            logger.exception("An error occurred!")
         sys.exit(1)
 
 def show_package_metadata(archive):
@@ -187,6 +190,10 @@ def collect_packages(archives, directory, cache):
                 # print one manually so the console output doesn't look funny.
                 sys.stderr.write('\n')
             logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
+            if isinstance(e, KeyboardInterrupt):
+                # Maybe we shouldn't actually swallow Control-C, it can make
+                # for a very unfriendly user experience... :-)
+                raise
 
 def with_repository_wrapper(directory, command, cache):
     """
