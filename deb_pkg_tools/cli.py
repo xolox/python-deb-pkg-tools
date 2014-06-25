@@ -163,22 +163,30 @@ def show_package_metadata(archive):
             pathname=pathname))
 
 def collect_packages(archives, directory, cache):
+    # Find all related packages.
     related_archives = set()
-    for given_filename in archives:
-        related_archives.add(parse_filename(given_filename))
-        related_archives.update(collect_related_packages(given_filename, cache=cache))
-    if related_archives:
-        related_archives = sorted(related_archives)
-        pluralized = pluralize(len(related_archives), "package archive", "package archives")
+    for filename in archives:
+        related_archives.add(parse_filename(filename))
+        related_archives.update(collect_related_packages(filename, cache=cache))
+    # Ignore package archives that are already in the target directory.
+    relevant_archives = set()
+    for archive in related_archives:
+        basename = os.path.basename(archive.filename)
+        if not os.path.isfile(os.path.join(directory, basename)):
+            relevant_archives.add(archive)
+    # Interactively move the package archives.
+    if relevant_archives:
+        relevant_archives = sorted(relevant_archives)
+        pluralized = pluralize(len(relevant_archives), "package archive", "package archives")
         print("Found %s:" % pluralized)
-        for file_to_collect in related_archives:
+        for file_to_collect in relevant_archives:
             print(" - %s" % format_path(file_to_collect.filename))
         try:
             # Ask permission to copy the file(s).
             prompt = "Copy %s to %s? [Y/n] " % (pluralized, format_path(directory))
             assert raw_input(prompt).lower() in ('', 'y', 'yes')
             # Copy the file(s).
-            for file_to_collect in related_archives:
+            for file_to_collect in relevant_archives:
                 copy_from = file_to_collect.filename
                 copy_to = os.path.join(directory, os.path.basename(copy_from))
                 logger.debug("Copying %s -> %s ..", format_path(copy_from), format_path(copy_to))
