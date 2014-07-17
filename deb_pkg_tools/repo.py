@@ -39,6 +39,7 @@ import pipes
 import re
 import shutil
 import tempfile
+import os
 
 # Python 2/3 compatibility.
 try:
@@ -56,6 +57,8 @@ from deb_pkg_tools.control import unparse_control_fields
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 from deb_pkg_tools.package import find_package_archives, inspect_package_fields
 from deb_pkg_tools.utils import atomic_lock, optimize_order, sha1
+
+_DO_SUDO = bool(int(os.environ('DPT_SUDO', '1')))
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -281,7 +284,7 @@ def activate_repository(directory, gpg_key=None):
     logger.debug("Activating repository: %s", format_path(directory))
     # Generate the `sources.list' file.
     sources_directory = '/etc/apt/sources.list.d'
-    execute('mkdir', '-p', sources_directory, sudo=True, logger=logger)
+    execute('mkdir', '-p', sources_directory, sudo=_DO_SUDO, logger=logger)
     sources_file = os.path.join(sources_directory, '%s.list' % sha1(directory))
     logger.debug("Generating file: %s", sources_file)
     sources_entry = ['deb']
@@ -292,17 +295,17 @@ def activate_repository(directory, gpg_key=None):
     command = "echo {text} > {file}"
     execute(command.format(text=pipes.quote(' '.join(sources_entry)),
                            file=pipes.quote(sources_file)),
-            sudo=True, logger=logger)
+            sudo=_DO_SUDO, logger=logger)
     # Make apt-get accept the repository signing key?
     gpg_key = gpg_key or select_gpg_key(directory)
     if gpg_key:
         logger.info("Installing GPG key for automatic signing ..")
         initialize_gnupg()
         command = '{gpg} --armor --export | apt-key add -'
-        execute(command.format(gpg=gpg_key.gpg_command), sudo=True, logger=logger)
+        execute(command.format(gpg=gpg_key.gpg_command), sudo=_DO_SUDO, logger=logger)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
-    execute("apt-get update", sudo=True, logger=logger)
+    execute("apt-get update", sudo=_DO_SUDO, logger=logger)
 
 def deactivate_repository(directory):
     """
@@ -324,10 +327,10 @@ def deactivate_repository(directory):
     # Remove the `sources.list' file.
     sources_file = os.path.join('/etc/apt/sources.list.d', '%s.list' % sha1(directory))
     logger.debug("Removing file: %s", sources_file)
-    execute('rm', '-f', sources_file, sudo=True, logger=logger)
+    execute('rm', '-f', sources_file, sudo=_DO_SUDO, logger=logger)
     # Update the package list (cleanup).
     logger.debug("Updating package list ..")
-    execute("apt-get update", sudo=True, logger=logger)
+    execute("apt-get update", sudo=_DO_SUDO, logger=logger)
 
 def with_repository(directory, *command, **kw):
     """

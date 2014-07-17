@@ -86,6 +86,24 @@ Debian based systems so you should only need the following to get started::
 
     $ sudo apt-get install dpkg-dev fakeroot lintian
 
+Platform Compatibility
+----------------------
+
+Several things can be tweaked via environment variable if they don't work for
+your system, or for your platform. For example, the the *cp* command doesn't
+have an `-l` parameter and the `root` user-group may not exist in OS X 
+Mavericks 10.9.2 .
+
+The following environment variables can be set to adjust those factors:
+
+- *DPT_ROOT_USER*: The user to use when chowning the artifacts. Defaults to 
+  'root'.
+- *DPT_ROOT_GROUP*: The group to use when chowning the artifacts. Defaults to
+  'root'.
+- *DPT_HARD_LINKS*: Use hard-links to speed up some of the copies. Defaults to
+  to '1'.
+- *DPT_SUDO*: Allow *sudo* during some of the operations. Defaults to '1'.
+
 Contact
 -------
 
