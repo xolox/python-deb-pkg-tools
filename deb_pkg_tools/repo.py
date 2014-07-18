@@ -58,7 +58,7 @@ from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 from deb_pkg_tools.package import find_package_archives, inspect_package_fields
 from deb_pkg_tools.utils import atomic_lock, optimize_order, sha1
 
-_DO_SUDO = bool(int(os.environ('DPT_SUDO', '1')))
+_DO_SUDO = bool(int(os.environ.get('DPT_SUDO', '1')))
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
