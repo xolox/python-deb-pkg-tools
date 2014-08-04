@@ -86,6 +86,32 @@ Debian based systems so you should only need the following to get started::
 
     $ sudo apt-get install dpkg-dev fakeroot lintian
 
+Platform compatibility
+----------------------
+
+Several things can be tweaked via environment variables if they don't work for
+your system or platform. For example on Mac OS X the ``cp`` command doesn't
+have an ``-l`` parameter and the ``root`` user and group may not exist, but
+despite these things it can still be useful to test package builds on Mac OS
+X. The following environment variables can be used to adjust such factors:
+
+==================  ========  ================================================
+Variable            Default   Description
+==================  ========  ================================================
+``DPT_HARD_LINKS``  ``true``  Allow the usage of hard links to speed up file
+                              copies between directories on the same file
+                              system.
+``DPT_ROOT_USER``   ``root``  During package builds the ownership of all
+                              directories and files is reset to this user.
+``DPT_ROOT_GROUP``  ``root``  During package builds the ownership of all
+                              directories and files is reset to this group.
+``DPT_SUDO``        ``true``  Enable the usage of ``sudo`` during operations
+                              that normally require elevated privileges.
+==================  ========  ================================================
+
+Environment variables for boolean options support the strings ``yes``,
+``true``, ``1``, ``no``, ``false`` and ``0`` (case is ignored).
+
 Contact
 -------
 
