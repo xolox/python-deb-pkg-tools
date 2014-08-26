@@ -13,6 +13,13 @@ interface (see below) because they're very convenient to use in shell scripts,
 while other functions are meant to be called directly from Python code. It's
 currently tested on Python 2.6, 2.7 and 3.4.
 
+Please note that `deb-pkg-tools` is quite opinionated about how Debian binary
+packages should be built and it enforces some of these opinions on its users.
+Most of this can be avoided with optional function arguments and/or environment
+variables. If you find something that doesn't work to your liking and you can't
+work around it, feel free to ask for an additional configuration option; I try
+to keep an open mind about the possible use cases of my projects.
+
 Status
 ------
 
@@ -95,19 +102,21 @@ have an ``-l`` parameter and the ``root`` user and group may not exist, but
 despite these things it can still be useful to test package builds on Mac OS
 X. The following environment variables can be used to adjust such factors:
 
-==================  ========  ================================================
-Variable            Default   Description
-==================  ========  ================================================
-``DPT_HARD_LINKS``  ``true``  Allow the usage of hard links to speed up file
-                              copies between directories on the same file
-                              system.
-``DPT_ROOT_USER``   ``root``  During package builds the ownership of all
-                              directories and files is reset to this user.
-``DPT_ROOT_GROUP``  ``root``  During package builds the ownership of all
-                              directories and files is reset to this group.
-``DPT_SUDO``        ``true``  Enable the usage of ``sudo`` during operations
-                              that normally require elevated privileges.
-==================  ========  ================================================
+====================  ========  ================================================
+Variable              Default   Description
+====================  ========  ================================================
+``DPT_HARD_LINKS``    ``true``  Allow the usage of hard links to speed up file
+                                copies between directories on the same file
+                                system.
+``DPT_ROOT_USER``     ``root``  During package builds the ownership of all
+                                directories and files is reset to this user.
+``DPT_ROOT_GROUP``    ``root``  During package builds the ownership of all
+                                directories and files is reset to this group.
+``DPT_SUDO``          ``true``  Enable the usage of ``sudo`` during operations
+                                that normally require elevated privileges.
+``DPT_RESET_SETGID``  ``true``  Reset sticky bit on directories inside package
+                                templates before building.
+====================  ========  ================================================
 
 Environment variables for boolean options support the strings ``yes``,
 ``true``, ``1``, ``no``, ``false`` and ``0`` (case is ignored).
