@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get install --yes rng-tools || true
   - sudo rm -f /dev/random
   - sudo mknod -m 0666 /dev/random c 1 9
-  - echo RNGDOPTIONS="--random-device /dev/urandom --rng-device /dev/urandom" | sudo tee /etc/default/rng-tools
+  - echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
   - sudo /etc/init.d/rng-tools restart
 # Prepare to submit coverage statistics to coveralls.io.
 install:
