@@ -7,9 +7,6 @@ python:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install --yes dpkg-dev fakeroot lintian python-apt
-  - sudo apt-get install --yes rng-tools || true
-  - echo 'HRNGDEVICE=/dev/urandom' | sudo tee /etc/default/rng-tools
-  - sudo /etc/init.d/rng-tools restart || true
 # Prepare to submit coverage statistics to coveralls.io.
 install:
   - pip install coveralls
