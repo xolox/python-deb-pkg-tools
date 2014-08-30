@@ -5,7 +5,7 @@
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Semi-standard module versioning.
-__version__ = '1.25'
+__version__ = '1.26'
 
 debian_package_dependencies = (
     'apt',        # apt-get

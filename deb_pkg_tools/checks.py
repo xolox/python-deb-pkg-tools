@@ -1,7 +1,7 @@
 # Debian packaging tools: Static analysis of package archives.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 9, 2014
+# Last Change: August 30, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -15,9 +15,11 @@ import itertools
 import logging
 
 # External dependencies.
-from deb_pkg_tools.package import inspect_package, parse_filename
-from deb_pkg_tools.utils import optimize_order
-from humanfriendly import pluralize, Spinner
+from humanfriendly import format_path, pluralize, Spinner
+
+# Modules included in our package.
+from deb_pkg_tools.package import collect_related_packages, inspect_package, parse_filename
+from deb_pkg_tools.utils import compact, optimize_order
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -39,6 +41,8 @@ def check_duplicate_files(package_archives, cache=None):
     :raises: :py:class:`exceptions.ValueError` when less than two package
              archives are given (the duplicate check obviously only works if
              there are packages to compare :-).
+    :raises: :py:class:`DuplicateFilesFound` when duplicate files are found
+             within a group of package archives.
     """
     package_archives = list(map(parse_filename, package_archives))
     # Make sure we have something useful to work with.
@@ -109,18 +113,67 @@ def check_duplicate_files(package_archives, cache=None):
         files = pluralize(len(duplicate_files), 'duplicate file', 'duplicate files')
         archives = pluralize(len(archives_involved), 'package archive', 'package archives')
         summary.insert(0, "Found %s in %s!\n" % (files, archives))
-        summary.append("Hint: If the package contents are correct you can resolve these conflicts by\n"
-                       "marking the packages as conflicting. You do this by adding the 'Conflicts' and\n"
-                       "'Provides' fields and setting them to a common value. That should silence this\n"
-                       "message.")
+        summary.append(compact("""
+            Hint: If the package contents are correct you can resolve these
+            conflicts by marking the packages as conflicting. You do this by
+            adding the 'Conflicts' and 'Provides' fields and setting them to a
+            common value. That should silence this message.
+        """))
         delimiter = '%s\n' % ('-' * 79)
         raise DuplicateFilesFound(delimiter.join(summary))
     else:
         logger.info("No conflicting files found in %i package(s).", len(package_archives))
 
-class DuplicateFilesFound(Exception):
+def check_version_conflicts(package_archives, cache=None):
+    """
+    Check for version conflicts in one or more dependency sets.
+
+    For each Debian binary package archive given, find the dependencies of the
+    package and check ik newer versions of dependencies exist in the same
+    repository (directory).
+
+    This analysis can be very slow. To make it faster you can use the
+    :py:class:`.PackageCache`.
+
+    :param package_archives: A list of filenames (strings) of ``*.deb`` files.
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :raises: :py:class:`VersionConflictFound` when one or more version
+             conflicts are found.
+    """
+    summary = []
+    num_package_archives = 0
+    for archive in sorted(map(parse_filename, package_archives)):
+        logger.info("Checking dependencies of %s for version conflicts ..", format_path(archive.filename))
+        for related_archive in collect_related_packages(archive.filename, cache=cache):
+            if related_archive.newer_versions:
+                summary.append(compact("""
+                        The dependency set of {package} includes {dependency}
+                        but newer version(s) of that package also exist and
+                        will take precedence:
+                """, package=format_path(archive.filename),
+                     dependency=format_path(related_archive.filename)))
+                summary.append("\n".join(" - %s" % format_path(a.filename) for a in sorted(related_archive.newer_versions)))
+            num_package_archives += 1
+    if summary:
+        summary.insert(0, "One or more version conflicts found:")
+        raise VersionConflictFound('\n\n'.join(summary))
+    else:
+        logger.info("No version conflicts found in %i package(s).", num_package_archives)
+
+class BrokenPackage(Exception):
+    """
+    Base class for exceptions raised by the checks defined in
+    :py:mod:`deb_pkg_tools.checks`.
+    """
+
+class DuplicateFilesFound(BrokenPackage):
     """
     Raised by :py:func:`check_duplicate_files()` when duplicates are found.
+    """
+
+class VersionConflictFound(BrokenPackage):
+    """
+    Raised by :py:func:`check_version_conflicts()` when version conflicts are found.
     """
 
 # vim: ts=4 sw=4 et
