@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 22, 2014
+# Last Change: August 30, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -224,7 +224,6 @@ class PackageCache(object):
         with self.db_timer:
             tokens = query.split()
             query = ' '.join(tokens)
-            logger.debug("Executing query %r with parameters %r ..", query, params)
             cursor = self.db.execute(query, params)
             if tokens[0] != 'select':
                 self.gc_enabled = True
