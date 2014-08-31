@@ -1,7 +1,7 @@
 # Debian packaging tools: Static analysis of package archives.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 30, 2014
+# Last Change: August 31, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -15,7 +15,7 @@ import itertools
 import logging
 
 # External dependencies.
-from humanfriendly import format_path, pluralize, Spinner
+from humanfriendly import format_path, pluralize, Spinner, Timer
 
 # Modules included in our package.
 from deb_pkg_tools.package import collect_related_packages, inspect_package, parse_filename
@@ -24,7 +24,39 @@ from deb_pkg_tools.utils import compact, optimize_order
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
-def check_duplicate_files(package_archives, cache=None):
+def check_package(archive, cache=None):
+    """
+    Perform static checks on a package's dependency set.
+
+    :param archive: The pathname of an existing ``*.deb`` archive (a string).
+    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :raises: :py:class:`BrokenPackage` when one or more checks failed.
+    """
+    timer = Timer()
+    logger.info("Checking %s ..", format_path(archive))
+    dependency_set = collect_related_packages(archive, cache=cache)
+    failed_checks = []
+    # Check for duplicate files in the dependency set.
+    try:
+        check_duplicate_files(dependency_set, cache=cache)
+    except BrokenPackage as e:
+        failed_checks.append(e)
+    except ValueError:
+        # Silenced.
+        pass
+    # Check for version conflicts in the dependency set.
+    try:
+        check_version_conflicts(dependency_set, cache=cache)
+    except BrokenPackage as e:
+        failed_checks.append(e)
+    if len(failed_checks) == 1:
+        raise failed_checks[0]
+    elif failed_checks:
+        raise BrokenPackage('\n\n'.join(map(str, failed_checks)))
+    else:
+        logger.info("Finished checking in %s, no problems found.", timer)
+
+def check_duplicate_files(dependency_set, cache=None):
     """
     Check a collection of Debian package archives for conflicts.
 
@@ -36,7 +68,7 @@ def check_duplicate_files(package_archives, cache=None):
     pathnames of files installed by packages it can be slow. To make it faster
     you can use the :py:class:`.PackageCache`.
 
-    :param package_archives: A list of filenames (strings) of ``*.deb`` files.
+    :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
     :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
     :raises: :py:class:`exceptions.ValueError` when less than two package
              archives are given (the duplicate check obviously only works if
@@ -44,9 +76,10 @@ def check_duplicate_files(package_archives, cache=None):
     :raises: :py:class:`DuplicateFilesFound` when duplicate files are found
              within a group of package archives.
     """
-    package_archives = list(map(parse_filename, package_archives))
+    timer = Timer()
+    dependency_set = list(map(parse_filename, dependency_set))
     # Make sure we have something useful to work with.
-    num_archives = len(package_archives)
+    num_archives = len(dependency_set)
     if num_archives < 2:
         msg = "To check for duplicate files you need to provide two or more packages archives! (%i given)"
         raise ValueError(msg % num_archives)
@@ -54,8 +87,8 @@ def check_duplicate_files(package_archives, cache=None):
     global_contents = collections.defaultdict(set)
     global_fields = {}
     spinner = Spinner(total=num_archives)
-    logger.info("Scanning %i package archives for duplicate files (this can take a while) ..", num_archives)
-    for i, archive in enumerate(optimize_order(package_archives), start=1):
+    logger.info("Checking for duplicate files in %i package archives ..", num_archives)
+    for i, archive in enumerate(optimize_order(dependency_set), start=1):
         spinner.step(label="Scanning %i package archives" % num_archives, progress=i)
         fields, contents = inspect_package(archive.filename, cache=cache)
         global_fields[archive.filename] = fields
@@ -122,43 +155,41 @@ def check_duplicate_files(package_archives, cache=None):
         delimiter = '%s\n' % ('-' * 79)
         raise DuplicateFilesFound(delimiter.join(summary))
     else:
-        logger.info("No conflicting files found in %i package(s).", len(package_archives))
+        logger.info("No conflicting files found (took %s).", timer)
 
-def check_version_conflicts(package_archives, cache=None):
+def check_version_conflicts(dependency_set, cache=None):
     """
-    Check for version conflicts in one or more dependency sets.
+    Check for version conflicts in a dependency set.
 
-    For each Debian binary package archive given, find the dependencies of the
-    package and check ik newer versions of dependencies exist in the same
-    repository (directory).
-
-    This analysis can be very slow. To make it faster you can use the
+    For each Debian binary package archive given, check if a newer version of
+    the same package exists in the same repository (directory). This analysis
+    can be very slow. To make it faster you can use the
     :py:class:`.PackageCache`.
 
-    :param package_archives: A list of filenames (strings) of ``*.deb`` files.
+    :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
     :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
     :raises: :py:class:`VersionConflictFound` when one or more version
              conflicts are found.
     """
+    timer = Timer()
     summary = []
-    num_package_archives = 0
-    for archive in sorted(map(parse_filename, package_archives)):
-        logger.info("Checking dependencies of %s for version conflicts ..", format_path(archive.filename))
-        for related_archive in collect_related_packages(archive.filename, cache=cache):
-            if related_archive.newer_versions:
-                summary.append(compact("""
-                        The dependency set of {package} includes {dependency}
-                        but newer version(s) of that package also exist and
-                        will take precedence:
-                """, package=format_path(archive.filename),
-                     dependency=format_path(related_archive.filename)))
-                summary.append("\n".join(" - %s" % format_path(a.filename) for a in sorted(related_archive.newer_versions)))
-            num_package_archives += 1
+    dependency_set = list(map(parse_filename, dependency_set))
+    spinner = Spinner(total=len(dependency_set))
+    logger.info("Checking for version conflicts in %i package(s) ..", len(dependency_set))
+    for i, archive in enumerate(dependency_set, start=1):
+        if archive.newer_versions:
+            summary.append(compact("""
+                    Dependency set includes {dependency} but newer version(s)
+                    of that package also exist and will take precedence:
+            """, dependency=format_path(archive.filename)))
+            summary.append("\n".join(" - %s" % format_path(a.filename) for a in sorted(archive.newer_versions)))
+        spinner.step(label="Checking for version conflicts", progress=i)
+    spinner.clear()
     if summary:
         summary.insert(0, "One or more version conflicts found:")
         raise VersionConflictFound('\n\n'.join(summary))
     else:
-        logger.info("No version conflicts found in %i package(s).", num_package_archives)
+        logger.info("No version conflicts found (took %s).", timer)
 
 class BrokenPackage(Exception):
     """

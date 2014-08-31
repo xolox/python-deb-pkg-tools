@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 25, 2014
+# Last Change: August 31, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -13,6 +13,9 @@ Supported options:
   -c, --collect=DIR           copy the package archive(s) given as positional
                               arguments and all packages archives required by
                               the given package archives into a directory
+  -C, --check=FILE            perform static analysis on a package archive and
+                              its dependencies in order to recognize common
+                              errors as soon as possible
   -p, --patch=FILE            patch fields into an existing control file
   -s, --set=LINE              a line to patch into the control file
                               (syntax: "Name: Value")
@@ -26,6 +29,7 @@ Supported options:
                               activate the repository, run the positional
                               arguments as an external command (usually `apt-get
                               install') and finally deactivate the repository
+  -y, --yes                   assume the answer to interactive questions is yes
   -v, --verbose               make more noise
   -h, --help                  show this message and exit
 """
@@ -45,6 +49,7 @@ from humanfriendly import format_path, format_size, pluralize
 
 # Modules included in our package.
 from deb_pkg_tools.cache import get_default_cache
+from deb_pkg_tools.checks import check_package
 from deb_pkg_tools.control import patch_control_file
 from deb_pkg_tools.package import (build_package, collect_related_packages,
                                    inspect_package, parse_filename)
@@ -72,6 +77,7 @@ def main():
         sys.stdout = codecs.getwriter(OUTPUT_ENCODING)(sys.stdout)
         sys.stderr = codecs.getwriter(OUTPUT_ENCODING)(sys.stderr)
     # Command line option defaults.
+    prompt = True
     actions = []
     control_file = None
     control_fields = {}
@@ -79,10 +85,10 @@ def main():
     cache = get_default_cache()
     # Parse the command line options.
     try:
-        options, arguments = getopt.getopt(sys.argv[1:], 'i:c:p:s:b:u:a:d:w:vh', [
-            'inspect=', 'collect=', 'patch=', 'set=', 'build=', 'update-repo=',
-            'activate-repo=', 'deactivate-repo=', 'with-repo=', 'verbose',
-            'help'
+        options, arguments = getopt.getopt(sys.argv[1:], 'i:c:C:p:s:b:u:a:d:w:yvh', [
+            'inspect=', 'collect=', 'check=', 'patch=', 'set=', 'build=',
+            'update-repo=', 'activate-repo=', 'deactivate-repo=', 'with-repo=',
+            'yes', 'verbose', 'help'
         ])
         for option, value in options:
             if option in ('-i', '--inspect'):
@@ -91,8 +97,11 @@ def main():
                 actions.append(functools.partial(collect_packages,
                                                  archives=arguments,
                                                  directory=check_directory(value),
+                                                 prompt=prompt,
                                                  cache=cache))
                 arguments = []
+            elif option in ('-C', '--check'):
+                actions.append(functools.partial(check_package, archive=value, cache=cache))
             elif option in ('-p', '--patch'):
                 control_file = os.path.abspath(value)
                 assert os.path.isfile(control_file), "Control file does not exist!"
@@ -114,6 +123,8 @@ def main():
                                                  directory=check_directory(value),
                                                  command=arguments,
                                                  cache=cache))
+            elif option in ('-y', '--yes'):
+                prompt = False
             elif option in ('-v', '--verbose'):
                 coloredlogs.increase_verbosity()
             elif option in ('-h', '--help'):
@@ -162,7 +173,7 @@ def show_package_metadata(archive):
             group=entry.group, size=size, modified=entry.modified,
             pathname=pathname))
 
-def collect_packages(archives, directory, cache):
+def collect_packages(archives, directory, prompt=True, cache=None):
     # Find all related packages.
     related_archives = set()
     for filename in archives:
@@ -182,9 +193,10 @@ def collect_packages(archives, directory, cache):
         for file_to_collect in relevant_archives:
             print(" - %s" % format_path(file_to_collect.filename))
         try:
-            # Ask permission to copy the file(s).
-            prompt = "Copy %s to %s? [Y/n] " % (pluralized, format_path(directory))
-            assert raw_input(prompt).lower() in ('', 'y', 'yes')
+            if prompt:
+                # Ask permission to copy the file(s).
+                prompt = "Copy %s to %s? [Y/n] " % (pluralized, format_path(directory))
+                assert raw_input(prompt).lower() in ('', 'y', 'yes')
             # Copy the file(s).
             for file_to_collect in relevant_archives:
                 copy_from = file_to_collect.filename
