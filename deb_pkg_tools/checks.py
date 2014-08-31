@@ -34,7 +34,7 @@ def check_package(archive, cache=None):
     """
     timer = Timer()
     logger.info("Checking %s ..", format_path(archive))
-    dependency_set = list(collect_related_packages(archive, cache=cache))
+    dependency_set = collect_related_packages(archive, cache=cache)
     failed_checks = []
     # Check for duplicate files in the dependency set.
     try:
