@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 30, 2014
+# Last Change: August 31, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -123,7 +123,10 @@ class PackageCache(object):
                     );
                 ''')
             # Enable 8-bit bytestrings so we can store binary data.
-            self.db.text_factory = str
+            try:
+                self.db.text_factory = bytes
+            except NameError:
+                self.db.text_factory = str
             # Use a custom row factory to implement lazy evaluation.
             self.db.row_factory = functools.partial(CachedPackage, cache=self)
 
