@@ -226,7 +226,7 @@ class EntropyGenerator(object):
     """
 
     def __init__(self):
-        self.enabled = coerce_boolean(os.environ.get('DPT_FORCE_ENTROPY', 'no'))
+        self.enabled = coerce_boolean(os.environ.get('DPT_FORCE_ENTROPY', 'false'))
         if self.enabled:
             self.process = multiprocessing.Process(target=generate_entropy)
 
