@@ -102,24 +102,40 @@ have an ``-l`` parameter and the ``root`` user and group may not exist, but
 despite these things it can still be useful to test package builds on Mac OS
 X. The following environment variables can be used to adjust such factors:
 
-====================  ========  ================================================
-Variable              Default   Description
-====================  ========  ================================================
-``DPT_HARD_LINKS``    ``true``  Allow the usage of hard links to speed up file
-                                copies between directories on the same file
-                                system.
-``DPT_ROOT_USER``     ``root``  During package builds the ownership of all
-                                directories and files is reset to this user.
-``DPT_ROOT_GROUP``    ``root``  During package builds the ownership of all
-                                directories and files is reset to this group.
-``DPT_SUDO``          ``true``  Enable the usage of ``sudo`` during operations
-                                that normally require elevated privileges.
-``DPT_RESET_SETGID``  ``true``  Reset sticky bit on directories inside package
-                                templates before building.
-====================  ========  ================================================
+==============================  =============  ================================
+Variable                        Default        Description
+==============================  =============  ================================
+``DPT_HARD_LINKS``              ``true``       Allow the usage of hard links to 
+                                               speed up file copies between 
+                                               directories on the same file 
+                                               system.
+``DPT_ROOT_USER``               ``root``       During package builds the 
+                                               ownership of all directories and 
+                                               files is reset to this user.
+``DPT_ROOT_GROUP``              ``root``       During package builds the 
+                                               ownership of all directories and 
+                                               files is reset to this group.
+``DPT_SUDO``                    ``true``       Enable the usage of ``sudo`` 
+                                               during operations that normally 
+                                               require elevated privileges.
+``DPT_RESET_SETGID``            ``true``       Reset sticky bit on directories 
+                                               inside package templates before 
+                                               building.
+``SHELL``                       ``/bin/bash``  Shell to use
+``DPT_FORCE_ENTROPY``           ``no``         Force the system to generate 
+                                               entropy based on disk I/O.
+``DPT_ALLOW_FAKEROOT_OR_SUDO``  ``true``       Run commands using either 
+                                               fakeroot or sudo (depending on 
+                                               which is available).
+``DPT_CHOWN_FILES``             ``true``       Whether to *chown* package-
+                                               files.
+==============================  =============  ================================
 
 Environment variables for boolean options support the strings ``yes``,
 ``true``, ``1``, ``no``, ``false`` and ``0`` (case is ignored).
+
+To disable any use of *sudo*, disable `DPT_ALLOW_FAKEROOT_OR_SUDO`, 
+`DPT_CHOWN_FILES`, `DPT_RESET_SETGID`, and `DPT_SUDO`.
 
 Contact
 -------
