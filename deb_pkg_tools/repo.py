@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 4, 2014
+# Last Change: October 19, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -60,7 +60,7 @@ from deb_pkg_tools.utils import atomic_lock, coerce_boolean, optimize_order, sha
 
 # Enable power users to disable the use of `sudo' (because it
 # may not be available in non-Debian build environments).
-SUDO_ENABLED = coerce_boolean(os.environ.get('DPT_SUDO', 'true'))
+ALLOW_SUDO = coerce_boolean(os.environ.get('DPT_SUDO', 'true'))
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -286,7 +286,7 @@ def activate_repository(directory, gpg_key=None):
     logger.debug("Activating repository: %s", format_path(directory))
     # Generate the `sources.list' file.
     sources_directory = '/etc/apt/sources.list.d'
-    execute('mkdir', '-p', sources_directory, sudo=SUDO_ENABLED, logger=logger)
+    execute('mkdir', '-p', sources_directory, sudo=ALLOW_SUDO, logger=logger)
     sources_file = os.path.join(sources_directory, '%s.list' % sha1(directory))
     logger.debug("Generating file: %s", sources_file)
     sources_entry = ['deb']
@@ -297,17 +297,17 @@ def activate_repository(directory, gpg_key=None):
     command = "echo {text} > {file}"
     execute(command.format(text=pipes.quote(' '.join(sources_entry)),
                            file=pipes.quote(sources_file)),
-            sudo=SUDO_ENABLED, logger=logger)
+            sudo=ALLOW_SUDO, logger=logger)
     # Make apt-get accept the repository signing key?
     gpg_key = gpg_key or select_gpg_key(directory)
     if gpg_key:
         logger.info("Installing GPG key for automatic signing ..")
         initialize_gnupg()
         command = '{gpg} --armor --export | apt-key add -'
-        execute(command.format(gpg=gpg_key.gpg_command), sudo=SUDO_ENABLED, logger=logger)
+        execute(command.format(gpg=gpg_key.gpg_command), sudo=ALLOW_SUDO, logger=logger)
     # Update the package list (make sure it works).
     logger.debug("Updating package list ..")
-    execute("apt-get update", sudo=SUDO_ENABLED, logger=logger)
+    execute("apt-get update", sudo=ALLOW_SUDO, logger=logger)
 
 def deactivate_repository(directory):
     """
@@ -329,10 +329,10 @@ def deactivate_repository(directory):
     # Remove the `sources.list' file.
     sources_file = os.path.join('/etc/apt/sources.list.d', '%s.list' % sha1(directory))
     logger.debug("Removing file: %s", sources_file)
-    execute('rm', '-f', sources_file, sudo=SUDO_ENABLED, logger=logger)
+    execute('rm', '-f', sources_file, sudo=ALLOW_SUDO, logger=logger)
     # Update the package list (cleanup).
     logger.debug("Updating package list ..")
-    execute("apt-get update", sudo=SUDO_ENABLED, logger=logger)
+    execute("apt-get update", sudo=ALLOW_SUDO, logger=logger)
 
 def with_repository(directory, *command, **kw):
     """

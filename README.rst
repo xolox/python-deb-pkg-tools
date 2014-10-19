@@ -20,6 +20,8 @@ variables. If you find something that doesn't work to your liking and you can't
 work around it, feel free to ask for an additional configuration option; I try
 to keep an open mind about the possible use cases of my projects.
 
+.. contents::
+
 Status
 ------
 
@@ -102,24 +104,51 @@ have an ``-l`` parameter and the ``root`` user and group may not exist, but
 despite these things it can still be useful to test package builds on Mac OS
 X. The following environment variables can be used to adjust such factors:
 
-====================  ========  ================================================
-Variable              Default   Description
-====================  ========  ================================================
-``DPT_HARD_LINKS``    ``true``  Allow the usage of hard links to speed up file
-                                copies between directories on the same file
-                                system.
-``DPT_ROOT_USER``     ``root``  During package builds the ownership of all
-                                directories and files is reset to this user.
-``DPT_ROOT_GROUP``    ``root``  During package builds the ownership of all
-                                directories and files is reset to this group.
-``DPT_SUDO``          ``true``  Enable the usage of ``sudo`` during operations
-                                that normally require elevated privileges.
-``DPT_RESET_SETGID``  ``true``  Reset sticky bit on directories inside package
-                                templates before building.
-====================  ========  ================================================
+==============================  =============  ================================
+Variable                        Default        Description
+==============================  =============  ================================
+``DPT_CHOWN_FILES``             ``true``       Normalize ownership of files
+                                               during packaging.
+``DPT_ROOT_USER``               ``root``       During package builds the
+                                               ownership of all directories and
+                                               files is reset to this user.
+``DPT_ROOT_GROUP``              ``root``       During package builds the
+                                               ownership of all directories and
+                                               files is reset to this group.
+``DPT_RESET_SETGID``            ``true``       Reset sticky bit on directories
+                                               inside package templates before
+                                               building.
+``DPT_ALLOW_FAKEROOT_OR_SUDO``  ``true``       Run commands using either
+                                               fakeroot or sudo (depending on
+                                               which is available).
+``DPT_SUDO``                    ``true``       Enable the usage of ``sudo``
+                                               during operations that normally
+                                               require elevated privileges.
+``DPT_HARD_LINKS``              ``true``       Allow the usage of hard links to
+                                               speed up file copies between
+                                               directories on the same file
+                                               system.
+``DPT_FORCE_ENTROPY``           ``false``      Force the system to generate
+                                               entropy based on disk I/O.
+``SHELL``                       ``/bin/bash``  Shell to use for the
+                                               ``deb-pkg-tools --with-repo``
+                                               command.
+==============================  =============  ================================
 
 Environment variables for boolean options support the strings ``yes``,
 ``true``, ``1``, ``no``, ``false`` and ``0`` (case is ignored).
+
+Disabling sudo usage
+~~~~~~~~~~~~~~~~~~~~
+
+To disable any use of ``sudo`` you can use the following:
+
+.. code-block:: bash
+
+   export DPT_ALLOW_FAKEROOT_OR_SUDO=false
+   export DPT_CHOWN_FILES=false
+   export DPT_RESET_SETGID=false
+   export DPT_SUDO=false
 
 Contact
 -------
