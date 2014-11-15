@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 19, 2014
+# Last Change: November 15, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -49,14 +49,14 @@ except ImportError:
 
 # External dependencies.
 from executor import execute, ExternalCommandFailed
-from humanfriendly import concatenate, format_path, Spinner, Timer
+from humanfriendly import coerce_boolean, concatenate, format_path, Spinner, Timer
 
 # Modules included in our package.
 from deb_pkg_tools import config
 from deb_pkg_tools.control import unparse_control_fields
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 from deb_pkg_tools.package import find_package_archives, inspect_package_fields
-from deb_pkg_tools.utils import atomic_lock, coerce_boolean, optimize_order, sha1
+from deb_pkg_tools.utils import atomic_lock, optimize_order, sha1
 
 # Enable power users to disable the use of `sudo' (because it
 # may not be available in non-Debian build environments).
