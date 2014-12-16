@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 31, 2014
+# Last Change: December 16, 2014
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -35,7 +35,6 @@ use case if you're using `deb-pkg-tools` seriously).
 """
 
 # Standard library modules.
-import functools
 import logging
 import os
 import sqlite3
@@ -127,8 +126,19 @@ class PackageCache(object):
                 self.db.text_factory = bytes
             except NameError:
                 self.db.text_factory = str
-            # Use a custom row factory to implement lazy evaluation.
-            self.db.row_factory = functools.partial(CachedPackage, cache=self)
+            # Use a custom row factory to implement lazy evaluation. Previously
+            # this used functools.partial() to inject self (a PackageCache
+            # object) into the CachedPackage constructor, however as of Python
+            # 3.4.2 this causes the following error to be raised:
+            #
+            #   TypeError: Row() does not take keyword arguments
+            #   https://travis-ci.org/xolox/python-deb-pkg-tools/jobs/44186883#L746
+            #
+            # Looks like this was caused by the changes referenced in
+            # http://bugs.python.org/issue21975.
+            class CachedPackagePartial(CachedPackage):
+                cache = self
+            self.db.row_factory = CachedPackagePartial
 
     def upgrade_schema(self, version, script):
         """
@@ -269,10 +279,6 @@ class CachedPackage(sqlite3.Row):
     - :py:attr:`contents`
     """
 
-    def __init__(self, *args, **kw):
-        self.cache = kw.pop('cache')
-        super(CachedPackage, self).__init__(*args, **kw)
-
     @cached_property
     def pathname(self):
         """
@@ -280,7 +286,7 @@ class CachedPackage(sqlite3.Row):
 
         :returns: The pathname (a string).
         """
-        return self['pathname'].decode(self.cache.character_encoding)
+        return str(self['pathname']).decode(self.cache.character_encoding)
 
     @property
     def timestamp(self):
