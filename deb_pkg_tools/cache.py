@@ -286,7 +286,7 @@ class CachedPackage(sqlite3.Row):
 
         :returns: The pathname (a string).
         """
-        return str(self['pathname']).decode(self.cache.character_encoding)
+        return self['pathname'].decode(self.cache.character_encoding)
 
     @property
     def timestamp(self):
