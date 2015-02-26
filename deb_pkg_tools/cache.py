@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: December 16, 2014
+# Last Change: February 26, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -35,6 +35,7 @@ use case if you're using `deb-pkg-tools` seriously).
 """
 
 # Standard library modules.
+import codecs
 import logging
 import os
 import sqlite3
@@ -123,8 +124,10 @@ class PackageCache(object):
                 ''')
             # Enable 8-bit bytestrings so we can store binary data.
             try:
+                # Python 3.x.
                 self.db.text_factory = bytes
             except NameError:
+                # Python 2.x.
                 self.db.text_factory = str
             # Use a custom row factory to implement lazy evaluation. Previously
             # this used functools.partial() to inject self (a PackageCache
@@ -286,7 +289,11 @@ class CachedPackage(sqlite3.Row):
 
         :returns: The pathname (a string).
         """
-        return str(self['pathname']).decode(self.cache.character_encoding)
+        # Due to our use of text_factory, self['pathname'] is a buffer object in
+        # Python 2.x and a bytes object in Python 3.x. The buffer object will
+        # not have a decode() method so we use codecs.decode() as a `universal
+        # method' avoiding a dedicated code path for Python 2.x vs 3.x.
+        return codecs.decode(self['pathname'], self.cache.character_encoding)
 
     @property
     def timestamp(self):
