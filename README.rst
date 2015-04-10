@@ -82,7 +82,7 @@ Program                Package
 ``apt-get``            ``apt``
 ``cp``                 ``coreutils``
 ``dpkg-deb``           ``dpkg``
-``dpkg-scanpackages``  ``dpkg-dev``
+``dpkg-architecture``  ``dpkg-dev``
 ``du``                 ``coreutils``
 ``fakeroot``           ``fakeroot``
 ``gpg``                ``gnupg``
