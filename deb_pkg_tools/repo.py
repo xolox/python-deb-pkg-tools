@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 15, 2014
+# Last Change: April 10, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -56,7 +56,8 @@ from deb_pkg_tools import config
 from deb_pkg_tools.control import unparse_control_fields
 from deb_pkg_tools.gpg import GPGKey, initialize_gnupg
 from deb_pkg_tools.package import find_package_archives, inspect_package_fields
-from deb_pkg_tools.utils import atomic_lock, optimize_order, sha1
+from deb_pkg_tools.utils import atomic_lock, find_installed_version, optimize_order, sha1
+from deb_pkg_tools.version import Version
 
 # Enable power users to disable the use of `sudo' (because it
 # may not be available in non-Debian build environments).
@@ -377,12 +378,9 @@ def apt_supports_trusted_option():
     if trusted_option_supported is None:
         try:
             # Find the installed version of the `apt' package.
-            version = execute('dpkg-query','--show', '--showformat=${Version}', 'apt', capture=True)
+            apt_version = Version(find_installed_version('apt'))
             # Check if the version is >= 0.8.16 (which includes [trusted=yes] support).
-            execute('dpkg','--compare-versions', version, 'ge', '0.8.16~exp3')
-            # If ExternalCommandFailed  is not raised,
-            # `dpkg --compare-versions' reported succes.
-            trusted_option_supported = True
+            trusted_option_supported = (apt_version >= Version('0.8.16~exp3'))
         except ExternalCommandFailed:
             trusted_option_supported = False
     return trusted_option_supported
