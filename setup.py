@@ -3,9 +3,10 @@
 # Setup script for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 26, 2013
+# Last Change: July 16, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
+import codecs
 import re
 from os.path import abspath, dirname, join
 from setuptools import setup, find_packages
@@ -21,12 +22,13 @@ for line in open(module, 'r'):
         version_string = match.group(1)
         break
 else:
-    raise Exception("Failed to extract version from deb_pkg_tools/__init__.py!")
+    raise Exception("Failed to extract version from %s!" % module)
 
-# Fill in the long description (for the benefit of PyPi)
+# Fill in the long description (for the benefit of PyPI)
 # with the contents of README.rst (rendered by GitHub).
 readme_file = join(source_directory, 'README.rst')
-readme_text = open(readme_file, 'r').read()
+with codecs.open(readme_file, 'r', 'utf-8') as handle:
+    readme_text = handle.read()
 
 # Fill in the "install_requires" field based on requirements.txt.
 requirements = [l.strip() for l in open(join(source_directory, 'requirements.txt'), 'r') if not l.startswith('#')]
