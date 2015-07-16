@@ -1,7 +1,7 @@
 # Makefile for deb-pkg-tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: June 9, 2014
+# Last Change: July 16, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 WORKON_HOME ?= $(HOME)/.virtualenvs
@@ -51,6 +51,10 @@ clean:
 	rm -Rf *.egg *.egg-info .coverage build dist docs/build htmlcov
 	find -depth -type d -name __pycache__ -exec rm -Rf {} \;
 	find -type f -name '*.pyc' -delete
+
+readme:
+	test -x "$(VIRTUAL_ENV)/bin/cog.py" || ($(ACTIVATE) && pip-accel install cogapp)
+	$(ACTIVATE) && cog.py -r README.rst
 
 docs: install
 	test -x "$(VIRTUAL_ENV)/bin/sphinx-build" || ($(ACTIVATE) && pip-accel install sphinx)

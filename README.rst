@@ -39,26 +39,68 @@ You can install the `deb-pkg-tools` package using the following command::
 
     $ pip install deb-pkg-tools
 
-After installation you'll have the ``deb-pkg-tools`` program available::
+After installation you'll have the ``deb-pkg-tools`` program available:
 
-    $ deb-pkg-tools --help
-    Usage: deb-pkg-tools [OPTIONS]
+.. A DRY solution to avoid duplication of the `deb-pkg-tools --help' text:
+..
+.. [[[cog
+.. from humanfriendly.usage import inject_usage
+.. inject_usage('deb_pkg_tools.cli')
+.. ]]]
 
-    Supported options:
+**Usage:** `deb-pkg-tools [OPTIONS] ...`
 
-      -i, --inspect=FILE          inspect the metadata in a *.deb archive
-      -b, --build=DIR             build a Debian package with `dpkg-deb --build'
-      -u, --update-repo=DIR       create/update a trivial package repository
-      -a, --activate-repo=DIR     enable `apt-get' to install packages from a
-                                  trivial repository (requires root/sudo privilege)
-      -d, --deactivate-repo=DIR   cleans up after --activate-repo
-                                  (requires root/sudo privilege)
-      -w, --with-repo=DIR CMD...  create/update a trivial package repository,
-                                  activate the repository, run the positional
-                                  arguments as an external command (usually `apt-get
-                                  install') and finally deactivate the repository
-      -v, --verbose               make more noise
-      -h, --help                  show this message and exit
+Wrapper for the deb-pkg-tools Python project that implements various tools to inspect, build and manipulate Debian binary package archives and related entities like trivial repositories.
+
+**Supported options:**
+
+.. csv-table::
+   :header: Option, Description
+   :widths: 30, 70
+
+
+   "``-i``, ``--inspect=FILE``","Inspect the metadata in the Debian binary package archive given by ``FILE``.
+   "
+   "``-c``, ``--collect=DIR``","Copy the package archive(s) given as positional arguments (and all packages
+   archives required by the given package archives) into the directory given
+   by ``DIR``.
+   "
+   "``-C``, ``--check=FILE``","Perform static analysis on a package archive and its dependencies in order
+   to recognize common errors as soon as possible.
+   "
+   "``-p``, ``--patch=FILE``","Patch fields into the existing control file given by ``FILE``. To be used
+   together with the ``-s``, ``--set`` option.
+   "
+   "``-s``, ``--set=LINE``","A line to patch into the control file (syntax: ""Name: Value""). To be used
+   together with the ``-p``, ``--patch`` option.
+   "
+   "``-b``, ``--build=DIR``","Build a Debian binary package with ""dpkg-deb ``--build``"" (and lots of
+   intermediate Python magic, refer to the API documentation of the project
+   for full details) based on the binary package template in the directory
+   given by ``DIR``.
+   "
+   "``-u``, ``--update-repo=DIR``","Create or update the trivial Debian binary package repository in the
+   directory given by ``DIR``.
+   "
+   "``-a``, ``--activate-repo=DIR``","Enable ""apt-get"" to install packages from the trivial repository (requires
+   root/sudo privilege) in the directory given by ``DIR``. Alternatively you can
+   use the ``-w``, ``--with-repo`` option.
+   "
+   "``-d``, ``--deactivate-repo=DIR``","Cleans up after ``--activate-repo`` (requires root/sudo privilege).
+   Alternatively you can use the ``-w``, ``--with-repo`` option.
+   "
+   "``-w``, ``--with-repo=DIR`` CMD...","Create or update a trivial package repository, activate the repository, run
+   the positional arguments as an external command (usually ""apt-get install"")
+   and finally deactivate the repository.
+   "
+   "``-y``, ``--yes``","Assume the answer to interactive questions is yes.
+   "
+   "``-v``, ``--verbose``","Make more noise! (useful during debugging)
+   "
+   "``-h``, ``--help``","Show this message and exit.
+   "
+
+.. [[[end]]]
 
 One thing to note is that the operation of ``deb-pkg-tools --update-repo`` can
 be influenced by a configuration file. For details about this, please refer to

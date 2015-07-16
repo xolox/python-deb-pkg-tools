@@ -1,37 +1,83 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 31, 2014
+# Last Change: July 16, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
 Usage: deb-pkg-tools [OPTIONS] ...
 
+Wrapper for the deb-pkg-tools Python project that implements various tools to
+inspect, build and manipulate Debian binary package archives and related
+entities like trivial repositories.
+
 Supported options:
 
-  -i, --inspect=FILE          inspect the metadata in a *.deb archive
-  -c, --collect=DIR           copy the package archive(s) given as positional
-                              arguments and all packages archives required by
-                              the given package archives into a directory
-  -C, --check=FILE            perform static analysis on a package archive and
-                              its dependencies in order to recognize common
-                              errors as soon as possible
-  -p, --patch=FILE            patch fields into an existing control file
-  -s, --set=LINE              a line to patch into the control file
-                              (syntax: "Name: Value")
-  -b, --build=DIR             build a Debian package with `dpkg-deb --build'
-  -u, --update-repo=DIR       create/update a trivial package repository
-  -a, --activate-repo=DIR     enable `apt-get' to install packages from a
-                              trivial repository (requires root/sudo privilege)
-  -d, --deactivate-repo=DIR   cleans up after --activate-repo
-                              (requires root/sudo privilege)
-  -w, --with-repo=DIR CMD...  create/update a trivial package repository,
-                              activate the repository, run the positional
-                              arguments as an external command (usually `apt-get
-                              install') and finally deactivate the repository
-  -y, --yes                   assume the answer to interactive questions is yes
-  -v, --verbose               make more noise
-  -h, --help                  show this message and exit
+  -i, --inspect=FILE
+
+    Inspect the metadata in the Debian binary package archive given by FILE.
+
+  -c, --collect=DIR
+
+    Copy the package archive(s) given as positional arguments (and all packages
+    archives required by the given package archives) into the directory given
+    by DIR.
+
+  -C, --check=FILE
+
+    Perform static analysis on a package archive and its dependencies in order
+    to recognize common errors as soon as possible.
+
+  -p, --patch=FILE
+
+    Patch fields into the existing control file given by FILE. To be used
+    together with the -s, --set option.
+
+  -s, --set=LINE
+
+    A line to patch into the control file (syntax: "Name: Value"). To be used
+    together with the -p, --patch option.
+
+  -b, --build=DIR
+
+    Build a Debian binary package with `dpkg-deb --build' (and lots of
+    intermediate Python magic, refer to the API documentation of the project
+    for full details) based on the binary package template in the directory
+    given by DIR.
+
+  -u, --update-repo=DIR
+
+    Create or update the trivial Debian binary package repository in the
+    directory given by DIR.
+
+  -a, --activate-repo=DIR
+
+    Enable `apt-get' to install packages from the trivial repository (requires
+    root/sudo privilege) in the directory given by DIR. Alternatively you can
+    use the -w, --with-repo option.
+
+  -d, --deactivate-repo=DIR
+
+    Cleans up after --activate-repo (requires root/sudo privilege).
+    Alternatively you can use the -w, --with-repo option.
+
+  -w, --with-repo=DIR
+
+    Create or update a trivial package repository, activate the repository, run
+    the positional arguments as an external command (usually `apt-get install')
+    and finally deactivate the repository.
+
+  -y, --yes
+
+    Assume the answer to interactive questions is yes.
+
+  -v, --verbose
+
+    Make more noise! (useful during debugging)
+
+  -h, --help
+
+    Show this message and exit.
 """
 
 # Standard library modules.
