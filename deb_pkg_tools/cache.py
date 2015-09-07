@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 26, 2015
+# Last Change: September 7, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -121,6 +121,13 @@ class PackageCache(object):
                         package_fields blob null,
                         contents blob null
                     );
+                ''')
+                # In deb-pkg-tools 1.32.1 the parsing of the `Pre-Depends'
+                # field was changed. Because of this change data cached by
+                # older versions of deb-pkg-tools cannot be used by newer
+                # versions of deb-pkg-tools.
+                self.upgrade_schema(2, '''
+                    delete from package_cache;
                 ''')
             # Enable 8-bit bytestrings so we can store binary data.
             try:

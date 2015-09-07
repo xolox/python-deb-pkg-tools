@@ -1,11 +1,11 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 16, 2015
+# Last Change: September 7, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 # Semi-standard module versioning.
-__version__ = '1.34'
+__version__ = '1.34.1'
 
 debian_package_dependencies = (
     'apt',        # apt-get
