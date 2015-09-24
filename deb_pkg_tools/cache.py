@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 7, 2015
+# Last Change: September 24, 2015
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -126,9 +126,12 @@ class PackageCache(object):
                 # field was changed. Because of this change data cached by
                 # older versions of deb-pkg-tools cannot be used by newer
                 # versions of deb-pkg-tools.
-                self.upgrade_schema(2, '''
-                    delete from package_cache;
-                ''')
+                self.upgrade_schema(2, 'delete from package_cache;')
+                # In deb-pkg-tools 1.35 the parsing of the `Breaks' field was
+                # changed. Because of this change data cached by older versions
+                # of deb-pkg-tools cannot be used by newer versions of
+                # deb-pkg-tools.
+                self.upgrade_schema(3, 'delete from package_cache;')
             # Enable 8-bit bytestrings so we can store binary data.
             try:
                 # Python 3.x.
