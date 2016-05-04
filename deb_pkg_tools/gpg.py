@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 15, 2014
+# Last Change: May 4, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -31,6 +31,9 @@ from deb_pkg_tools.utils import find_home_directory
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
+
+GPG_AGENT_VARIABLE = 'GPG_AGENT_INFO'
+"""The name of the environment variable used to communicate between the GPG agent and ``gpg`` processes (a string)."""
 
 def initialize_gnupg():
     """
@@ -198,7 +201,24 @@ class GPGKey(object):
                    '--keyring', pipes.quote(self.public_key_file)]
         if self.key_id:
             command.extend(['--recipient', self.key_id])
+        if self.use_agent:
+            command.append('--use-agent')
         return ' '.join(command)
+
+    @property
+    def use_agent(self):
+        """
+        Whether to enable the use of the `GPG agent`_ (a boolean).
+
+        This property checks whether the environment variable given by
+        :data:`GPG_AGENT_VARIABLE` is set to a nonempty value. If it is then
+        :attr:`gpg_command` will include the ``--use-agent`` option. This makes
+        it possible to integrate repository signing with the GPG agent, so that
+        a password is asked for once instead of every time something is signed.
+
+        .. _GPG agent: http://linux.die.net/man/1/gpg-agent
+        """
+        return bool(os.environ.get(GPG_AGENT_VARIABLE))
 
 class EntropyGenerator(object):
 
