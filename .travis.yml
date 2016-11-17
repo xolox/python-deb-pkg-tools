@@ -14,10 +14,12 @@ before_install:
   - sudo mknod -m 0666 /dev/random c 1 9
   - echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
   - sudo /etc/init.d/rng-tools restart
-# Prepare to submit coverage statistics to coveralls.io.
+# Install the Python dependencies and our own package.
 install:
-  - pip install coveralls
-  - python setup.py install
+  - pip install pip-accel
+  - pip-accel install coveralls
+  - pip-accel install --requirement=requirements.txt
+  - LC_ALL=C pip install .
 # Run the test suite as root so that all tests run (even the `dangerous ones').
 script:
   sudo "$VIRTUAL_ENV/bin/coverage" run --source=deb_pkg_tools setup.py test
