@@ -236,20 +236,39 @@ def collect_packages(archives, directory, prompt=True, cache=None):
     if relevant_archives:
         relevant_archives = sorted(relevant_archives)
         pluralized = pluralize(len(relevant_archives), "package archive", "package archives")
-        print("Found %s:" % pluralized)
-        for file_to_collect in relevant_archives:
-            print(" - %s" % format_path(file_to_collect.filename))
-        prompt_text = "Copy %s to %s?" % (pluralized, format_path(directory))
-        if prompt and not prompt_for_confirmation(prompt_text, default=True):
+        prompt_text = ["Found %s:" % pluralized]
+        prompt_text.extend(" - %s" % format_path(file_to_collect.filename)
+                           for file_to_collect in relevant_archives)
+        prompt_text.append("Copy %s to %s?" % (pluralized, format_path(directory)))
+        if prompt and not prompt_for_confirmation("\n".join(prompt_text), default=True):
             logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
         else:
-            # Copy the file(s).
+            # Link or copy the file(s).
             for file_to_collect in relevant_archives:
-                copy_from = file_to_collect.filename
-                copy_to = os.path.join(directory, os.path.basename(copy_from))
-                logger.debug("Copying %s -> %s ..", format_path(copy_from), format_path(copy_to))
-                shutil.copy(copy_from, copy_to)
+                src = file_to_collect.filename
+                dst = os.path.join(directory, os.path.basename(src))
+                smart_copy(src, dst)
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
+
+def smart_copy(src, dst):
+    """
+    Create a hard link to or copy of a file.
+
+    :param src: The pathname of the source file (a string).
+    :param dst: The pathname of the target file (a string).
+
+    This function first tries to create a hard link `dst` pointing to `src` and
+    if that fails it will perform a regular file copy from `src` to `dst`. This
+    is used by :func:`collect_packages()` in an attempt to conserve disk space
+    when copying package archives between repositories on the same filesystem.
+    """
+    try:
+        os.link(src, dst)
+    except Exception:
+        logger.debug("Copying %s -> %s using regular file copy ..", format_path(src), format_path(dst))
+        shutil.copy(src, dst)
+    else:
+        logger.debug("Copied %s -> %s using hard link ..", format_path(src), format_path(dst))
 
 def with_repository_wrapper(directory, command, cache):
     """
