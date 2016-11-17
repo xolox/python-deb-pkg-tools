@@ -23,3 +23,7 @@ script:
 # Submit coverage statistics to coveralls.io after successful runs.
 after_success:
   coveralls
+# Don't test tags.
+branches:
+  except:
+    - /^[0-9]/
