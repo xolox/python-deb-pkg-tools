@@ -91,8 +91,10 @@ import sys
 
 # External dependencies.
 import coloredlogs
-from humanfriendly import format_path, format_size, pluralize
+from humanfriendly import format_path, format_size
+from humanfriendly.text import format, pluralize
 from humanfriendly.prompts import prompt_for_confirmation
+from humanfriendly.terminal import usage, warning
 
 # Modules included in our package.
 from deb_pkg_tools.cache import get_default_cache
@@ -116,13 +118,6 @@ def main():
     """
     # Configure logging output.
     coloredlogs.install()
-    # Enable printing of Unicode strings even when our standard output and/or
-    # standard error streams are not connected to a terminal. This is required
-    # on Python 2.x but will break on Python 3.x which explains the ugly
-    # version check. See also: http://stackoverflow.com/q/4374455/788200.
-    if sys.version_info[0] == 2:
-        sys.stdout = codecs.getwriter(OUTPUT_ENCODING)(sys.stdout)
-        sys.stderr = codecs.getwriter(OUTPUT_ENCODING)(sys.stderr)
     # Command line option defaults.
     prompt = True
     actions = []
@@ -175,15 +170,13 @@ def main():
             elif option in ('-v', '--verbose'):
                 coloredlogs.increase_verbosity()
             elif option in ('-h', '--help'):
-                usage()
+                usage(__doc__)
                 return
         if control_file:
             assert control_fields, "Please specify one or more control file fields to patch!"
             actions.append(functools.partial(patch_control_file, control_file, control_fields))
     except Exception as e:
-        logger.error(e)
-        print
-        usage()
+        warning("Error: %s", e)
         sys.exit(1)
     # Execute the selected action.
     try:
@@ -192,7 +185,7 @@ def main():
                 action()
             cache.collect_garbage()
         else:
-            usage()
+            usage(__doc__)
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
             logger.error("Interrupted by Control-C, aborting!")
@@ -202,23 +195,23 @@ def main():
 
 def show_package_metadata(archive):
     control_fields, contents = inspect_package(archive)
-    print("Package metadata from %s:" % format_path(archive))
+    say("Package metadata from %s:", format_path(archive))
     for field_name in sorted(control_fields.keys()):
         value = control_fields[field_name]
         if field_name == 'Installed-Size':
             value = format_size(int(value) * 1024)
-        print(" - %s: %s" % (field_name, value))
-    print("Package contents from %s:" % format_path(archive))
+        say(" - %s: %s", field_name, value)
+    say("Package contents from %s:", format_path(archive))
     for pathname, entry in sorted(contents.items()):
         size = format_size(entry.size, keep_width=True)
         if len(size) < 10:
             size = ' ' * (10 - len(size)) + size
         if entry.target:
             pathname += ' -> ' + entry.target
-        print("{permissions} {owner} {group} {size} {modified} {pathname}".format(
+        say("{permissions} {owner} {group} {size} {modified} {pathname}",
             permissions=entry.permissions, owner=entry.owner,
             group=entry.group, size=size, modified=entry.modified,
-            pathname=pathname))
+            pathname=pathname)
 
 def collect_packages(archives, directory, prompt=True, cache=None):
     # Find all related packages.
@@ -236,11 +229,11 @@ def collect_packages(archives, directory, prompt=True, cache=None):
     if relevant_archives:
         relevant_archives = sorted(relevant_archives)
         pluralized = pluralize(len(relevant_archives), "package archive", "package archives")
-        prompt_text = ["Found %s:" % pluralized]
-        prompt_text.extend(" - %s" % format_path(file_to_collect.filename)
-                           for file_to_collect in relevant_archives)
-        prompt_text.append("Copy %s to %s?" % (pluralized, format_path(directory)))
-        if prompt and not prompt_for_confirmation("\n".join(prompt_text), default=True):
+        say("Found %s:", pluralized)
+        for file_to_collect in relevant_archives:
+            say(" - %s", format_path(file_to_collect.filename))
+        prompt_text = "Copy %s to %s?" % (pluralized, format_path(directory))
+        if prompt and not prompt_for_confirmation(prompt_text, default=True, padding=False):
             logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
         else:
             # Link or copy the file(s).
@@ -301,10 +294,12 @@ def check_directory(argument):
         raise Exception(msg % directory)
     return directory
 
-def usage():
-    """
-    Print a friendly usage message to the terminal.
-    """
-    print(__doc__.strip())
+def say(text, *args, **kw):
+    """Reliably print Unicode strings to the terminal / standard output stream."""
+    text = format(text, *args, **kw)
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        print(codecs.encode(text, OUTPUT_ENCODING))
 
 # vim: ts=4 sw=4 et
