@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 16, 2015
+# Last Change: November 17, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -92,6 +92,7 @@ import sys
 # External dependencies.
 import coloredlogs
 from humanfriendly import format_path, format_size, pluralize
+from humanfriendly.prompts import prompt_for_confirmation
 
 # Modules included in our package.
 from deb_pkg_tools.cache import get_default_cache
@@ -238,11 +239,10 @@ def collect_packages(archives, directory, prompt=True, cache=None):
         print("Found %s:" % pluralized)
         for file_to_collect in relevant_archives:
             print(" - %s" % format_path(file_to_collect.filename))
-        try:
-            if prompt:
-                # Ask permission to copy the file(s).
-                prompt = "Copy %s to %s? [Y/n] " % (pluralized, format_path(directory))
-                assert raw_input(prompt).lower() in ('', 'y', 'yes')
+        prompt_text = "Copy %s to %s?" % (pluralized, format_path(directory))
+        if prompt and not prompt_for_confirmation(prompt_text, default=True):
+            logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
+        else:
             # Copy the file(s).
             for file_to_collect in relevant_archives:
                 copy_from = file_to_collect.filename
@@ -250,16 +250,6 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                 logger.debug("Copying %s -> %s ..", format_path(copy_from), format_path(copy_to))
                 shutil.copy(copy_from, copy_to)
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
-        except (AssertionError, KeyboardInterrupt, EOFError) as e:
-            if isinstance(e, KeyboardInterrupt):
-                # Control-C interrupts the prompt without emitting a newline. We'll
-                # print one manually so the console output doesn't look funny.
-                sys.stderr.write('\n')
-            logger.warning("Not copying archive(s) to %s! (aborted by user)", format_path(directory))
-            if isinstance(e, KeyboardInterrupt):
-                # Maybe we shouldn't actually swallow Control-C, it can make
-                # for a very unfriendly user experience... :-)
-                raise
 
 def with_repository_wrapper(directory, command, cache):
     """
