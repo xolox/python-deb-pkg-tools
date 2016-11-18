@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 17, 2016
+# Last Change: November 18, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -43,7 +43,8 @@ Supported options:
     Build a Debian binary package with `dpkg-deb --build' (and lots of
     intermediate Python magic, refer to the API documentation of the project
     for full details) based on the binary package template in the directory
-    given by DIR.
+    given by DIR. The resulting archive is located in the system wide
+    temporary directory (usually /tmp).
 
   -u, --update-repo=DIR
 
@@ -88,6 +89,7 @@ import logging
 import os.path
 import shutil
 import sys
+import tempfile
 
 # External dependencies.
 import coloredlogs
@@ -151,7 +153,11 @@ def main():
                 name, _, value = value.partition(':')
                 control_fields[name] = value.strip()
             elif option in ('-b', '--build'):
-                actions.append(functools.partial(build_package, check_directory(value)))
+                actions.append(functools.partial(
+                    build_package,
+                    check_directory(value),
+                    repository=tempfile.gettempdir(),
+                ))
             elif option in ('-u', '--update-repo'):
                 actions.append(functools.partial(update_repository,
                                                  directory=check_directory(value),
