@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 24, 2015
+# Last Change: November 21, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -157,12 +157,12 @@ class PackageCache(object):
         """
         # Get the version of the database schema.
         # http://www.sqlite.org/pragma.html#pragma_schema_version
-        cursor = self.execute('pragma user_version')
+        cursor = self.db.execute('pragma user_version')
         existing_version = cursor.fetchone()[0]
         if existing_version < version:
             logger.debug("Upgrading database schema from %i to %i ..", existing_version, version)
             self.db.executescript(script)
-            self.execute('pragma user_version = %d' % version)
+            self.db.execute('pragma user_version = %d' % version)
 
     def collect_garbage(self, force=False):
         """
