@@ -112,6 +112,13 @@ class PackageCache(object):
             with atomic_lock(self.filename):
                 # Open the SQLite database connection, enable autocommit.
                 self.db = sqlite3.connect(database=self.filename, isolation_level=None)
+                # Try to enable SQLite's Write-Ahead Log (WAL) to increase
+                # concurrency between readers and writers. See also:
+                # https://www.sqlite.org/wal.html#overview
+                logger.debug("Trying to enable SQLite's Write-Ahead Log (WAL) ..")
+                cursor = self.db.execute('pragma journal_mode = WAL')
+                journal_mode = cursor.fetchone()[0].upper()
+                logger.debug("SQLite's journal mode is now %s.", journal_mode)
                 # Initialize the database schema.
                 self.upgrade_schema(1, '''
                     create table package_cache (
