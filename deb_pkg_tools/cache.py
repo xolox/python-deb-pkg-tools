@@ -133,12 +133,7 @@ class PackageCache(object):
                 # deb-pkg-tools.
                 self.upgrade_schema(3, 'delete from package_cache;')
             # Enable 8-bit bytestrings so we can store binary data.
-            try:
-                # Python 3.x.
-                self.db.text_factory = bytes
-            except NameError:
-                # Python 2.x.
-                self.db.text_factory = str
+            self.db.text_factory = bytes
             # Use a custom row factory to implement lazy evaluation. Previously
             # this used functools.partial() to inject self (a PackageCache
             # object) into the CachedPackage constructor, however as of Python
