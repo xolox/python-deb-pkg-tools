@@ -1,9 +1,11 @@
+sudo: required
 language: python
 python:
   - "2.6"
   - "2.7"
   - "3.4"
   - "3.5"
+  - "pypy"
 # Install the dependencies of deb-pkg-tools before running the test suite.
 # For more information about the nasty /dev/random hack, please see:
 # https://github.com/travis-ci/travis-ci/issues/1913#issuecomment-33891474
@@ -19,13 +21,16 @@ install:
   - pip install pip-accel
   - pip-accel install coveralls
   - pip-accel install --requirement=requirements.txt
-  - LC_ALL=C pip install .
+  - pip-accel install --requirement=requirements-checks.txt
+  - pip-accel install --requirement=requirements-tests.txt
+  - LC_ALL=C pip-accel install .
 # Run the test suite as root so that all tests run (even the `dangerous ones').
 script:
-  sudo "$VIRTUAL_ENV/bin/coverage" run --source=deb_pkg_tools setup.py test
+  - make check || true
+  - sudo -E make test
 # Submit coverage statistics to coveralls.io after successful runs.
 after_success:
-  coveralls
+  - coveralls
 # Don't test tags.
 branches:
   except:

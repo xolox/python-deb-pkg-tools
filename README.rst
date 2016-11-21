@@ -11,7 +11,7 @@ The Python package `deb-pkg-tools` is a collection of functions to work with
 Debian packages and repositories. Some of those functions have a command line
 interface (see below) because they're very convenient to use in shell scripts,
 while other functions are meant to be called directly from Python code. It's
-currently tested on Python 2.6, 2.7 and 3.4.
+currently tested on cPython 2.6, 2.7, 3.4 and 3.5 and PyPy (2.7).
 
 Please note that `deb-pkg-tools` is quite opinionated about how Debian binary
 packages should be built and it enforces some of these opinions on its users.
@@ -59,44 +59,33 @@ Wrapper for the deb-pkg-tools Python project that implements various tools to in
    :widths: 30, 70
 
 
-   "``-i``, ``--inspect=FILE``","Inspect the metadata in the Debian binary package archive given by ``FILE``.
-   "
+   "``-i``, ``--inspect=FILE``",Inspect the metadata in the Debian binary package archive given by ``FILE``.
    "``-c``, ``--collect=DIR``","Copy the package archive(s) given as positional arguments (and all packages
    archives required by the given package archives) into the directory given
-   by ``DIR``.
-   "
+   by ``DIR``."
    "``-C``, ``--check=FILE``","Perform static analysis on a package archive and its dependencies in order
-   to recognize common errors as soon as possible.
-   "
+   to recognize common errors as soon as possible."
    "``-p``, ``--patch=FILE``","Patch fields into the existing control file given by ``FILE``. To be used
-   together with the ``-s``, ``--set`` option.
-   "
+   together with the ``-s``, ``--set`` option."
    "``-s``, ``--set=LINE``","A line to patch into the control file (syntax: ""Name: Value""). To be used
-   together with the ``-p``, ``--patch`` option.
-   "
+   together with the ``-p``, ``--patch`` option."
    "``-b``, ``--build=DIR``","Build a Debian binary package with ""dpkg-deb ``--build``"" (and lots of
    intermediate Python magic, refer to the API documentation of the project
    for full details) based on the binary package template in the directory
-   given by ``DIR``.
-   "
+   given by ``DIR``. The resulting archive is located in the system wide
+   temporary directory (usually /tmp)."
    "``-u``, ``--update-repo=DIR``","Create or update the trivial Debian binary package repository in the
-   directory given by ``DIR``.
-   "
+   directory given by ``DIR``."
    "``-a``, ``--activate-repo=DIR``","Enable ""apt-get"" to install packages from the trivial repository (requires
    root/sudo privilege) in the directory given by ``DIR``. Alternatively you can
-   use the ``-w``, ``--with-repo`` option.
-   "
+   use the ``-w``, ``--with-repo`` option."
    "``-d``, ``--deactivate-repo=DIR``","Cleans up after ``--activate-repo`` (requires root/sudo privilege).
-   Alternatively you can use the ``-w``, ``--with-repo`` option.
-   "
-   "``-w``, ``--with-repo=DIR`` CMD...","Create or update a trivial package repository, activate the repository, run
+   Alternatively you can use the ``-w``, ``--with-repo`` option."
+   "``-w``, ``--with-repo=DIR``","Create or update a trivial package repository, activate the repository, run
    the positional arguments as an external command (usually ""apt-get install"")
-   and finally deactivate the repository.
-   "
-   "``-y``, ``--yes``","Assume the answer to interactive questions is yes.
-   "
-   "``-v``, ``--verbose``","Make more noise! (useful during debugging)
-   "
+   and finally deactivate the repository."
+   "``-y``, ``--yes``",Assume the answer to interactive questions is yes.
+   "``-v``, ``--verbose``",Make more noise! (useful during debugging)
    "``-h``, ``--help``","Show this message and exit.
    "
 
@@ -205,7 +194,7 @@ License
 
 This software is licensed under the `MIT license`_.
 
-© 2015 Peter Odding.
+© 2016 Peter Odding.
 
 .. External references:
 .. _deb_pkg_tools.repo.select_gpg_key(): https://deb-pkg-tools.readthedocs.org/en/latest/#deb_pkg_tools.repo.select_gpg_key

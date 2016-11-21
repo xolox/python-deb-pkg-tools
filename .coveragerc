@@ -1,0 +1,8 @@
+# .coveragerc: Configuration file for coverage.py.
+# http://nedbatchelder.com/code/coverage/
+
+[run]
+source = deb_pkg_tools
+omit = deb_pkg_tools/tests.py
+
+# vim: ft=dosini

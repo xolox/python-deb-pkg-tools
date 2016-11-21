@@ -1,17 +1,26 @@
-# -*- coding: utf-8 -*-
+# Debian packaging tools.
 #
-# documentation build configuration file for the 'humanfriendly' package. This
-# file is execfile()d with the current directory set to its containing dir.
+# Author: Peter Odding <peter@peterodding.com>
+# Last Change: November 21, 2016
+# URL: https://github.com/xolox/python-deb-pkg-tools
 
-import sys, os
+"""Sphinx documentation configuration for the `deb-pkg-tools` project."""
 
-# Add the 'deb-pkg-tools' source distribution's root directory to the module path.
+import os
+import sys
+
+# Add the deb-pkg-tools source distribution's root directory to the module path.
 sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
 # Sphinx extension module names.
-extensions = ['sphinx.ext.doctest', 'sphinx.ext.autodoc', 'sphinx.ext.intersphinx']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'humanfriendly.sphinx',
+]
 
 # Paths that contain templates, relative to this directory.
 templates_path = ['templates']
@@ -24,14 +33,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'deb-pkg-tools'
-copyright = u'2013, Peter Odding'
+copyright = u'2016, Peter Odding'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
 # Find the package version and make it the release.
-from deb_pkg_tools import __version__ as deb_pkg_tools_version
+from deb_pkg_tools import __version__ as deb_pkg_tools_version  # NOQA
 
 # The short X.Y version.
 version = '.'.join(deb_pkg_tools_version.split('.')[:2])
@@ -50,32 +59,26 @@ exclude_patterns = ['build']
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
 
+# http://sphinx-doc.org/ext/autodoc.html#confval-autodoc_member_order
+autodoc_member_order = 'bysource'
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
 # Refer to the Python standard library.
 # From: http://twistedmatrix.com/trac/ticket/4582.
 intersphinx_mapping = dict(
-    executor=('http://executor.readthedocs.org/en/latest', None),
-    humanfriendly=('http://humanfriendly.readthedocs.org/en/latest', None),
-    python=('http://docs.python.org', None),
-    pythonapt=('http://apt.alioth.debian.org/python-apt-doc', None))
+    executor=('https://executor.readthedocs.io/en/latest', None),
+    humanfriendly=('https://humanfriendly.readthedocs.io/en/latest', None),
+    python=('https://docs.python.org/2', None),
+    pythonapt=('https://apt.alioth.debian.org/python-apt-doc', None),
+)
 
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['static']
+html_theme = 'classic'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'debpkgtoolsdoc'
-
-def setup(app):
-    # Based on http://stackoverflow.com/a/5599712/788200.
-    app.connect('autodoc-skip-member', (lambda app, what, name, obj, skip, options:
-                                        False if name == '__init__' else skip))
