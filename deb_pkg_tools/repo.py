@@ -8,22 +8,22 @@
 Repository management
 =====================
 
-The functions in the :py:mod:`deb_pkg_tools.repo` module make it possible to
+The functions in the :mod:`deb_pkg_tools.repo` module make it possible to
 transform a directory of ``*.deb`` archives into a (temporary) Debian package
 repository:
 
-- :py:func:`update_repository()` creates/updates a `trivial repository`_
+- :func:`update_repository()` creates/updates a `trivial repository`_
 
-- :py:func:`activate_repository()` enables ``apt-get`` to install packages from
+- :func:`activate_repository()` enables ``apt-get`` to install packages from
   the trivial repository
 
-- :py:func:`deactivate_repository()` cleans up after
-  :py:func:`activate_repository()`
+- :func:`deactivate_repository()` cleans up after
+  :func:`activate_repository()`
 
-All of the functions in this module can raise :py:exc:`executor.ExternalCommandFailed`.
+All of the functions in this module can raise :exc:`executor.ExternalCommandFailed`.
 
 You can configure the GPG key(s) used by this module through a configuration
-file, please refer to the documentation of :py:func:`select_gpg_key()`.
+file, please refer to the documentation of :func:`select_gpg_key()`.
 
 .. _trivial repository: http://www.debian.org/doc/manuals/repository-howto/repository-howto#id443677
 """
@@ -71,7 +71,7 @@ def scan_packages(repository, packages_file=None, cache=None):
     A reimplementation of the ``dpkg-scanpackages -m`` command in Python.
 
     Updates a ``Packages`` file based on the Debian package archive(s) found in
-    the given directory. Uses :py:class:`.PackageCache` to (optionally) speed
+    the given directory. Uses :class:`.PackageCache` to (optionally) speed
     up the process significantly by caching package metadata and hashes on
     disk. This explains why this function can be much faster than
     ``dpkg-scanpackages -m``.
@@ -81,7 +81,7 @@ def scan_packages(repository, packages_file=None, cache=None):
     :param packages_file: The pathname of the ``Packages`` file to update
                           (a string). Defaults to the ``Packages`` file in
                           the given directory.
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
     """
     # By default the `Packages' file inside the repository is updated.
     if not packages_file:
@@ -107,22 +107,22 @@ def get_packages_entry(pathname, cache=None):
     Get a dictionary with the control fields required in a ``Packages`` file.
 
     :param pathname: The pathname of the package archive (a string).
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
     :returns: A dictionary with control fields (see below).
 
-    Used by :py:func:`.scan_packages()` to generate ``Packages`` files. The
+    Used by :func:`.scan_packages()` to generate ``Packages`` files. The
     format of ``Packages`` files (part of the Debian binary package repository
     format) is fairly simple:
 
     - All of the fields extracted from a package archive's control file using
-      :py:func:`.inspect_package_fields()` are listed (you have to get these
+      :func:`.inspect_package_fields()` are listed (you have to get these
       fields yourself and combine the dictionaries returned by
-      :py:func:`.inspect_package_fields()` and
-      :py:func:`.get_packages_entry()`);
+      :func:`.inspect_package_fields()` and
+      :func:`.get_packages_entry()`);
 
     - The field ``Filename`` contains the filename of the package archive
       relative to the ``Packages`` file (which is in the same directory in our
-      case, because :py:func:`update_repository()` generates trivial
+      case, because :func:`update_repository()` generates trivial
       repositories);
 
     - The field ``Size`` contains the size of the package archive in bytes;
@@ -130,13 +130,13 @@ def get_packages_entry(pathname, cache=None):
     - The following fields contain package archive checksums:
 
       ``MD5sum``
-        Calculated using :py:func:`hashlib.md5()`.
+        Calculated using :func:`hashlib.md5()`.
 
       ``SHA1``
-        Calculated using :py:func:`hashlib.sha1()`.
+        Calculated using :func:`hashlib.sha1()`.
 
       ``SHA256``
-        Calculated using :py:func:`hashlib.sha256()`.
+        Calculated using :func:`hashlib.sha256()`.
 
     The three checksums are calculated simultaneously by reading the package
     archive once, in blocks of a kilobyte. This is probably why this function
@@ -166,17 +166,17 @@ def get_packages_entry(pathname, cache=None):
 def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
     """
     Create or update a `trivial repository`_ using the Debian commands
-    ``dpkg-scanpackages`` (reimplemented as :py:class:`scan_packages()`) and
+    ``dpkg-scanpackages`` (reimplemented as :class:`scan_packages()`) and
     ``apt-ftparchive`` (also uses the external programs ``gpg`` and ``gzip``).
-    Raises :py:exc:`.ResourceLockedException` when the given repository
+    Raises :exc:`.ResourceLockedException` when the given repository
     directory is being updated by another process.
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param release_fields: An optional dictionary with fields to set inside the
                            ``Release`` file.
-    :param gpg_key: The :py:class:`.GPGKey` object used to sign the repository.
-                    Defaults to the result of :py:func:`select_gpg_key()`.
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :param gpg_key: The :class:`.GPGKey` object used to sign the repository.
+                    Defaults to the result of :func:`select_gpg_key()`.
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
     """
     with atomic_lock(directory):
         timer = Timer()
@@ -271,8 +271,8 @@ def activate_repository(directory, gpg_key=None):
     scheme to point ``apt-get`` to a directory on the local file system).
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
-    :param gpg_key: The :py:class:`.GPGKey` object used to sign the repository.
-                    Defaults to the result of :py:func:`select_gpg_key()`.
+    :param gpg_key: The :class:`.GPGKey` object used to sign the repository.
+                    Defaults to the result of :func:`select_gpg_key()`.
 
     .. warning:: This function requires ``root`` privileges to:
 
@@ -313,7 +313,7 @@ def activate_repository(directory, gpg_key=None):
 def deactivate_repository(directory):
     """
     Deactivate a trivial Debian package repository that was previously
-    activated using :py:func:`activate_repository()`.
+    activated using :func:`activate_repository()`.
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
 
@@ -340,13 +340,13 @@ def with_repository(directory, *command, **kw):
     Create/update a trivial package repository, activate the repository, run an
     external command (usually ``apt-get install``) and finally deactivate the
     repository again. Also deactivates the repository when the external command
-    fails and :py:exc:`executor.ExternalCommandFailed` is raised.
+    fails and :exc:`executor.ExternalCommandFailed` is raised.
 
     :param directory: The pathname of a directory containing ``*.deb`` archives
                       (a string).
     :param command: The command to execute (a tuple of strings, passed verbatim
-                    to :py:func:`executor.execute()`).
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+                    to :func:`executor.execute()`).
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
     """
     update_repository(directory=directory,
                       cache=kw.get('cache'))
@@ -366,7 +366,7 @@ def apt_supports_trusted_option():
     ``sources.list`` file to disable GPG key checking (see `Debian bug
     #596498`_). This version of apt is included with Ubuntu 12.04 and later,
     but deb-pkg-tools also has to support older versions of apt. The
-    :py:func:`apt_supports_trusted_option()` function checks if the installed
+    :func:`apt_supports_trusted_option()` function checks if the installed
     version of apt supports the ``[trusted=yes]`` option, so that deb-pkg-tools
     can use it when possible.
 
@@ -388,7 +388,7 @@ def apt_supports_trusted_option():
 def select_gpg_key(directory):
     """
     Select a suitable GPG key for repository signing (for use in
-    :py:func:`update_repository()` and :py:func:`activate_repository()`). First
+    :func:`update_repository()` and :func:`activate_repository()`). First
     the following locations are checked for a configuration file:
 
     1. ``~/.deb-pkg-tools/repos.ini``
@@ -421,7 +421,7 @@ def select_gpg_key(directory):
 
     :param directory: The pathname of the directory that contains the package
                       repository to sign.
-    :returns: A :py:class:`.GPGKey` object or ``None``.
+    :returns: A :class:`.GPGKey` object or ``None``.
     """
     # Check if the user has configured one or more GPG keys.
     options = load_config(directory)

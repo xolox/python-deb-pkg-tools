@@ -193,7 +193,7 @@ class GPGKey(object):
     def gpg_command(self):
         """
         The GPG command line that can be used to sign using the key, export the
-        key, etc. The documentation of :py:func:`GPGKey.__init__()` contains
+        key, etc. The documentation of :func:`GPGKey.__init__()` contains
         two examples.
         """
         command = ['gpg', '--no-default-keyring',
@@ -264,7 +264,7 @@ def generate_entropy():
     """
     Force the system to generate entropy based on disk I/O.
 
-    This function is run in a separate process by :py:class:`EntropyGenerator`.
+    This function is run in a separate process by :class:`EntropyGenerator`.
     It scans the complete file system and reads every file it finds in blocks
     of 1 KB. This function never returns; it has to be killed.
     """

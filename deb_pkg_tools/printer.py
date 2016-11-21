@@ -8,13 +8,13 @@
 Custom pretty printer
 =======================
 
-The :py:class:`PrettyPrinter` class in the :py:mod:`deb_pkg_tools.print`
+The :class:`PrettyPrinter` class in the :mod:`deb_pkg_tools.print`
 module can be used to pretty print Python expressions containing
-:py:class:`debian.deb822.Deb822` and/or
-:py:class:`deb_pkg_tools.deps.RelationshipSet` objects.
+:class:`debian.deb822.Deb822` and/or
+:class:`deb_pkg_tools.deps.RelationshipSet` objects.
 
 The custom pretty printer is useful during testing and documenting, for example
-the :py:mod:`doctest` fragments spread throughout the :py:mod:`deb_pkg_tools`
+the :mod:`doctest` fragments spread throughout the :mod:`deb_pkg_tools`
 documentation use the custom pretty printer for human friendly object
 representations.
 """
@@ -32,8 +32,8 @@ class CustomPrettyPrinter(pprint.PrettyPrinter):
 
     """
     Custom pretty printer that can be used to pretty print Python
-    expressions containing :py:class:`debian.deb822.Deb822` and/or
-    :py:class:`deb_pkg_tools.deps.RelationshipSet` objects.
+    expressions containing :class:`debian.deb822.Deb822` and/or
+    :class:`deb_pkg_tools.deps.RelationshipSet` objects.
     """
 
     def _format(self, obj, stream, indent, *args):

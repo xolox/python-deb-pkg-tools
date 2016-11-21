@@ -29,8 +29,8 @@ def check_package(archive, cache=None):
     Perform static checks on a package's dependency set.
 
     :param archive: The pathname of an existing ``*.deb`` archive (a string).
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
-    :raises: :py:class:`BrokenPackage` when one or more checks failed.
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :raises: :class:`BrokenPackage` when one or more checks failed.
     """
     timer = Timer()
     logger.info("Checking %s ..", format_path(archive))
@@ -66,14 +66,14 @@ def check_duplicate_files(dependency_set, cache=None):
 
     Because this analysis involves both the package control file fields and the
     pathnames of files installed by packages it can be slow. To make it faster
-    you can use the :py:class:`.PackageCache`.
+    you can use the :class:`.PackageCache`.
 
     :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
-    :raises: :py:class:`exceptions.ValueError` when less than two package
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :raises: :class:`exceptions.ValueError` when less than two package
              archives are given (the duplicate check obviously only works if
              there are packages to compare :-).
-    :raises: :py:class:`DuplicateFilesFound` when duplicate files are found
+    :raises: :class:`DuplicateFilesFound` when duplicate files are found
              within a group of package archives.
     """
     timer = Timer()
@@ -164,11 +164,11 @@ def check_version_conflicts(dependency_set, cache=None):
     For each Debian binary package archive given, check if a newer version of
     the same package exists in the same repository (directory). This analysis
     can be very slow. To make it faster you can use the
-    :py:class:`.PackageCache`.
+    :class:`.PackageCache`.
 
     :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
-    :raises: :py:class:`VersionConflictFound` when one or more version
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :raises: :class:`VersionConflictFound` when one or more version
              conflicts are found.
     """
     timer = Timer()
@@ -194,17 +194,17 @@ def check_version_conflicts(dependency_set, cache=None):
 class BrokenPackage(Exception):
     """
     Base class for exceptions raised by the checks defined in
-    :py:mod:`deb_pkg_tools.checks`.
+    :mod:`deb_pkg_tools.checks`.
     """
 
 class DuplicateFilesFound(BrokenPackage):
     """
-    Raised by :py:func:`check_duplicate_files()` when duplicates are found.
+    Raised by :func:`check_duplicate_files()` when duplicates are found.
     """
 
 class VersionConflictFound(BrokenPackage):
     """
-    Raised by :py:func:`check_version_conflicts()` when version conflicts are found.
+    Raised by :func:`check_version_conflicts()` when version conflicts are found.
     """
 
 # vim: ts=4 sw=4 et

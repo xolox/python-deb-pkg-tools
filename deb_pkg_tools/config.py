@@ -25,7 +25,7 @@ Configuration defaults
 .. data:: package_cache_file
 
    The pathname of the SQLite 3.x database containing the package cache
-   used by :py:class:`.PackageCache()`.
+   used by :class:`.PackageCache()`.
 
    :default: The expanded value of ``~/.deb-pkg-tools/package-cache.sqlite3``.
 
@@ -33,7 +33,7 @@ Configuration defaults
 
    The base name of the configuration file containing user defined Debian
    package repositories (a string). This configuration file is loaded from
-   :py:data:`system_config_directory` and/or :py:data:`user_config_directory`.
+   :data:`system_config_directory` and/or :data:`user_config_directory`.
 
    :default: The string ``repos.ini``.
 """

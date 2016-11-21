@@ -8,7 +8,7 @@ the `deb-pkg-tools` package.
 
 .. note:: Most of the functions defined by `deb-pkg-tools` depend on external
    programs. If these programs fail unexpectedly (end with a nonzero exit code)
-   :py:exc:`executor.ExternalCommandFailed` is raised.
+   :exc:`executor.ExternalCommandFailed` is raised.
 
 .. automodule:: deb_pkg_tools.cache
    :members:

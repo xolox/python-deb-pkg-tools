@@ -271,12 +271,12 @@ def smart_copy(src, dst):
 
 def with_repository_wrapper(directory, command, cache):
     """
-    Command line wrapper for :py:func:`deb_pkg_tools.repo.with_repository()`.
+    Command line wrapper for :func:`deb_pkg_tools.repo.with_repository()`.
 
     :param directory: The pathname of a directory with ``*.deb`` archives (a
                       string).
     :param command: The command to execute (a list of strings).
-    :param cache: The :py:class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
     """
     if not command:
         # Default to the user's shell (seems like a sensible default?)

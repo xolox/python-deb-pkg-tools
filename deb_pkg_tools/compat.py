@@ -8,7 +8,7 @@
 Compatibility functions
 =======================
 
-The :py:mod:`deb_pkg_tools.compat` module makes it easier to write Python code
+The :mod:`deb_pkg_tools.compat` module makes it easier to write Python code
 that is compatible with Python 2.x and Python 3.x. Think of it as a very
 lightweight six_, except this module implements similar but different shortcuts
 (the ones I need :-).
@@ -42,9 +42,9 @@ def str_compatible(cls):
     """
     Class decorator that makes it easy to implement human readable object
     representations containing Unicode characters that are compatible with both
-    Python 2.x (with its :py:func:`object.__unicode__()` and
-    :py:func:`object.__str__()` methods) and Python 3.x (with its
-    :py:func:`object.__str__()` and :py:func:`object.__bytes__()` methods).
+    Python 2.x (with its :func:`object.__unicode__()` and
+    :func:`object.__str__()` methods) and Python 3.x (with its
+    :func:`object.__str__()` and :func:`object.__bytes__()` methods).
 
     This decorator expects the ``__unicode__()`` method to return a Unicode
     string (i.e. you write Python 2.x compatible code). The missing part will
@@ -60,7 +60,7 @@ def str_compatible(cls):
 def total_ordering(cls):
     """
     Class decorator that fills in missing ordering methods. Copied from
-    :py:func:`functools.total_ordering()` which became available in Python
+    :func:`functools.total_ordering()` which became available in Python
     2.7 (copied to enable compatibility with Python 2.6).
     """
     convert = {
