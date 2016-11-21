@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 10, 2015
+# Last Change: November 21, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -130,13 +130,13 @@ def get_packages_entry(pathname, cache=None):
     - The following fields contain package archive checksums:
 
       ``MD5sum``
-        Calculated using :func:`hashlib.md5()`.
+        Calculated using the ``md5()`` constructor of the :mod:`hashlib` module.
 
       ``SHA1``
-        Calculated using :func:`hashlib.sha1()`.
+        Calculated using the ``sha1()`` constructor of the :mod:`hashlib` module.
 
       ``SHA256``
-        Calculated using :func:`hashlib.sha256()`.
+        Calculated using the ``sha256()`` constructor of the :mod:`hashlib` module.
 
     The three checksums are calculated simultaneously by reading the package
     archive once, in blocks of a kilobyte. This is probably why this function

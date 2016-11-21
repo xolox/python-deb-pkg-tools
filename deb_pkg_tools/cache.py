@@ -208,7 +208,8 @@ class PackageCache(object):
 
         :param pathname: The pathname of a Debian binary package archive (a string).
         :returns: A :class:`CachedPackage` object.
-        :raises: :exc:`KeyError` when the Debian binary package archive doesn't exist.
+        :raises: :exc:`~exceptions.KeyError` when the Debian binary package
+                 archive doesn't exist.
         """
         self.initialize()
         # Make sure the package archive exists on disk.
