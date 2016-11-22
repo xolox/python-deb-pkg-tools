@@ -134,7 +134,7 @@ class CachedPackage(object):
         """
         self.cache = cache
         self.pathname = pathname
-        self.fingerprint = sha1(pathname.encode('UTF-8'))
+        self.fingerprint = sha1(pathname)
 
     @cached_property
     def control_fields(self):
