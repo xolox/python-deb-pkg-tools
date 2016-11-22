@@ -26,7 +26,7 @@ install:
   - LC_ALL=C pip-accel install .
 # Run the test suite as root so that all tests run (even the `dangerous ones').
 script:
-  - make check || true
+  - make check
   - sudo -E make test
 # Submit coverage statistics to coveralls.io after successful runs.
 after_success:

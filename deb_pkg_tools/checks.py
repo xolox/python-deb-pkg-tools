@@ -5,8 +5,12 @@
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
-Static analysis of package archives
-===================================
+Static analysis of Debian binary packages to detect common problems.
+
+The :class:`deb_pkg_tools.checks` module attempts to detect common problems in
+Debian binary package archives using static analysis. Currently there's a check
+that detects duplicate files in dependency sets and a check that detects
+version conflicts in repositories.
 """
 
 # Standard library modules.
@@ -25,13 +29,14 @@ from deb_pkg_tools.utils import optimize_order
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
+
 def check_package(archive, cache=None):
     """
     Perform static checks on a package's dependency set.
 
     :param archive: The pathname of an existing ``*.deb`` archive (a string).
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
-    :raises: :class:`BrokenPackage` when one or more checks failed.
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :raises: :exc:`BrokenPackage` when one or more checks failed.
     """
     timer = Timer()
     logger.info("Checking %s ..", format_path(archive))
@@ -57,25 +62,27 @@ def check_package(archive, cache=None):
     else:
         logger.info("Finished checking in %s, no problems found.", timer)
 
+
 def check_duplicate_files(dependency_set, cache=None):
     """
     Check a collection of Debian package archives for conflicts.
 
-    Looks for duplicate files in unrelated package archives. Ignores groups of
-    packages that have their 'Provides' and 'Replaces' fields set to a common
-    value. Other variants of 'Conflicts' are not supported yet.
-
-    Because this analysis involves both the package control file fields and the
-    pathnames of files installed by packages it can be slow. To make it faster
-    you can use the :class:`.PackageCache`.
-
     :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
-    :raises: :class:`exceptions.ValueError` when less than two package
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :raises: :exc:`exceptions.ValueError` when less than two package
              archives are given (the duplicate check obviously only works if
              there are packages to compare :-).
-    :raises: :class:`DuplicateFilesFound` when duplicate files are found
+    :raises: :exc:`DuplicateFilesFound` when duplicate files are found
              within a group of package archives.
+
+    This check looks for duplicate files in package archives that concern
+    different packages. Ignores groups of packages that have their 'Provides'
+    and 'Replaces' fields set to a common value. Other variants of 'Conflicts'
+    are not supported yet.
+
+    Because this analysis involves both the package control file fields and the
+    pathnames of files installed by packages it can be really slow. To make it
+    faster you can use the :class:`.PackageCache`.
     """
     timer = Timer()
     dependency_set = list(map(parse_filename, dependency_set))
@@ -112,6 +119,7 @@ def check_duplicate_files(dependency_set, cache=None):
         if len(set(package.name for package in packages)) == 1:
             duplicate_files.pop(packages)
             continue
+
         # We check for one common case where it's easy to guarantee that
         # we're not dealing with broken packages: All of the packages have
         # marked each other as conflicting via the combination of the
@@ -126,6 +134,7 @@ def check_duplicate_files(dependency_set, cache=None):
                     return
             if len(package_names) == 1:
                 return list(package_names)[0]
+
         marked_conflicts = find_virtual_name('Conflicts')
         marked_provides = find_virtual_name('Provides')
         if marked_conflicts and marked_conflicts == marked_provides:
@@ -158,19 +167,20 @@ def check_duplicate_files(dependency_set, cache=None):
     else:
         logger.info("No conflicting files found (took %s).", timer)
 
+
 def check_version_conflicts(dependency_set, cache=None):
     """
     Check for version conflicts in a dependency set.
+
+    :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :raises: :exc:`VersionConflictFound` when one or more version
+             conflicts are found.
 
     For each Debian binary package archive given, check if a newer version of
     the same package exists in the same repository (directory). This analysis
     can be very slow. To make it faster you can use the
     :class:`.PackageCache`.
-
-    :param dependency_set: A list of filenames (strings) of ``*.deb`` files.
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
-    :raises: :class:`VersionConflictFound` when one or more version
-             conflicts are found.
     """
     timer = Timer()
     summary = []
@@ -192,20 +202,17 @@ def check_version_conflicts(dependency_set, cache=None):
     else:
         logger.info("No version conflicts found (took %s).", timer)
 
+
 class BrokenPackage(Exception):
-    """
-    Base class for exceptions raised by the checks defined in
-    :mod:`deb_pkg_tools.checks`.
-    """
+
+    """Base class for exceptions raised by the checks defined in :mod:`deb_pkg_tools.checks`."""
+
 
 class DuplicateFilesFound(BrokenPackage):
-    """
-    Raised by :func:`check_duplicate_files()` when duplicates are found.
-    """
+
+    """Raised by :func:`check_duplicate_files()` when duplicates are found."""
+
 
 class VersionConflictFound(BrokenPackage):
-    """
-    Raised by :func:`check_version_conflicts()` when version conflicts are found.
-    """
 
-# vim: ts=4 sw=4 et
+    """Raised by :func:`check_version_conflicts()` when version conflicts are found."""

@@ -1,12 +1,11 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 21, 2016
+# Last Change: November 22, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
-Repository management
-=====================
+Create, update and activate trivial Debian package repositories.
 
 The functions in the :mod:`deb_pkg_tools.repo` module make it possible to
 transform a directory of ``*.deb`` archives into a (temporary) Debian package
@@ -41,15 +40,10 @@ import re
 import shutil
 import tempfile
 
-# Python 2/3 compatibility.
-try:
-    import ConfigParser as configparser
-except ImportError:
-    import configparser
-
 # External dependencies.
 from executor import execute, ExternalCommandFailed
 from humanfriendly import coerce_boolean, concatenate, format_path, Spinner, Timer
+from six.moves import configparser
 
 # Modules included in our package.
 from deb_pkg_tools import config
@@ -66,6 +60,7 @@ ALLOW_SUDO = coerce_boolean(os.environ.get('DPT_SUDO', 'true'))
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
+
 def scan_packages(repository, packages_file=None, cache=None):
     """
     A reimplementation of the ``dpkg-scanpackages -m`` command in Python.
@@ -81,7 +76,7 @@ def scan_packages(repository, packages_file=None, cache=None):
     :param packages_file: The pathname of the ``Packages`` file to update
                           (a string). Defaults to the ``Packages`` file in
                           the given directory.
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
     """
     # By default the `Packages' file inside the repository is updated.
     if not packages_file:
@@ -102,12 +97,13 @@ def scan_packages(repository, packages_file=None, cache=None):
     spinner.clear()
     logger.debug("Wrote %i entries to output Packages file in %s.", num_packages, timer)
 
+
 def get_packages_entry(pathname, cache=None):
     """
     Get a dictionary with the control fields required in a ``Packages`` file.
 
     :param pathname: The pathname of the package archive (a string).
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
     :returns: A dictionary with control fields (see below).
 
     Used by :func:`.scan_packages()` to generate ``Packages`` files. The
@@ -163,20 +159,23 @@ def get_packages_entry(pathname, cache=None):
                 SHA1=sha1_state.hexdigest(),
                 SHA256=sha256_state.hexdigest())
 
+
 def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
     """
-    Create or update a `trivial repository`_ using the Debian commands
-    ``dpkg-scanpackages`` (reimplemented as :class:`scan_packages()`) and
-    ``apt-ftparchive`` (also uses the external programs ``gpg`` and ``gzip``).
-    Raises :exc:`.ResourceLockedException` when the given repository
-    directory is being updated by another process.
+    Create or update a `trivial repository`_.
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param release_fields: An optional dictionary with fields to set inside the
                            ``Release`` file.
     :param gpg_key: The :class:`.GPGKey` object used to sign the repository.
                     Defaults to the result of :func:`select_gpg_key()`.
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :raises: :exc:`.ResourceLockedException` when the given repository
+             directory is being updated by another process.
+
+    This function is based on the Debian commands ``dpkg-scanpackages``
+    (reimplemented as :class:`scan_packages()`) and ``apt-ftparchive`` (also
+    uses the external programs ``gpg`` and ``gzip``).
     """
     with atomic_lock(directory):
         timer = Timer()
@@ -264,15 +263,19 @@ def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
         finally:
             shutil.rmtree(temporary_directory)
 
+
 def activate_repository(directory, gpg_key=None):
     """
-    Set everything up so that a trivial Debian package repository can be used
-    to install packages without a webserver (this uses the ``file://`` URL
-    scheme to point ``apt-get`` to a directory on the local file system).
+    Activate a local trivial repository.
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
     :param gpg_key: The :class:`.GPGKey` object used to sign the repository.
                     Defaults to the result of :func:`select_gpg_key()`.
+
+    This function sets everything up so that a trivial Debian package
+    repository can be used to install packages without a webserver. This uses
+    the ``file://`` URL scheme to point ``apt-get`` to a directory on the local
+    file system.
 
     .. warning:: This function requires ``root`` privileges to:
 
@@ -310,10 +313,10 @@ def activate_repository(directory, gpg_key=None):
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=ALLOW_SUDO, logger=logger)
 
+
 def deactivate_repository(directory):
     """
-    Deactivate a trivial Debian package repository that was previously
-    activated using :func:`activate_repository()`.
+    Deactivate a local repository that was previously activated using :func:`activate_repository()`.
 
     :param directory: The pathname of a directory with ``*.deb`` packages.
 
@@ -335,18 +338,23 @@ def deactivate_repository(directory):
     logger.debug("Updating package list ..")
     execute("apt-get update", sudo=ALLOW_SUDO, logger=logger)
 
+
 def with_repository(directory, *command, **kw):
     """
-    Create/update a trivial package repository, activate the repository, run an
-    external command (usually ``apt-get install``) and finally deactivate the
-    repository again. Also deactivates the repository when the external command
-    fails and :exc:`executor.ExternalCommandFailed` is raised.
+    Execute an external command while a repository is activated.
 
     :param directory: The pathname of a directory containing ``*.deb`` archives
                       (a string).
     :param command: The command to execute (a tuple of strings, passed verbatim
                     to :func:`executor.execute()`).
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :raises: :exc:`executor.ExternalCommandFailed` if any external commands fail.
+
+    This function create or updates a trivial package repository, activates the
+    repository, runs an external command (usually ``apt-get install``) and
+    finally deactivates the repository again. Also deactivates the repository
+    when the external command fails and :exc:`executor.ExternalCommandFailed`
+    is raised.
     """
     update_repository(directory=directory,
                       cache=kw.get('cache'))
@@ -356,12 +364,18 @@ def with_repository(directory, *command, **kw):
     finally:
         deactivate_repository(directory)
 
+
 # Use a global to cache the answer of apt_supports_trusted_option() so we don't
 # execute `dpkg-query --show' and `dpkg --compare-versions' more than once.
 trusted_option_supported = None
 
+
 def apt_supports_trusted_option():
     """
+    Figure out whether apt supports the ``[trusted=yes]`` option.
+
+    :returns: :data:`True` if the option is supported, :data:`False` if it is not.
+
     Since apt version 0.8.16~exp3 the option ``[trusted=yes]`` can be used in a
     ``sources.list`` file to disable GPG key checking (see `Debian bug
     #596498`_). This version of apt is included with Ubuntu 12.04 and later,
@@ -369,8 +383,6 @@ def apt_supports_trusted_option():
     :func:`apt_supports_trusted_option()` function checks if the installed
     version of apt supports the ``[trusted=yes]`` option, so that deb-pkg-tools
     can use it when possible.
-
-    :returns: ``True`` if the option is supported, ``False`` if it is not.
 
     .. _Debian bug #596498: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=596498
     """
@@ -385,11 +397,19 @@ def apt_supports_trusted_option():
             trusted_option_supported = False
     return trusted_option_supported
 
+
 def select_gpg_key(directory):
     """
-    Select a suitable GPG key for repository signing (for use in
-    :func:`update_repository()` and :func:`activate_repository()`). First
-    the following locations are checked for a configuration file:
+    Select a suitable GPG key for repository signing.
+
+    :param directory: The pathname of the directory that contains the package
+                      repository to sign (a string).
+    :returns: A :class:`.GPGKey` object or :data:`None`.
+
+    This function is used by :func:`update_repository()` and
+    :func:`activate_repository()` to select a default GPG key.
+
+    First the following locations are checked for a configuration file:
 
     1. ``~/.deb-pkg-tools/repos.ini``
     2. ``/etc/deb-pkg-tools/repos.ini``
@@ -418,10 +438,6 @@ def select_gpg_key(directory):
     signed then this function falls back to selecting an automatically
     generated signing key. The generated public key and secret key are stored
     in the directory ``~/.deb-pkg-tools``.
-
-    :param directory: The pathname of the directory that contains the package
-                      repository to sign.
-    :returns: A :class:`.GPGKey` object or ``None``.
     """
     # Check if the user has configured one or more GPG keys.
     options = load_config(directory)
@@ -432,12 +448,15 @@ def select_gpg_key(directory):
         # No GPG key was given and no GPG key was configured, however apt
         # supports the [trusted] option so we'll assume the user doesn't care
         # about signing.
-        logger.debug("No GPG key specified but your version of apt doesn't require signing so I'll just skip it :-)")
+        logger.debug("No GPG key specified but your version of apt"
+                     " doesn't require signing so I'll just skip it :-)")
     else:
         # No GPG key was given and no GPG key was configured, but apt doesn't
         # support the [trusted] option so we'll have to sign the repository
         # anyway.
-        logger.debug("No GPG key specified but your version of apt doesn't support the [trusted] option, so I will have to sign the repository anyway ..")
+        logger.debug("No GPG key specified but your version of apt"
+                     " doesn't support the [trusted] option, so I"
+                     " will have to sign the repository anyway ..")
         # XXX About the choice of `user_config_directory' here vs.
         # `system_config_directory': Since we're generating a private
         # key we shouldn't ever store it in a non-secure location.
@@ -446,7 +465,9 @@ def select_gpg_key(directory):
                       secret_key_file=os.path.join(config.user_config_directory, 'automatic-signing-key.sec'),
                       public_key_file=os.path.join(config.user_config_directory, 'automatic-signing-key.pub'))
 
+
 def load_config(repository):
+    """Load repository configuration from a ``repos.ini`` file."""
     repository = os.path.abspath(repository)
     for config_dir in (config.user_config_directory, config.system_config_directory):
         config_file = os.path.join(config_dir, config.repo_config_file)
@@ -463,5 +484,3 @@ def load_config(repository):
                     defaults.update(options)
                     return defaults
     return {}
-
-# vim: ts=4 sw=4 et

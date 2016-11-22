@@ -1,67 +1,47 @@
 # Debian packaging tools: Compatibility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 26, 2014
+# Last Change: November 21, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
-Compatibility functions
-=======================
+Python version compatibility.
 
 The :mod:`deb_pkg_tools.compat` module makes it easier to write Python code
-that is compatible with Python 2.x and Python 3.x. Think of it as a very
-lightweight six_, except this module implements similar but different shortcuts
-(the ones I need :-).
-
-.. _six: http://six.readthedocs.org/
+that is compatible with Python 2.6 up to 3.5, filling in some missing bits that
+`six <http://six.readthedocs.org/>`_ doesn't provide.
 """
 
-import sys
+# External dependencies.
+from six import PY2
 
-# StringIO.StringIO() vs io.StringIO().
-try:
-    # Python 2.x.
-    from StringIO import StringIO
-except ImportError:
-    # Python 3.x.
-    from io import StringIO
-
-# unicode() vs str().
-try:
-    unicode = unicode
-except NameError:
-    unicode = str
-
-# str() vs basestring().
-try:
-    basestring = basestring
-except NameError:
-    basestring = str
 
 def str_compatible(cls):
     """
-    Class decorator that makes it easy to implement human readable object
-    representations containing Unicode characters that are compatible with both
-    Python 2.x (with its :func:`object.__unicode__()` and
-    :func:`object.__str__()` methods) and Python 3.x (with its
-    :func:`object.__str__()` and :func:`object.__bytes__()` methods).
+    A class decorator that defines ``__unicode__()`` and ``__str__()`` on Python 2.
 
-    This decorator expects the ``__unicode__()`` method to return a Unicode
-    string (i.e. you write Python 2.x compatible code). The missing part will
-    be filled in automatically by encoding the Unicode string to UTF-8.
+    :param cls: The class to decorate.
+    :returns: The decorated class.
+
+    On Python 3 this class decorator does nothing, in the assumption that the
+    class defines an ``__str__()`` method and that is all that is needed.
+
+    On Python 2 the ``__unicode__()`` method is defined based on the
+    implementation of ``__str__()`` and then ``__str__()`` is redefined to
+    return the UTF-8 encoded result of ``__unicode__()``.
     """
-    if sys.version_info[0] == 2:
-        cls.__str__ = lambda self: unicode(self).encode('utf-8')
-    elif sys.version_info[0] == 3:
-        cls.__str__ = cls.__unicode__
-        cls.__bytes__ = lambda self: str(self).encode('utf-8')
+    if PY2:
+        cls.__unicode__ = cls.__str__
+        cls.__str__ = lambda self: self.__unicode__().encode('UTF-8')
     return cls
+
 
 def total_ordering(cls):
     """
-    Class decorator that fills in missing ordering methods. Copied from
-    :func:`functools.total_ordering()` which became available in Python
-    2.7 (copied to enable compatibility with Python 2.6).
+    Class decorator that fills in missing ordering methods.
+
+    Copied from :func:`functools.total_ordering()` which became available in
+    Python 2.7 (copied to enable compatibility with Python 2.6).
     """
     convert = {
         '__lt__': [('__gt__', lambda self, other: not (self < other or self == other)),
@@ -87,5 +67,3 @@ def total_ordering(cls):
             opfunc.__doc__ = getattr(int, opname).__doc__
             setattr(cls, opname, opfunc)
     return cls
-
-# vim: ts=4 sw=4 et

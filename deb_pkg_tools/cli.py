@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 18, 2016
+# Last Change: November 21, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -93,10 +93,16 @@ import tempfile
 
 # External dependencies.
 import coloredlogs
-from humanfriendly import format_path, format_size
+from humanfriendly import format_path, format_size, parse_path
 from humanfriendly.text import format, pluralize
 from humanfriendly.prompts import prompt_for_confirmation
-from humanfriendly.terminal import usage, warning
+from humanfriendly.terminal import (
+    HIGHLIGHT_COLOR,
+    ansi_wrap,
+    terminal_supports_colors,
+    usage,
+    warning,
+)
 
 # Modules included in our package.
 from deb_pkg_tools.cache import get_default_cache
@@ -114,10 +120,9 @@ logger = logging.getLogger(__name__)
 
 OUTPUT_ENCODING = 'UTF-8'
 
+
 def main():
-    """
-    Command line interface for the ``deb-pkg-tools`` program.
-    """
+    """Command line interface for the ``deb-pkg-tools`` program."""
     # Configure logging output.
     coloredlogs.install()
     # Command line option defaults.
@@ -199,15 +204,21 @@ def main():
             logger.exception("An error occurred!")
         sys.exit(1)
 
+
 def show_package_metadata(archive):
+    """
+    Show the metadata and contents of a Debian archive on the terminal.
+
+    :param archive: The pathname of an existing ``*.deb`` archive (a string).
+    """
     control_fields, contents = inspect_package(archive)
-    say("Package metadata from %s:", format_path(archive))
+    say(highlight("Package metadata from %s:"), format_path(archive))
     for field_name in sorted(control_fields.keys()):
         value = control_fields[field_name]
         if field_name == 'Installed-Size':
             value = format_size(int(value) * 1024)
-        say(" - %s: %s", field_name, value)
-    say("Package contents from %s:", format_path(archive))
+        say(" - %s %s", highlight(field_name + ":"), value)
+    say(highlight("Package contents from %s:"), format_path(archive))
     for pathname, entry in sorted(contents.items()):
         size = format_size(entry.size, keep_width=True)
         if len(size) < 10:
@@ -219,7 +230,34 @@ def show_package_metadata(archive):
             group=entry.group, size=size, modified=entry.modified,
             pathname=pathname)
 
+
+def highlight(text):
+    """
+    Highlight a piece of text using ANSI escape sequences.
+
+    :param text: The text to highlight (a string).
+    :returns: The highlighted text (when standard output is connected to a
+              terminal) or the original text (when standard output is not
+              connected to a terminal).
+    """
+    if terminal_supports_colors(sys.stdout):
+        text = ansi_wrap(text, color=HIGHLIGHT_COLOR)
+    return text
+
+
 def collect_packages(archives, directory, prompt=True, cache=None):
+    """
+    Interactively copy packages and their dependencies.
+
+    :param archives: An iterable of strings with the filenames of one or more
+                     ``*.deb`` files.
+    :param directory: The pathname of a directory where the package archives
+                      and dependencies should be copied to (a string).
+    :param prompt: :data:`True` (the default) to ask confirmation from the
+                   operator (using a confirmation prompt rendered on the
+                   terminal), :data:`False` to skip the prompt.
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    """
     # Find all related packages.
     related_archives = set()
     for filename in archives:
@@ -249,6 +287,7 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                 smart_copy(src, dst)
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
 
+
 def smart_copy(src, dst):
     """
     Create a hard link to or copy of a file.
@@ -269,6 +308,7 @@ def smart_copy(src, dst):
     else:
         logger.debug("Copied %s -> %s using hard link ..", format_path(src), format_path(dst))
 
+
 def with_repository_wrapper(directory, command, cache):
     """
     Command line wrapper for :func:`deb_pkg_tools.repo.with_repository()`.
@@ -276,7 +316,7 @@ def with_repository_wrapper(directory, command, cache):
     :param directory: The pathname of a directory with ``*.deb`` archives (a
                       string).
     :param command: The command to execute (a list of strings).
-    :param cache: The :class:`.PackageCache` to use (defaults to ``None``).
+    :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
     """
     if not command:
         # Default to the user's shell (seems like a sensible default?)
@@ -287,6 +327,7 @@ def with_repository_wrapper(directory, command, cache):
         logger.exception("Caught an unhandled exception!")
         sys.exit(1)
 
+
 def check_directory(argument):
     """
     Make sure a command line argument points to an existing directory.
@@ -294,18 +335,17 @@ def check_directory(argument):
     :param argument: The original command line argument.
     :returns: The absolute pathname of an existing directory.
     """
-    directory = os.path.realpath(os.path.expanduser(argument))
+    directory = parse_path(argument)
     if not os.path.isdir(directory):
         msg = "Directory doesn't exist! (%s)"
         raise Exception(msg % directory)
     return directory
 
+
 def say(text, *args, **kw):
-    """Reliably print Unicode strings to the terminal / standard output stream."""
+    """Reliably print Unicode strings to the terminal (standard output stream)."""
     text = format(text, *args, **kw)
     try:
         print(text)
     except UnicodeEncodeError:
         print(codecs.encode(text, OUTPUT_ENCODING))
-
-# vim: ts=4 sw=4 et

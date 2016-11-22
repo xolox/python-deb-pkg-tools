@@ -5,8 +5,7 @@
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
-Package metadata cache
-======================
+Debian binary package metadata cache.
 
 The :class:`PackageCache` class implements a persistent, multiprocess cache
 for Debian binary package metadata using :mod:`sqlite3`. The cache supports
@@ -62,6 +61,7 @@ logger = logging.getLogger(__name__)
 # Instance of PackageCache, initialized on demand by get_default_cache().
 default_cache_instance = None
 
+
 def get_default_cache():
     """
     Load the default package cache stored inside the user's home directory.
@@ -79,11 +79,10 @@ def get_default_cache():
         default_cache_instance = PackageCache(filename=os.path.expanduser(package_cache_file))
     return default_cache_instance
 
+
 class PackageCache(object):
 
-    """
-    A persistent, multi process cache for Debian binary package metadata.
-    """
+    """A persistent, multi process cache for Debian binary package metadata."""
 
     def __init__(self, filename):
         """
@@ -103,9 +102,7 @@ class PackageCache(object):
         self.identity_map = {}
 
     def initialize(self):
-        """
-        Initialize (create and/or upgrade) the package cache database.
-        """
+        """Initialize (create and/or upgrade) the package cache database."""
         if self.db is None:
             # Create any missing directories.
             makedirs(os.path.dirname(self.filename))
@@ -141,6 +138,7 @@ class PackageCache(object):
                 self.upgrade_schema(3, 'delete from package_cache;')
             # Enable 8-bit bytestrings so we can store binary data.
             self.db.text_factory = bytes
+
             # Use a custom row factory to implement lazy evaluation. Previously
             # this used functools.partial() to inject self (a PackageCache
             # object) into the CachedPackage constructor, however as of Python
@@ -153,6 +151,7 @@ class PackageCache(object):
             # http://bugs.python.org/issue21975.
             class CachedPackagePartial(CachedPackage):
                 cache = self
+
             self.db.row_factory = CachedPackagePartial
 
     def upgrade_schema(self, version, script):
@@ -174,6 +173,11 @@ class PackageCache(object):
     def collect_garbage(self, force=False):
         """
         Cleanup expired cache entries.
+
+        :param force: :data:`True` to unconditionally expire cache entries.
+
+        By default garbage collection is only performed when something has been
+        written to the cache. The `force` option can be used to override this.
         """
         if self.gc_enabled or force:
             self.initialize()
@@ -192,15 +196,20 @@ class PackageCache(object):
         self.dump_stats()
 
     def dump_stats(self):
-        """
-        Write database statistics to the log stream.
-        """
-        logger.debug("Package cache statistics:"
-                + "\n - Spent %s on database I/O." % self.db_timer
-                + "\n - Spent %s on garbage collection." % self.gc_timer
-                + "\n - Spent %s on getmtime() calls." % self.fs_timer
-                + "\n - Spent %s on value encoding." % self.encode_timer
-                + "\n - Spent %s on value decoding." % self.decode_timer)
+        """Write database statistics to the log stream."""
+        logger.debug(
+            "Package cache statistics:"
+            "\n - Spent %s on database I/O."
+            "\n - Spent %s on garbage collection."
+            "\n - Spent %s on getmtime() calls."
+            "\n - Spent %s on value encoding."
+            "\n - Spent %s on value decoding.",
+            self.db_timer,
+            self.gc_timer,
+            self.fs_timer,
+            self.encode_timer,
+            self.decode_timer,
+        )
 
     def __getitem__(self, pathname):
         """
@@ -277,6 +286,7 @@ class PackageCache(object):
         """
         with self.decode_timer:
             return pickle.loads(zlib.decompress(database_value))
+
 
 class CachedPackage(sqlite3.Row):
 
@@ -370,5 +380,3 @@ class CachedPackage(sqlite3.Row):
         update_query = 'update package_cache set contents = ? where pathname = ?'
         self.cache.execute(update_query, self.cache.encode(contents), self.pathname)
         return contents
-
-# vim: ts=4 sw=4 et

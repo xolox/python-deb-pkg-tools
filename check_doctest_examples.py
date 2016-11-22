@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Quick hack to conditionally evaluate doctest fragments."""
+
 # Standard library modules.
 import doctest
 import glob
@@ -19,7 +21,9 @@ logger = logging.getLogger('check-doctest-examples')
 
 SAMPLES_DIRECTORY = '/var/lib/deb-pkg-tools/samples'
 
+
 def main():
+    """Command line interface."""
     coloredlogs.install()
     if not os.path.isdir(SAMPLES_DIRECTORY):
         logger.info("Samples directory (%s) doesn't exist, skipping doctest checks ..", SAMPLES_DIRECTORY)
@@ -30,7 +34,9 @@ def main():
         if failures > 0:
             sys.exit(1)
 
+
 def testfile(filename, verbose=False):
+    """Evaluate and report on the doctest fragments in a single Python file."""
     logger.info("Checking %s", format_path(filename))
     printer = CustomPrettyPrinter()
     filename = os.path.abspath(filename)
@@ -48,6 +54,7 @@ def testfile(filename, verbose=False):
             logger.error("Evaluated %i doctests, %i failed!", results.attempted, results.failed)
     os.chdir(cwd_save)
     return results.failed
+
 
 if __name__ == '__main__':
     main()
