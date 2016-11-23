@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 21, 2016
+# Last Change: November 23, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -86,6 +86,7 @@ import codecs
 import functools
 import getopt
 import logging
+import multiprocessing
 import os.path
 import shutil
 import sys
@@ -258,11 +259,14 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                    terminal), :data:`False` to skip the prompt.
     :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
     """
-    # Find all related packages.
-    related_archives = set()
-    for filename in archives:
-        related_archives.add(parse_filename(filename))
-        related_archives.update(collect_related_packages(filename, cache=cache))
+    # Find all related packages (concurrently).
+    pool = multiprocessing.Pool()
+    try:
+        related_archives = set(map(parse_filename, archives))
+        for result in pool.map(collect_packages_worker, archives, chunksize=1):
+            related_archives.update(result)
+    finally:
+        pool.terminate()
     # Ignore package archives that are already in the target directory.
     relevant_archives = set()
     for archive in related_archives:
@@ -286,6 +290,16 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                 dst = os.path.join(directory, os.path.basename(src))
                 smart_copy(src, dst)
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
+
+
+def collect_packages_worker(filename):
+    """Concurrent package collection using the default package metadata cache."""
+    try:
+        return collect_related_packages(filename, cache=get_default_cache())
+    except Exception:
+        logger.exception("Encountered unhandled exception!")
+        # Don't swallow the exception!
+        raise
 
 
 def smart_copy(src, dst):
