@@ -73,11 +73,14 @@ required to use the cache; it's an optional optimization.
 
 # Standard library modules.
 import errno
+import glob
 import logging
 import os
+import time
 
 # External dependencies.
 import memcache
+from humanfriendly import Timer, format_timespan, pluralize
 from six.moves import cPickle as pickle
 
 # Modules included in our package.
@@ -144,9 +147,63 @@ class PackageCache(object):
             self.entries[key] = entry
         return entry
 
-    def collect_garbage(self, force=False):
-        """Not yet implemented for the new filesystem based cache."""
-        logger.warning("Garbage collection for deb-pkg-tools package cache not yet implemented!")
+    def collect_garbage(self, force=False, interval=60 * 60 * 24):
+        """
+        Delete any entries in the persistent cache that refer to deleted archives.
+
+        :param force: :data:`True` to force a full garbage collection run
+                      (defaults to :data:`False` which means garbage collection
+                      is performed only once per `interval`).
+        :param interval: Delay garbage collection so that it's performed only
+                         once per given interval (the number of seconds).
+        """
+        timer = Timer()
+        num_checked = 0
+        num_deleted = 0
+        marker_file = os.path.join(self.directory, 'last-gc.txt')
+        if force:
+            logger.debug("Performing forced garbage collection ..")
+        else:
+            # Check when garbage collection was last run.
+            try:
+                last_gc = os.path.getmtime(marker_file)
+            except Exception:
+                last_gc = 0
+            elapsed_time = time.time() - last_gc
+            logger.debug("Elapsed time since last garbage collection: %s",
+                         format_timespan(elapsed_time))
+            if elapsed_time < interval:
+                logger.debug("Skipping automatic garbage collection (elapsed time < interval).")
+                return
+            else:
+                logger.debug("Performing automatic garbage collection (elapsed time > interval).")
+        for cache_file in glob.glob(os.path.join(self.directory, '*', '*.pickle')):
+            try:
+                with open(cache_file, 'rb') as handle:
+                    data = pickle.load(handle)
+                last_modified = os.path.getmtime(data['pathname'])
+                is_garbage = (last_modified != data['last_modified'])
+            except Exception:
+                is_garbage = True
+            if is_garbage:
+                try:
+                    os.unlink(cache_file)
+                    num_deleted += 1
+                except EnvironmentError as e:
+                    # Silence `No such file or directory' errors (e.g. due to
+                    # concurrent garbage collection runs) without accidentally
+                    # swallowing other exceptions (that we don't know how to
+                    # handle).
+                    if e.errno != errno.ENOENT:
+                        raise
+            num_checked += 1
+        # Record when garbage collection was last run.
+        with open(marker_file, 'a') as handle:
+            os.utime(marker_file, None)
+        logger.debug("Checked %s, garbage collected %s in %s.",
+                     pluralize(num_checked, "cache entry", "cache entries"),
+                     pluralize(num_deleted, "cache entry", "cache entries"),
+                     timer)
 
 
 class CacheEntry(object):
@@ -204,7 +261,7 @@ class CacheEntry(object):
                 self.in_memory = from_fs
                 self.set_memcached()
                 return from_fs['value']
-        except IOError as e:
+        except EnvironmentError as e:
             # Silence `No such file or directory' errors without accidentally
             # swallowing other exceptions (that we don't know how to handle).
             if e.errno != errno.ENOENT:
@@ -230,7 +287,7 @@ class CacheEntry(object):
         try:
             # Try to write the cache file.
             self.write_file(temporary_file)
-        except IOError as e:
+        except EnvironmentError as e:
             # We may be missing the cache directory.
             if e.errno == errno.ENOENT:
                 # Make sure the cache directory exists.
