@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 22, 2016
+# Last Change: November 23, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -28,9 +28,47 @@ The package metadata cache can speed up the following functions:
 Because a lot of functionality in `deb-pkg-tools` uses
 :func:`.inspect_package()` and its variants, the package metadata cache
 almost always provides a speedup compared to recalculating metadata on demand.
+
 The cache is especially useful when you're manipulating large package
 repositories where relatively little metadata changes (which is a pretty common
 use case if you're using `deb-pkg-tools` seriously).
+
+Internals
+---------
+
+For several years the package metadata cache was based on SQLite and this
+worked fine. Then I started experimenting with concurrent builds on the same
+build server and I ran into SQLite raising lock timeout errors. I switched
+SQLite to use the Write-Ahead Log (WAL) and things seemed to improve until
+I experienced several corrupt databases in situations where multiple writers
+and multiple readers were all hitting the cache at the same time.
+
+At this point I looked around for alternative cache backends with the following
+requirements:
+
+- Better support for concurrent writers and readers, ideally without
+  any locking or blocking between concurrent writers and readers.
+
+- It should simply not be possible to corrupt the cache, regardless of the
+  number of concurrent reads and writes.
+
+- To keep system requirements to a minimum, it should not be required to have
+  server (daemon) process running.
+
+These conflicting requirements left me with basically no options. Based on
+previous good experiences I decided to try using the filesystem to store the
+cache, with individual files representing cache entries. Through atomic
+filesystem operations this strategy basically delegates all locking to the
+filesystem, which should be guaranteed to do the right thing (POSIX).
+
+Storing the cache on the filesystem like this has indeed appeared to solve all
+locking and corruption issues, but when the filesystem cache is cold (for
+example because you've just run a couple of heavy builds) it's still damn slow
+to scan the package metadata of a full repository with hundreds of archives...
+
+As a pragmatic performance optimization memcached was added to the mix. Any
+errors involving memcached are silently ignored which means memcached isn't
+required to use the cache; it's an optional optimization.
 """
 
 # Standard library modules.
@@ -39,17 +77,10 @@ import logging
 import os
 
 # External dependencies.
-from cached_property import cached_property
-
-# Load the fastest pickle module available to us.
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import memcache
+from six.moves import cPickle as pickle
 
 # Modules included in our package.
-from deb_pkg_tools.package import inspect_package_contents, inspect_package_fields
-from deb_pkg_tools.repo import get_packages_entry
 from deb_pkg_tools.utils import makedirs, sha1
 
 # Initialize a logger for this module.
@@ -79,7 +110,7 @@ def get_default_cache():
 
 class PackageCache(object):
 
-    """A persistent, multi process cache for Debian binary package metadata."""
+    """A persistent, multiprocess cache for Debian binary package metadata."""
 
     def __init__(self, directory):
         """
@@ -88,20 +119,29 @@ class PackageCache(object):
         :param directory: The pathname of the package cache directory (a string).
         """
         self.directory = directory
-        self.identity_map = {}
+        self.entries = {}
+        self.memcached = memcache.Client(['127.0.0.1:11211'])
+        self.use_memcached = True
 
-    def __getitem__(self, pathname):
+    def get_entry(self, category, pathname):
         """
-        Get a cache entry representing a Debian binary package archive.
+        Get an object representing a cache entry.
 
-        :param pathname: The pathname of a Debian binary package archive (a string).
-        :returns: A :class:`CachedPackage` object.
+        :param category: The type of metadata that this cache entry represents
+                         (a string like 'control-fields', 'package-fields' or
+                         'contents').
+        :param pathname: The pathname of the package archive (a string).
+        :returns: A :class:`CacheEntry` object.
         """
-        pathname = os.path.realpath(pathname)
-        entry = self.identity_map.get(pathname)
+        # Normalize the pathname so we can use it as a dictionary & cache key.
+        pathname = os.path.abspath(pathname)
+        # Check if the entry was previously initialized.
+        key = (category, pathname)
+        entry = self.entries.get(key)
         if not entry:
-            entry = CachedPackage(cache=self, pathname=pathname)
-            self.identity_map[pathname] = entry
+            # Initialize a new entry.
+            entry = CacheEntry(self, category, pathname)
+            self.entries[key] = entry
         return entry
 
     def collect_garbage(self, force=False):
@@ -109,136 +149,116 @@ class PackageCache(object):
         logger.warning("Garbage collection for deb-pkg-tools package cache not yet implemented!")
 
 
-class CachedPackage(object):
+class CacheEntry(object):
 
-    """
-    A cache entry representing a Debian binary package archive's metadata.
+    """An entry in the package metadata cache provided by :class:`PackageCache`."""
 
-    The following attributes are always available:
-
-    - :attr:`pathname`
-
-    The following attributes are loaded on demand:
-
-    - :attr:`control_fields`
-    - :attr:`package_fields`
-    - :attr:`contents`
-    """
-
-    def __init__(self, cache, pathname):
+    def __init__(self, cache, category, pathname):
         """
-        Initialize a :class:`CachedPackage` object.
+        Initialize a :class:`CacheEntry` object.
 
-        :param cache: The :class:`PackageCache` that created this object.
-        :param pathname: The pathname of a Debian binary package archive (a string).
+        :param cache: The :class:`PackageCache` that created this entry.
+        :param category: The type of metadata that this cache entry represents
+                         (a string like 'control-fields', 'package-fields' or
+                         'contents').
+        :param pathname: The pathname of the package archive (a string).
         """
+        # Store the arguments.
         self.cache = cache
+        self.category = category
         self.pathname = pathname
-        self.fingerprint = sha1(pathname)
+        # Generate the entry's cache key and filename.
+        fingerprint = sha1(pathname)
+        self.cache_key = 'deb-pkg-tools:%s:%s' % (category, fingerprint)
+        self.cache_file = os.path.join(self.cache.directory, category, '%s.pickle' % fingerprint)
+        # Get the archive's last modified time.
+        self.last_modified = os.path.getmtime(pathname)
+        # Prepare to cache the value in memory.
+        self.in_memory = None
 
-    @cached_property
-    def control_fields(self):
+    def get_value(self):
         """
-        The control fields extracted from the Debian binary package archive.
+        Get the cache entry's value.
 
-        :returns: A dictionary with control fields generated by
-                  :func:`.inspect_package_fields()`.
+        :returns: A previously cached value or :data:`None` (when the value
+                  isn't available in the cache).
         """
-        file_in_cache = self.generate_filename('control-fields')
+        # Check for a value that was previously cached in memory.
+        if self.up_to_date(self.in_memory):
+            return self.in_memory['value']
+        # Check for a value that was previously cached in memcached.
         try:
-            control_fields = self.read_from_cache(file_in_cache)
+            from_mc = self.cache.memcached.get(self.cache_key)
+            if self.up_to_date(from_mc):
+                # Cache the value in memory.
+                self.in_memory = from_mc
+                return from_mc['value']
         except Exception:
-            logger.debug("Failed to read control fields from cache, generating new value ..", exc_info=True)
-            control_fields = inspect_package_fields(self.pathname)
-            self.write_to_cache(file_in_cache, control_fields)
-        return control_fields
-
-    @cached_property
-    def package_fields(self):
-        """
-        The control fields required in a ``Packages`` file.
-
-        :returns: A dictionary with control fields generated by
-                  :func:`.get_packages_entry()`.
-        """
-        file_in_cache = self.generate_filename('package-fields')
+            pass
+        # Check for a value that was previously cached on the filesystem.
         try:
-            package_fields = self.read_from_cache(file_in_cache)
-        except Exception:
-            logger.debug("Failed to read package fields from cache, generating new value ..", exc_info=True)
-            package_fields = get_packages_entry(self.pathname)
-            self.write_to_cache(file_in_cache, package_fields)
-        return package_fields
+            with open(self.cache_file, 'rb') as handle:
+                from_fs = pickle.load(handle)
+            if self.up_to_date(from_fs):
+                # Cache the value in memory and in memcached.
+                self.in_memory = from_fs
+                self.set_memcached()
+                return from_fs['value']
+        except IOError as e:
+            # Silence `No such file or directory' errors without accidentally
+            # swallowing other exceptions (that we don't know how to handle).
+            if e.errno != errno.ENOENT:
+                raise
 
-    @cached_property
-    def contents(self):
+    def set_value(self, value):
         """
-        The contents extracted from the Debian binary package archive (a dictionary).
+        Set the cache entry's value.
 
-        :returns: A dictionary with package contents just like the one returned
-                  by :func:`.inspect_package_contents()`.
+        :param value: The metadata to save in the cache.
         """
-        file_in_cache = self.generate_filename('contents')
-        try:
-            contents = self.read_from_cache(file_in_cache)
-        except Exception:
-            logger.debug("Failed to read package contents from cache, generating new value ..", exc_info=True)
-            contents = inspect_package_contents(self.pathname)
-            self.write_to_cache(file_in_cache, contents)
-        return contents
-
-    def generate_filename(self, category):
-        """
-        Generate a filename for the cache entry in the given category.
-
-        :param category: The type of cache entry (a string like
-                         'control-fields', 'package-fields' or 'contents').
-        :returns: The absolute pathname of the cache entry (a string).
-        """
-        return os.path.join(self.cache.directory, category, '%s.pickle' % self.fingerprint)
-
-    def read_from_cache(self, file_in_cache):
-        """
-        Read a cache entry.
-
-        :param file_in_cache: The absolute pathname of the cache entry (a string).
-        :returns: The cache entry's value.
-        """
-        cache_last_updated = os.path.getmtime(file_in_cache)
-        archive_last_updated = os.path.getmtime(self.pathname)
-        if archive_last_updated > cache_last_updated:
-            raise Exception("Stale cache entry!")
-        with open(file_in_cache, 'rb') as handle:
-            return pickle.load(handle)
-
-    def write_to_cache(self, file_in_cache, value):
-        """
-        Write a cache entry.
-
-        :param file_in_cache: The absolute pathname of the cache entry (a string).
-        :param value: The value to save in the cache.
-        """
-        # Write the cache entry to a temporary file.
-        directory, filename = os.path.split(file_in_cache)
+        # Cache the value in memory.
+        self.in_memory = dict(
+            pathname=self.pathname,
+            last_modified=self.last_modified,
+            value=value,
+        )
+        # Cache the value in memcached.
+        self.set_memcached()
+        # Cache the value on the filesystem.
+        directory, filename = os.path.split(self.cache_file)
         temporary_file = os.path.join(directory, '.%s-%i' % (filename, os.getpid()))
         try:
-            # Try to write the cache entry.
-            self.write_file(temporary_file, value)
+            # Try to write the cache file.
+            self.write_file(temporary_file)
         except IOError as e:
             # We may be missing the cache directory.
             if e.errno == errno.ENOENT:
                 # Make sure the cache directory exists.
                 makedirs(directory)
-                # Try to write the cache entry again.
-                self.write_file(temporary_file, value)
+                # Try to write the cache file again.
+                self.write_file(temporary_file)
             else:
                 # Don't swallow exceptions we can't handle.
                 raise
         # Move the temporary file into place, trusting the
         # filesystem to handle this operation atomically.
-        os.rename(temporary_file, file_in_cache)
+        os.rename(temporary_file, self.cache_file)
 
-    def write_file(self, filename, value):
-        """Helper for :func:`write_to_cache()`."""
+    def set_memcached(self):
+        """Helper for :func:`get_value()` and :func:`set_value()` to write to memcached."""
+        if self.cache.use_memcached:
+            try:
+                self.cache.memcached.set(self.cache_key, self.in_memory)
+            except Exception:
+                self.cache.use_memcached = False
+
+    def up_to_date(self, value):
+        """Helper for :func:`get_value()` to validate cached values."""
+        return (value and
+                value['pathname'] == self.pathname and
+                value['last_modified'] >= self.last_modified)
+
+    def write_file(self, filename):
+        """Helper for :func:`set_value()` to cache values on the filesystem."""
         with open(filename, 'wb') as handle:
-            pickle.dump(value, handle)
+            pickle.dump(self.in_memory, handle)

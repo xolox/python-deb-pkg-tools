@@ -140,7 +140,10 @@ def get_packages_entry(pathname, cache=None):
     caching).
     """
     if cache:
-        return cache[pathname].package_fields
+        entry = cache.get_entry('package-fields', pathname)
+        value = entry.get_value()
+        if value is not None:
+            return value
     # Prepare to calculate the MD5, SHA1 and SHA256 hashes.
     md5_state = hashlib.md5()
     sha1_state = hashlib.sha1()
@@ -153,11 +156,14 @@ def get_packages_entry(pathname, cache=None):
             sha256_state.update(chunk)
     # Convert the hashes to hexadecimal strings and return the required fields
     # in a dictionary.
-    return dict(Filename=os.path.basename(pathname),
-                Size=str(os.path.getsize(pathname)),
-                MD5sum=md5_state.hexdigest(),
-                SHA1=sha1_state.hexdigest(),
-                SHA256=sha256_state.hexdigest())
+    fields = dict(Filename=os.path.basename(pathname),
+                  Size=str(os.path.getsize(pathname)),
+                  MD5sum=md5_state.hexdigest(),
+                  SHA1=sha1_state.hexdigest(),
+                  SHA256=sha256_state.hexdigest())
+    if cache:
+        entry.set_value(fields)
+    return fields
 
 
 def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
