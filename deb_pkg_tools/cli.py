@@ -258,15 +258,28 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                    operator (using a confirmation prompt rendered on the
                    terminal), :data:`False` to skip the prompt.
     :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :raises: :exc:`~exceptions.ValueError` when no archives are given.
+
+    When more than one archive is given a :class:`multiprocessing.Pool` is used
+    to collect related archives concurrently, in order to speed up the process
+    of collecting large dependency sets.
     """
-    # Find all related packages (concurrently).
-    pool = multiprocessing.Pool()
-    try:
-        related_archives = set(map(parse_filename, archives))
-        for result in pool.map(collect_packages_worker, archives, chunksize=1):
-            related_archives.update(result)
-    finally:
-        pool.terminate()
+    archives = list(archives)
+    related_archives = set(map(parse_filename, archives))
+    if not archives:
+        raise ValueError("At least one package archive is required!")
+    elif len(archives) == 1:
+        # Find the related packages of a single archive.
+        related_archives.update(collect_related_packages(archives[0], cache=cache))
+    else:
+        # Find the related packages of multiple archives (concurrently).
+        pool = multiprocessing.Pool()
+        try:
+            worker = functools.partial(collect_packages_worker, cache=cache)
+            for result in pool.map(worker, archives, chunksize=1):
+                related_archives.update(result)
+        finally:
+            pool.terminate()
     # Ignore package archives that are already in the target directory.
     relevant_archives = set()
     for archive in related_archives:
@@ -292,13 +305,19 @@ def collect_packages(archives, directory, prompt=True, cache=None):
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
 
 
-def collect_packages_worker(filename):
-    """Concurrent package collection using the default package metadata cache."""
+def collect_packages_worker(filename, cache=None):
+    """Helper for :func:`collect_packages()` that enables concurrent collection."""
     try:
-        return collect_related_packages(filename, cache=get_default_cache())
+        return collect_related_packages(filename, cache=cache)
     except Exception:
-        logger.exception("Encountered unhandled exception!")
-        # Don't swallow the exception!
+        # Log a full traceback in the child process because the multiprocessing
+        # module doesn't preserve the traceback when propagating the exception
+        # to the parent process.
+        logger.exception(compact("""
+            Encountered unhandled exception during collection of related
+            packages! (propagating exception to parent process)
+        """))
+        # Propagate the exception to the parent process.
         raise
 
 
