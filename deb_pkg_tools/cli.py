@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 23, 2016
+# Last Change: November 24, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -15,11 +15,12 @@ Supported options:
 
   -i, --inspect=FILE
 
-    Inspect the metadata in the Debian binary package archive given by FILE.
+    Inspect the metadata in the Debian binary package archive given by FILE
+    (similar to `dpkg --info').
 
   -c, --collect=DIR
 
-    Copy the package archive(s) given as positional arguments (and all packages
+    Copy the package archive(s) given as positional arguments (and all package
     archives required by the given package archives) into the directory given
     by DIR.
 
@@ -68,6 +69,15 @@ Supported options:
     the positional arguments as an external command (usually `apt-get install')
     and finally deactivate the repository.
 
+  --gc, --garbage-collect
+
+    Force removal of stale entries from the persistent (on disk) package
+    metadata cache. Garbage collection is performed automatically by the
+    deb-pkg-tools command line interface when the last garbage collection
+    cycle was more than 24 hours ago, so you only need to do it manually
+    when you want to control when it happens (for example by a daily
+    cron job scheduled during idle hours :-).
+
   -y, --yes
 
     Assume the answer to interactive questions is yes.
@@ -95,7 +105,7 @@ import tempfile
 # External dependencies.
 import coloredlogs
 from humanfriendly import format_path, format_size, parse_path
-from humanfriendly.text import format, pluralize
+from humanfriendly.text import compact, format, pluralize
 from humanfriendly.prompts import prompt_for_confirmation
 from humanfriendly.terminal import (
     HIGHLIGHT_COLOR,
@@ -138,7 +148,7 @@ def main():
         options, arguments = getopt.getopt(sys.argv[1:], 'i:c:C:p:s:b:u:a:d:w:yvh', [
             'inspect=', 'collect=', 'check=', 'patch=', 'set=', 'build=',
             'update-repo=', 'activate-repo=', 'deactivate-repo=', 'with-repo=',
-            'yes', 'verbose', 'help'
+            'gc', 'garbage-collect', 'yes', 'verbose', 'help'
         ])
         for option, value in options:
             if option in ('-i', '--inspect'):
@@ -177,6 +187,8 @@ def main():
                                                  directory=check_directory(value),
                                                  command=arguments,
                                                  cache=cache))
+            elif option in ('--gc', '--garbage-collect'):
+                actions.append(functools.partial(cache.collect_garbage, force=True))
             elif option in ('-y', '--yes'):
                 prompt = False
             elif option in ('-v', '--verbose'):

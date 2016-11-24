@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 23, 2016
+# Last Change: November 24, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -154,8 +154,9 @@ class PackageCache(object):
         :param force: :data:`True` to force a full garbage collection run
                       (defaults to :data:`False` which means garbage collection
                       is performed only once per `interval`).
-        :param interval: Delay garbage collection so that it's performed only
-                         once per given interval (the number of seconds).
+        :param interval: The number of seconds to delay garbage collection when
+                         `force` is :data:`False` (a number, defaults to the
+                         equivalent of 24 hours).
         """
         timer = Timer()
         num_checked = 0
@@ -167,7 +168,11 @@ class PackageCache(object):
         elif force:
             logger.info("Performing forced garbage collection ..")
         else:
-            # Check when garbage collection was last run.
+            # Check whether garbage collection is needed, the idea being that
+            # garbage collection can be expensive (given enough cache entries
+            # and/or a cold enough disk cache) so we'd rather not do it when
+            # it's not necessary.
+            logger.debug("Checking whether garbage collection is necessary ..")
             try:
                 last_gc = os.path.getmtime(marker_file)
             except Exception:
@@ -203,10 +208,14 @@ class PackageCache(object):
         # Record when garbage collection was last run.
         with open(marker_file, 'a') as handle:
             os.utime(marker_file, None)
-        logger.debug("Checked %s, garbage collected %s in %s.",
-                     pluralize(num_checked, "cache entry", "cache entries"),
-                     pluralize(num_deleted, "cache entry", "cache entries"),
-                     timer)
+        status_level = logging.INFO if force else logging.DEBUG
+        if num_checked == 0:
+            logger.log(status_level, "Nothing to garbage collect (the cache is empty).")
+        else:
+            logger.log(status_level, "Checked %s, garbage collected %s in %s.",
+                       pluralize(num_checked, "cache entry", "cache entries"),
+                       pluralize(num_deleted, "cache entry", "cache entries"),
+                       timer)
 
 
 class CacheEntry(object):
