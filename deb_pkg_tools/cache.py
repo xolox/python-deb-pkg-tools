@@ -161,8 +161,11 @@ class PackageCache(object):
         num_checked = 0
         num_deleted = 0
         marker_file = os.path.join(self.directory, 'last-gc.txt')
-        if force:
-            logger.debug("Performing forced garbage collection ..")
+        if not os.path.isdir(self.directory):
+            logger.debug("Skipping garbage collection (cache directory doesn't exist).")
+            return
+        elif force:
+            logger.info("Performing forced garbage collection ..")
         else:
             # Check when garbage collection was last run.
             try:
