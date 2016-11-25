@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 22, 2016
+# Last Change: November 25, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -26,7 +26,7 @@ from executor import execute
 from humanfriendly import coerce_boolean, format_path, format_timespan, parse_path
 
 # Modules included in our package.
-from deb_pkg_tools.utils import find_home_directory
+from deb_pkg_tools.utils import makedirs
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -45,13 +45,7 @@ def initialize_gnupg():
     fine however. To avoid this problem we make sure ``~/.gnupg`` exists before
     we run GPG.
     """
-    gnupg_directory = parse_path('~/.gnupg')
-    if not os.path.isdir(gnupg_directory):
-        logger.debug(
-            "The directory %s doesn't exist yet!"
-            " I'll create it now before we call GPG to make sure GPG won't complain ..",
-            gnupg_directory)
-        os.makedirs(gnupg_directory)
+    makedirs(parse_path('~/.gnupg'))
 
 
 class GPGKey(object):
@@ -121,7 +115,7 @@ class GPGKey(object):
         # If neither of the key files is provided we'll default to the
         # locations that GnuPG uses by default.
         if not secret_key_file and not public_key_file:
-            gnupg_directory = os.path.join(find_home_directory(), '.gnupg')
+            gnupg_directory = parse_path('~/.gnupg')
             secret_key_file = os.path.join(gnupg_directory, 'secring.gpg')
             public_key_file = os.path.join(gnupg_directory, 'pubring.gpg')
 
@@ -159,9 +153,7 @@ class GPGKey(object):
 
             # Make sure the directories of the secret/public key files exist.
             for filename in [secret_key_file, public_key_file]:
-                directory = os.path.dirname(filename)
-                if not os.path.isdir(directory):
-                    os.makedirs(directory)
+                makedirs(os.path.dirname(filename))
 
             # Generate a file with batch instructions
             # suitable for `gpg --batch --gen-key'.

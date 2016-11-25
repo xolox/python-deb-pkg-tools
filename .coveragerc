@@ -5,4 +5,7 @@
 source = deb_pkg_tools
 omit = deb_pkg_tools/tests.py
 
+[report]
+exclude_lines = raise NotImplementedError()
+
 # vim: ft=dosini
