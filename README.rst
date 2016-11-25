@@ -59,8 +59,9 @@ Wrapper for the deb-pkg-tools Python project that implements various tools to in
    :widths: 30, 70
 
 
-   "``-i``, ``--inspect=FILE``",Inspect the metadata in the Debian binary package archive given by ``FILE``.
-   "``-c``, ``--collect=DIR``","Copy the package archive(s) given as positional arguments (and all packages
+   "``-i``, ``--inspect=FILE``","Inspect the metadata in the Debian binary package archive given by ``FILE``
+   (similar to ""dpkg ``--info``"")."
+   "``-c``, ``--collect=DIR``","Copy the package archive(s) given as positional arguments (and all package
    archives required by the given package archives) into the directory given
    by ``DIR``."
    "``-C``, ``--check=FILE``","Perform static analysis on a package archive and its dependencies in order
@@ -84,6 +85,12 @@ Wrapper for the deb-pkg-tools Python project that implements various tools to in
    "``-w``, ``--with-repo=DIR``","Create or update a trivial package repository, activate the repository, run
    the positional arguments as an external command (usually ""apt-get install"")
    and finally deactivate the repository."
+   "``--gc``, ``--garbage-collect``","Force removal of stale entries from the persistent (on disk) package
+   metadata cache. Garbage collection is performed automatically by the
+   deb-pkg-tools command line interface when the last garbage collection
+   cycle was more than 24 hours ago, so you only need to do it manually
+   when you want to control when it happens (for example by a daily
+   cron job scheduled during idle hours :-)."
    "``-y``, ``--yes``",Assume the answer to interactive questions is yes.
    "``-v``, ``--verbose``",Make more noise! (useful during debugging)
    "``-h``, ``--help``","Show this message and exit.
