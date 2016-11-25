@@ -217,10 +217,7 @@ def main():
         else:
             usage(__doc__)
     except Exception as e:
-        if isinstance(e, KeyboardInterrupt):
-            logger.error("Interrupted by Control-C, aborting!")
-        else:
-            logger.exception("An error occurred!")
+        logger.exception("An error occurred!")
         sys.exit(1)
 
 

@@ -51,14 +51,13 @@ test: install
 	@pip-accel install --quiet --requirement=requirements-tests.txt
 	@py.test --cov
 	@coverage html
-	@coverage report --fail-under=90
+	@coverage report --fail-under=90 &>/dev/null
 
 full-coverage: install
 	@pip-accel install --quiet --requirement=requirements-tests.txt
-	@sudo PYTHONDONTWRITEBYTECODE=true "$(VIRTUAL_ENV)/bin/py.test" --cov
+	@sudo "$(VIRTUAL_ENV)/bin/py.test" --cov
 	@sudo chown --recursive --reference=. .
-	@coverage html
-	@coverage report --fail-under=90
+	@coverage report --fail-under=90 &>/dev/null
 
 tox: install
 	@pip-accel install --quiet tox && tox
