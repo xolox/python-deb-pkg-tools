@@ -296,8 +296,8 @@ def collect_packages(archives, directory, prompt=True, cache=None, concurrency=N
             concurrency = min(len(archives), concurrency or multiprocessing.cpu_count())
             pool = multiprocessing.Pool(concurrency)
             try:
-                worker = functools.partial(collect_packages_worker, cache=cache)
-                for result in pool.map(worker, archives, chunksize=1):
+                arguments = [(archive, cache) for archive in archives]
+                for result in pool.map(collect_packages_worker, arguments, chunksize=1):
                     related_archives.update(result)
             finally:
                 pool.terminate()
@@ -329,10 +329,10 @@ def collect_packages(archives, directory, prompt=True, cache=None, concurrency=N
                     pluralize(len(related_archives), "package archive"))
 
 
-def collect_packages_worker(filename, cache=None):
+def collect_packages_worker(args):
     """Helper for :func:`collect_packages()` that enables concurrent collection."""
     try:
-        return collect_related_packages(filename, cache=cache, interactive=False)
+        return collect_related_packages(args[0], cache=args[1], interactive=False)
     except Exception:
         # Log a full traceback in the child process because the multiprocessing
         # module doesn't preserve the traceback when propagating the exception
