@@ -279,7 +279,7 @@ def collect_packages(archives, directory, prompt=True, cache=None, concurrency=N
                         smaller).
     :raises: :exc:`~exceptions.ValueError` when no archives are given.
 
-    When more than one archive is given a :class:`multiprocessing.Pool` is used
+    When more than one archive is given a :mod:`multiprocessing` pool is used
     to collect related archives concurrently, in order to speed up the process
     of collecting large dependency sets.
     """

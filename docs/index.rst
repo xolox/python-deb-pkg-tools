@@ -22,6 +22,12 @@ Static analysis of package archives
 .. automodule:: deb_pkg_tools.checks
    :members:
 
+Command line interface
+----------------------
+
+.. automodule:: deb_pkg_tools.cli
+   :members:
+
 Configuration defaults
 ----------------------
 
