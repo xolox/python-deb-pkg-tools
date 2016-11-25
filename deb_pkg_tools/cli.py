@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 24, 2016
+# Last Change: November 25, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -104,7 +104,7 @@ import tempfile
 
 # External dependencies.
 import coloredlogs
-from humanfriendly import format_path, format_size, parse_path
+from humanfriendly import AutomaticSpinner, format_path, format_size, parse_path
 from humanfriendly.text import compact, format, pluralize
 from humanfriendly.prompts import prompt_for_confirmation
 from humanfriendly.terminal import (
@@ -141,6 +141,7 @@ def main():
     actions = []
     control_file = None
     control_fields = {}
+    directory = None
     # Initialize the package cache.
     cache = get_default_cache()
     # Parse the command line options.
@@ -154,12 +155,7 @@ def main():
             if option in ('-i', '--inspect'):
                 actions.append(functools.partial(show_package_metadata, archive=value))
             elif option in ('-c', '--collect'):
-                actions.append(functools.partial(collect_packages,
-                                                 archives=arguments,
-                                                 directory=check_directory(value),
-                                                 prompt=prompt,
-                                                 cache=cache))
-                arguments = []
+                directory = check_directory(value)
             elif option in ('-C', '--check'):
                 actions.append(functools.partial(check_package, archive=value, cache=cache))
             elif option in ('-p', '--patch'):
@@ -196,9 +192,19 @@ def main():
             elif option in ('-h', '--help'):
                 usage(__doc__)
                 return
+        # We delay the patch_control_file() and collect_packages() partials
+        # until all command line options have been parsed, to ensure that the
+        # order of the command line options doesn't matter.
         if control_file:
-            assert control_fields, "Please specify one or more control file fields to patch!"
+            if not control_fields:
+                raise Exception("Please specify one or more control file fields to patch!")
             actions.append(functools.partial(patch_control_file, control_file, control_fields))
+        if directory:
+            actions.append(functools.partial(collect_packages,
+                                             archives=arguments,
+                                             directory=directory,
+                                             prompt=prompt,
+                                             cache=cache))
     except Exception as e:
         warning("Error: %s", e)
         sys.exit(1)
@@ -258,7 +264,7 @@ def highlight(text):
     return text
 
 
-def collect_packages(archives, directory, prompt=True, cache=None):
+def collect_packages(archives, directory, prompt=True, cache=None, concurrency=None):
     """
     Interactively copy packages and their dependencies.
 
@@ -270,6 +276,10 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                    operator (using a confirmation prompt rendered on the
                    terminal), :data:`False` to skip the prompt.
     :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
+    :param concurrency: Override the number of concurrent processes (defaults
+                        to the number of `archives` given or to the value of
+                        :func:`multiprocessing.cpu_count()`, whichever is
+                        smaller).
     :raises: :exc:`~exceptions.ValueError` when no archives are given.
 
     When more than one archive is given a :class:`multiprocessing.Pool` is used
@@ -285,13 +295,15 @@ def collect_packages(archives, directory, prompt=True, cache=None):
         related_archives.update(collect_related_packages(archives[0], cache=cache))
     else:
         # Find the related packages of multiple archives (concurrently).
-        pool = multiprocessing.Pool()
-        try:
-            worker = functools.partial(collect_packages_worker, cache=cache)
-            for result in pool.map(worker, archives, chunksize=1):
-                related_archives.update(result)
-        finally:
-            pool.terminate()
+        with AutomaticSpinner(label="Collecting related packages"):
+            concurrency = min(len(archives), concurrency or multiprocessing.cpu_count())
+            pool = multiprocessing.Pool(concurrency)
+            try:
+                worker = functools.partial(collect_packages_worker, cache=cache)
+                for result in pool.map(worker, archives, chunksize=1):
+                    related_archives.update(result)
+            finally:
+                pool.terminate()
     # Ignore package archives that are already in the target directory.
     relevant_archives = set()
     for archive in related_archives:
@@ -315,12 +327,15 @@ def collect_packages(archives, directory, prompt=True, cache=None):
                 dst = os.path.join(directory, os.path.basename(src))
                 smart_copy(src, dst)
             logger.info("Done! Copied %s to %s.", pluralized, format_path(directory))
+    else:
+        logger.info("Nothing to do! (%s previously copied)",
+                    pluralize(len(related_archives), "package archive"))
 
 
 def collect_packages_worker(filename, cache=None):
     """Helper for :func:`collect_packages()` that enables concurrent collection."""
     try:
-        return collect_related_packages(filename, cache=cache)
+        return collect_related_packages(filename, cache=cache, interactive=False)
     except Exception:
         # Log a full traceback in the child process because the multiprocessing
         # module doesn't preserve the traceback when propagating the exception

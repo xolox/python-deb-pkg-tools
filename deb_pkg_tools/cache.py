@@ -46,16 +46,14 @@ and multiple readers were all hitting the cache at the same time.
 At this point I looked around for alternative cache backends with the following
 requirements:
 
-- Better support for concurrent writers and readers, ideally without
-  any locking or blocking between concurrent writers and readers.
+- Support for concurrent reading and writing without any locking or blocking.
 
-- It should simply not be possible to corrupt the cache, regardless of the
-  number of concurrent reads and writes.
+- It should not be possible to corrupt the cache, regardless of concurrency.
 
 - To keep system requirements to a minimum, it should not be required to have
-  server (daemon) process running.
+  a server (daemon) process running just for the cache to function.
 
-These conflicting requirements left me with basically no options. Based on
+These conflicting requirements left me with basically no options :-). Based on
 previous good experiences I decided to try using the filesystem to store the
 cache, with individual files representing cache entries. Through atomic
 filesystem operations this strategy basically delegates all locking to the
