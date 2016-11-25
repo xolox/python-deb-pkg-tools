@@ -1,7 +1,7 @@
 # Makefile for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 21, 2016
+# Last Change: November 25, 2016
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 PACKAGE_NAME = deb-pkg-tools
@@ -26,11 +26,15 @@ default:
 	@echo '    make clean      cleanup all temporary files'
 	@echo
 
+# The `virtualenv --system-site-packages' command is used to enable access to
+# the python-apt binding which isn't available on PyPI (AFAIK) and so can't
+# easily be installed inside of a Python virtual environment.
+
 install:
 	@test -d "$(VIRTUAL_ENV)" || mkdir -p "$(VIRTUAL_ENV)"
-	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --quiet "$(VIRTUAL_ENV)"
+	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --system-site-packages --quiet "$(VIRTUAL_ENV)"
 	@test -x "$(VIRTUAL_ENV)/bin/pip" || easy_install pip
-	@test -x "$(VIRTUAL_ENV)/bin/pip-accel" || pip install --quiet pip-accel
+	@test -x "$(VIRTUAL_ENV)/bin/pip-accel" || pip install --quiet --ignore-installed pip-accel
 	@pip-accel install --quiet --requirement=requirements.txt
 	@pip uninstall --yes $(PACKAGE_NAME) &>/dev/null || true
 	@pip install --quiet --no-deps --ignore-installed .
@@ -45,7 +49,16 @@ check: install
 
 test: install
 	@pip-accel install --quiet --requirement=requirements-tests.txt
-	@py.test --cov --cov-report=html --cov-fail-under=90
+	@py.test --cov
+	@coverage html
+	@coverage report --fail-under=90
+
+full-coverage: install
+	@pip-accel install --quiet --requirement=requirements-tests.txt
+	@sudo PYTHONDONTWRITEBYTECODE=true "$(VIRTUAL_ENV)/bin/py.test" --cov
+	@sudo chown --recursive --reference=. .
+	@coverage html
+	@coverage report --fail-under=90
 
 tox: install
 	@pip-accel install --quiet tox && tox
