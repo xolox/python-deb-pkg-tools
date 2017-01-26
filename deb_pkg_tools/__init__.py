@@ -39,4 +39,4 @@ def generate_stdeb_cfg():
     """
     print('[deb-pkg-tools]')
     print('Depends: %s' % ', '.join(debian_package_dependencies))
-    print('XS-Python-Version: >= 2.6')
+    print('Suggests: memcached')
