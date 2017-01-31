@@ -1,7 +1,7 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 21, 2016
+# Last Change: January 31, 2017
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Sphinx documentation configuration for the `deb-pkg-tools` project."""
@@ -70,6 +70,7 @@ pygments_style = 'sphinx'
 intersphinx_mapping = dict(
     executor=('https://executor.readthedocs.io/en/latest', None),
     humanfriendly=('https://humanfriendly.readthedocs.io/en/latest', None),
+    propertymanager=('https://property-manager.readthedocs.io/en/latest', None),
     python=('https://docs.python.org/2', None),
     pythonapt=('https://apt.alioth.debian.org/python-apt-doc', None),
 )
