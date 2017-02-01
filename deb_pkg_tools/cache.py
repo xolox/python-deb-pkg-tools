@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 24, 2016
+# Last Change: February 1, 2017
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -271,11 +271,8 @@ class CacheEntry(object):
                 self.in_memory = from_fs
                 self.set_memcached()
                 return from_fs['value']
-        except EnvironmentError as e:
-            # Silence `No such file or directory' errors without accidentally
-            # swallowing other exceptions (that we don't know how to handle).
-            if e.errno != errno.ENOENT:
-                raise
+        except Exception:
+            pass
 
     def set_value(self, value):
         """
