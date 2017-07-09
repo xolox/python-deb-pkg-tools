@@ -221,7 +221,7 @@ License
 
 This software is licensed under the `MIT license`_.
 
-© 2016 Peter Odding.
+© 2017 Peter Odding.
 
 .. External references:
 .. _deb_pkg_tools.repo.select_gpg_key(): https://deb-pkg-tools.readthedocs.org/en/latest/#deb_pkg_tools.repo.select_gpg_key
