@@ -1,7 +1,7 @@
 # Makefile for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: December 19, 2016
+# Last Change: July 9, 2017
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 PACKAGE_NAME = deb-pkg-tools
@@ -82,7 +82,7 @@ publish: stdeb.cfg
 	$(MAKE) clean
 
 clean:
-	@rm -Rf *.egg .cache .coverage .tox build dist docs/build htmlcov
+	@rm -Rf *.egg .cache .coverage .coverage.* .tox build dist docs/build htmlcov
 	@find -depth -type d -name __pycache__ -exec rm -Rf {} \;
 	@find -type f -name '*.pyc' -delete
 
