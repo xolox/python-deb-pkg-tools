@@ -1,7 +1,7 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 31, 2017
+# Last Change: July 9, 2017
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Sphinx documentation configuration for the `deb-pkg-tools` project."""
@@ -79,7 +79,7 @@ intersphinx_mapping = dict(
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'classic'
+html_theme = 'nature'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'debpkgtoolsdoc'
