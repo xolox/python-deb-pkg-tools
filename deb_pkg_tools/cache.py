@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 1, 2017
+# Last Change: July 10, 2017
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -123,6 +123,30 @@ class PackageCache(object):
         self.entries = {}
         self.memcached = memcache.Client(['127.0.0.1:11211'])
         self.use_memcached = True
+
+    def __getstate__(self):
+        """
+        Save a :mod:`pickle` compatible :class:`PackageCache` representation.
+
+        The :func:`__getstate__()` and :func:`__setstate__()` methods make
+        :class:`PackageCache` objects compatible with :mod:`multiprocessing`
+        (which uses :mod:`pickle`). This capability is used by
+        :func:`deb_pkg_tools.cli.collect_packages()` to
+        enable concurrent package collection.
+        """
+        # Get what is normally pickled.
+        state = self.__dict__.copy()
+        # Avoid pickling the `entries' and `memcached' attributes.
+        state.pop('entries')
+        state.pop('memcached')
+        # Pickle the other attributes.
+        return state
+
+    def __setstate__(self, state):
+        """Load a :mod:`pickle` compatible :class:`PackageCache` representation."""
+        self.__dict__.update(state)
+        self.entries = {}
+        self.memcached = memcache.Client(['127.0.0.1:11211'])
 
     def get_entry(self, category, pathname):
         """
