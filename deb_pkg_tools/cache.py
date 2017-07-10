@@ -84,6 +84,9 @@ from six.moves import cPickle as pickle
 # Modules included in our package.
 from deb_pkg_tools.utils import makedirs, sha1
 
+CACHE_FORMAT_REVISION = 2
+"""The version number of the cache format (an integer)."""
+
 # Initialize a logger for this module.
 logger = logging.getLogger(__name__)
 
@@ -306,8 +309,9 @@ class CacheEntry(object):
         """
         # Cache the value in memory.
         self.in_memory = dict(
-            pathname=self.pathname,
             last_modified=self.last_modified,
+            pathname=self.pathname,
+            revision=CACHE_FORMAT_REVISION,
             value=value,
         )
         # Cache the value in memcached.
@@ -344,7 +348,8 @@ class CacheEntry(object):
         """Helper for :func:`get_value()` to validate cached values."""
         return (value and
                 value['pathname'] == self.pathname and
-                value['last_modified'] >= self.last_modified)
+                value['last_modified'] >= self.last_modified and
+                value.get('revision') == CACHE_FORMAT_REVISION)
 
     def write_file(self, filename):
         """Helper for :func:`set_value()` to cache values on the filesystem."""
