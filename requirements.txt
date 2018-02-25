@@ -1,6 +1,6 @@
 # Direct dependencies of deb-pkg-tools.
 coloredlogs >= 0.4.6
-executor >= 1.3
+executor >= 19.0
 humanfriendly >= 4.3
 property-manager >= 2.1
 python-debian >= 0.1.21-nmu2
