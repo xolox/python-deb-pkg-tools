@@ -1,7 +1,7 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 9, 2017
+# Last Change: February 25, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Sphinx documentation configuration for the `deb-pkg-tools` project."""
@@ -33,7 +33,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'deb-pkg-tools'
-copyright = '2017, Peter Odding'
+copyright = '2018, Peter Odding'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
