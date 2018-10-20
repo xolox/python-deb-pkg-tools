@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 25, 2016
+# Last Change: October 20, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -216,8 +216,8 @@ def main():
             cache.collect_garbage()
         else:
             usage(__doc__)
-    except Exception as e:
-        logger.exception("An error occurred!")
+    except Exception:
+        logger.exception("An error occurred! Aborting..")
         sys.exit(1)
 
 
