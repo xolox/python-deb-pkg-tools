@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 25, 2016
+# Last Change: October 20, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -24,9 +24,11 @@ import time
 # External dependencies.
 from executor import execute
 from humanfriendly import coerce_boolean, format_path, format_timespan, parse_path
+from humanfriendly.decorators import cached
 
 # Modules included in our package.
-from deb_pkg_tools.utils import makedirs
+from deb_pkg_tools.utils import find_installed_version, makedirs
+from deb_pkg_tools.version import Version
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -46,6 +48,18 @@ def initialize_gnupg():
     we run GPG.
     """
     makedirs(parse_path('~/.gnupg'))
+
+
+@cached
+def have_updated_gnupg():
+    """
+    Check which version of GnuPG is installed.
+
+    :returns: :data:`True` if GnuPG >= 2.1 is installed,
+              :data:`False` for older versions.
+    """
+    gnupg_version = find_installed_version('gnupg')
+    return Version(gnupg_version) >= Version('2.1')
 
 
 class GPGKey(object):
@@ -170,11 +184,18 @@ class GPGKey(object):
                     Expire-Date: 0
                     %pubring {public_key_file}
                     %secring {secret_key_file}
-                    %commit
                 ''').format(name=self.name,
                             description=self.description,
                             secret_key_file=self.secret_key_file,
                             public_key_file=self.public_key_file))
+                # GnuPG >= 2.1 will prompt the operator to pick a password
+                # interactively unless the '%no-protection' option is used.
+                if have_updated_gnupg():
+                    logger.debug("Using 'no-protection' option ..")
+                    handle.write('%no-protection\n')
+                else:
+                    logger.debug("Not using 'no-protection' option ..")
+                handle.write('%commit\n')
 
             # Generate the GPG key pair.
             logger.info("Generating GPG key pair %s (%s) ..", self.name, self.description)
