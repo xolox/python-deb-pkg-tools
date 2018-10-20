@@ -3,7 +3,7 @@
 # Setup script for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 9, 2017
+# Last Change: October 20, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -88,6 +88,7 @@ setup(name='deb-pkg-tools',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
           'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: Implementation :: CPython',
           'Programming Language :: Python :: Implementation :: PyPy',
           'Topic :: Software Development',
