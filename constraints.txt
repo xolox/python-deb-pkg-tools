@@ -23,3 +23,7 @@ pytest < 3.3 ; python_version < '2.7'
 # pycparser < 2.19 drops Python 2.6 compatibility:
 # https://github.com/eliben/pycparser/blob/master/CHANGES
 pycparser < 2.19 ; python_version < '2.7'
+
+# python-debian 0.1.33 seems to break Python 2.6 compatibility:
+# https://travis-ci.org/xolox/python-deb-pkg-tools/jobs/443965978
+python-debian < 0.1.33 ; python_version < '2.7'
