@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 22, 2016
+# Last Change: October 20, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -43,6 +43,7 @@ import tempfile
 # External dependencies.
 from executor import execute, ExternalCommandFailed
 from humanfriendly import coerce_boolean, concatenate, format_path, Spinner, Timer
+from humanfriendly.decorators import cached
 from six.moves import configparser
 
 # Modules included in our package.
@@ -371,11 +372,7 @@ def with_repository(directory, *command, **kw):
         deactivate_repository(directory)
 
 
-# Use a global to cache the answer of apt_supports_trusted_option() so we don't
-# execute `dpkg-query --show' and `dpkg --compare-versions' more than once.
-trusted_option_supported = None
-
-
+@cached
 def apt_supports_trusted_option():
     """
     Figure out whether apt supports the ``[trusted=yes]`` option.
@@ -392,16 +389,13 @@ def apt_supports_trusted_option():
 
     .. _Debian bug #596498: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=596498
     """
-    global trusted_option_supported
-    if trusted_option_supported is None:
-        try:
-            # Find the installed version of the `apt' package.
-            apt_version = Version(find_installed_version('apt'))
-            # Check if the version is >= 0.8.16 (which includes [trusted=yes] support).
-            trusted_option_supported = (apt_version >= Version('0.8.16~exp3'))
-        except ExternalCommandFailed:
-            trusted_option_supported = False
-    return trusted_option_supported
+    try:
+        # Find the installed version of the `apt' package.
+        apt_version = Version(find_installed_version('apt'))
+        # Check if the version is >= 0.8.16 (which includes [trusted=yes] support).
+        return (apt_version >= Version('0.8.16~exp3'))
+    except ExternalCommandFailed:
+        return False
 
 
 def select_gpg_key(directory):

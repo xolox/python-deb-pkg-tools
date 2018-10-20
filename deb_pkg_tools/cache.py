@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 10, 2017
+# Last Change: October 20, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -79,6 +79,7 @@ import time
 # External dependencies.
 import memcache
 from humanfriendly import Timer, format_timespan, pluralize
+from humanfriendly.decorators import cached
 from six.moves import cPickle as pickle
 
 # Modules included in our package.
@@ -90,10 +91,8 @@ CACHE_FORMAT_REVISION = 2
 # Initialize a logger for this module.
 logger = logging.getLogger(__name__)
 
-# Instance of PackageCache, initialized on demand by get_default_cache().
-default_cache_instance = None
 
-
+@cached
 def get_default_cache():
     """
     Load the default package cache stored inside the user's home directory.
@@ -105,11 +104,8 @@ def get_default_cache():
 
     :returns: A :class:`PackageCache` object.
     """
-    global default_cache_instance
-    if default_cache_instance is None:
-        from deb_pkg_tools.config import package_cache_directory
-        default_cache_instance = PackageCache(directory=package_cache_directory)
-    return default_cache_instance
+    from deb_pkg_tools.config import package_cache_directory
+    return PackageCache(directory=package_cache_directory)
 
 
 class PackageCache(object):
