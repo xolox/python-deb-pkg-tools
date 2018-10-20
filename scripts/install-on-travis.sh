@@ -11,12 +11,8 @@ echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
 sudo /etc/init.d/rng-tools restart
 
 # Install the required Python packages.
-pip install pip-accel
-pip-accel install coveralls
-pip-accel install --requirement=requirements.txt
-pip-accel install --requirement=requirements-checks.txt
-pip-accel install --requirement=requirements-tests.txt
+pip install --constraint=constraints.txt --requirement=requirements-travis.txt
 
 # Install the project itself, making sure that potential character encoding
 # and/or decoding errors in the setup script are caught as soon as possible.
-LC_ALL=C pip-accel install .
+LC_ALL=C pip install .
