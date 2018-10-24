@@ -73,7 +73,9 @@ is described below.
 
 **Usage:** `deb-pkg-tools [OPTIONS] ...`
 
-Wrapper for the deb-pkg-tools Python project that implements various tools to inspect, build and manipulate Debian binary package archives and related entities like trivial repositories.
+Wrapper for the deb-pkg-tools Python project that implements various tools to
+inspect, build and manipulate Debian binary package archives and related
+entities like trivial repositories.
 
 **Supported options:**
 
@@ -116,8 +118,7 @@ Wrapper for the deb-pkg-tools Python project that implements various tools to in
    cron job scheduled during idle hours :-)."
    "``-y``, ``--yes``",Assume the answer to interactive questions is yes.
    "``-v``, ``--verbose``",Make more noise! (useful during debugging)
-   "``-h``, ``--help``","Show this message and exit.
-   "
+   "``-h``, ``--help``",Show this message and exit.
 
 .. [[[end]]]
 
