@@ -199,8 +199,9 @@ def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
             # not cause an unnecessary repository update. That would turn the
             # conditional update into an unconditional update, which is not the
             # intention here :-)
-            if os.path.isfile(os.path.join(directory, 'Release.gpg')) or gpg_key:
-                metadata_files.append('Release.gpg')
+            for signed_file in 'Release.gpg', 'InRelease':
+                if os.path.isfile(os.path.join(directory, signed_file)) or gpg_key:
+                    metadata_files.append(signed_file)
             metadata_last_updated = max(os.path.getmtime(os.path.join(directory, fn)) for fn in metadata_files)
         except Exception:
             metadata_last_updated = 0
