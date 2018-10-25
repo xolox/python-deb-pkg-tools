@@ -11,6 +11,29 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 5.1`_ (2018-10-26)
+---------------------------
+
+Added the ``deb_pkg_tools.gpg.GPGKey.identifier`` property that uses the ``gpg
+--list-keys --with-colons`` command to introspect the key pair and extract a
+unique identifier:
+
+- When a fingerprint is available in the output this is the preferred value.
+- Otherwise the output is searched for a key ID.
+
+If neither of these values is available an exception is raised.
+
+.. note:: While testing this I noticed that the old style ``gpg
+          --no-default-keyring --keyring=… --secret-keyring=…`` commands don't
+          support the ``--list-keys`` command line option. The only workaround
+          for this is to use the ``directory`` property (which triggers the use
+          of ``--homedir``) instead of the ``public_key_file`` and
+          ``secret_key_file`` properties. This appears to be due to a bug in
+          older GnuPG releases (see `this mailing list thread`_).
+
+.. _Release 5.1: https://github.com/xolox/python-deb-pkg-tools/compare/5.0...5.1
+.. _this mailing list thread: https://lists.gnupg.org/pipermail/gnupg-users/2002-March/012144.html
+
 `Release 5.0`_ (2018-10-25)
 ---------------------------
 
