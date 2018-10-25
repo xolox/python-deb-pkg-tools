@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 25, 2018
+# Last Change: October 26, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -205,9 +205,7 @@ class GPGKey(PropertyManager):
           :attr:`directory` (even though this is required to use an isolated
           GPG key with GnuPG >= 2.1).
         """
-        new_usage = bool(self.directory)
-        old_usage = (self.public_key_file or self.secret_key_file)
-        if old_usage and not new_usage:
+        if self.old_usage and not self.new_usage:
             raise TypeError(compact("""
                 You're running GnuPG >= 2.1 which requires changes to how
                 deb_pkg_tools.gpg.GPGKey is used and unfortunately our
@@ -400,23 +398,40 @@ class GPGKey(PropertyManager):
         return filenames
 
     @cached_property
-    def fingerprint(self):
+    def identifier(self):
         """
-        The fingerprint of the GPG key pair (a string).
+        A unique identifier for the GPG key pair (a string).
 
-        This uses the ``gpg --list-keys --with-colons`` command to extract the
-        fingerprint of the GPG key pair. If no fingerprint can be extracted
-        :exc:`~exceptions.EnvironmentError` is raised.
+        The output of the ``gpg --list-keys --with-colons`` command is parsed
+        to extract a unique identifier for the GPG key pair:
+
+        - When a fingerprint is available this is preferred.
+        - Otherwise a long key ID will be returned (assuming one is available).
+        - If neither can be extracted :exc:`~exceptions.EnvironmentError` is raised.
+
+        If an isolated key pair is being used the :attr:`directory` option
+        should be used instead of the :attr:`public_key_file` and
+        :attr:`secret_key_file` properties, even if GnuPG < 2.1 is being used.
+        This is necessary because of what appears to be a bug in GnuPG, see
+        `this mailing list thread`_ for more discussion.
+
+        .. _this mailing list thread: https://lists.gnupg.org/pipermail/gnupg-users/2002-March/012144.html
         """
-        command = ' '.join([self.gpg_command, '--list-keys', '--with-colons'])
-        listing = execute(command, capture=True)
-        for line in listing.splitlines():
-            fields = line.split(':')
-            # Refer to /usr/share/doc/gnupg/DETAILS.gz for details on this.
+        listing = execute(' '.join([self.gpg_command, '--list-keys', '--with-colons']), capture=True)
+        parsed_listing = [line.split(':') for line in listing.splitlines()]
+        # Look for an 'fpr:*' line with a key fingerprint.
+        for fields in parsed_listing:
             if len(fields) >= 10 and fields[0] == 'fpr' and fields[9].isalnum():
                 return fields[9]
-        msg = "Failed to get fingerprint of GPG key pair! (%s)"
-        raise EnvironmentError(msg % self)
+        # Look for an 'pub:*' line with a long key ID.
+        for fields in parsed_listing:
+            if len(fields) >= 5 and fields[0] == 'pub' and fields[4].isalnum():
+                return fields[4]
+        # Explain what went wrong, try to provide hints.
+        msg = "Failed to get unique ID of GPG key pair!"
+        if self.old_usage and not self.new_usage:
+            msg += " Use of the 'directory' option may help to resolve this."
+        raise EnvironmentError(msg)
 
     @property
     def gpg_command(self):
@@ -456,6 +471,16 @@ class GPGKey(PropertyManager):
 
         Used only when the key pair is generated because it doesn't exist yet.
         """
+
+    @property
+    def new_usage(self):
+        """:data:`True` if the new API is being used, :data:`False` otherwise."""
+        return bool(self.directory)
+
+    @property
+    def old_usage(self):
+        """:data:`True` if the old API is being used, :data:`False` otherwise."""
+        return bool(self.public_key_file or self.secret_key_file)
 
     @mutable_property
     def public_key_file(self):
