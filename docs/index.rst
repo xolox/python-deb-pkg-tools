@@ -1,77 +1,33 @@
-.. include:: ../README.rst
+deb-pkg-tools: Debian packaging tools
+=====================================
 
-Function reference
-==================
+Welcome to the documentation of `deb-pkg-tools` version |release|!
+The following sections are available:
 
-The following documentation is based on the source code of version |release| of
-the `deb-pkg-tools` package.
+.. contents::
+   :local:
 
-.. note:: Most of the functions defined by `deb-pkg-tools` depend on external
-   programs. If these programs fail unexpectedly (end with a nonzero exit code)
-   :exc:`executor.ExternalCommandFailed` is raised.
-
-Package metadata cache
-----------------------
-
-.. automodule:: deb_pkg_tools.cache
-   :members:
-
-Static analysis of package archives
------------------------------------
-
-.. automodule:: deb_pkg_tools.checks
-   :members:
-
-Command line interface
-----------------------
-
-.. automodule:: deb_pkg_tools.cli
-   :members:
-
-Configuration defaults
-----------------------
-
-.. automodule:: deb_pkg_tools.config
-   :members:
-
-Control file manipulation
--------------------------
-
-.. automodule:: deb_pkg_tools.control
-   :members:
-
-Relationship parsing and evaluation
------------------------------------
-
-.. automodule:: deb_pkg_tools.deps
-   :members:
-
-GPG key pair handling
----------------------
-
-.. automodule:: deb_pkg_tools.gpg
-   :members:
-
-Package manipulation
---------------------
-
-.. automodule:: deb_pkg_tools.package
-   :members:
-
-Repository management
----------------------
-
-.. automodule:: deb_pkg_tools.repo
-   :members:
-
-Miscellaneous functions
------------------------
-
-.. automodule:: deb_pkg_tools.utils
-   :members:
-
-Version comparison
+User documentation
 ------------------
 
-.. automodule:: deb_pkg_tools.version
-   :members:
+The readme is the best place to start reading, it's targeted at all users and
+documents the command line interface:
+
+.. toctree::
+   readme.rst
+
+API documentation
+-----------------
+
+The following API documentation is automatically generated from the source code:
+
+.. toctree::
+   api.rst
+
+Change log
+----------
+
+The change log lists notable changes to the project:
+
+.. toctree::
+   changelog.rst

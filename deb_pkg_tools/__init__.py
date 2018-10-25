@@ -13,7 +13,7 @@ the `deb-pkg-tools` package.
 """
 
 # Semi-standard module versioning.
-__version__ = '4.5'
+__version__ = '5.0'
 
 debian_package_dependencies = (
     'apt',        # apt-get
