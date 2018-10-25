@@ -334,8 +334,8 @@ class GPGKey(PropertyManager):
             lines.append('%no-protection')
         else:
             logger.debug("Specializing batch script for GnuPG < 2.1 ..")
-            lines.append('%pubring %s' % self.public_key_file)
-            lines.append('%secring %s' % self.secret_key_file)
+            lines.append('%%pubring %s' % self.public_key_file)
+            lines.append('%%secring %s' % self.secret_key_file)
         lines.append('%commit')
         text = '\n'.join(lines)
         logger.debug("Here's the complete batch script:\n%s", text)
