@@ -180,9 +180,38 @@ def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
     :raises: :exc:`.ResourceLockedException` when the given repository
              directory is being updated by another process.
 
-    This function is based on the Debian commands ``dpkg-scanpackages``
-    (reimplemented as :class:`scan_packages()`) and ``apt-ftparchive`` (also
-    uses the external programs ``gpg`` and ``gzip``).
+    This function is based on the Debian programs dpkg-scanpackages_ and
+    apt-ftparchive_ and also uses gpg_ and gzip_. The following files are
+    generated:
+
+    ===============  ==========================================================
+    Filename         Description
+    ===============  ==========================================================
+    ``Packages``     Provides the metadata of all ``*.deb`` packages in the
+                     `trivial repository`_ as a single text file. Generated
+                     using :class:`scan_packages()` (as a faster alternative
+                     to dpkg-scanpackages_).
+    ``Packages.gz``  A compressed version of the package metadata generated
+                     using gzip_.
+    ``Release``      Metadata about the release and hashes of the ``Packages``
+                     and ``Packages.gz`` files. Generated using
+                     apt-ftparchive_.
+    ``Release.gpg``  An ASCII-armored detached GPG signature of the ``Release``
+                     file. Generated using ``gpg --armor --sign
+                     --detach-sign``.
+    ``InRelease``    The contents of the ``Release`` file and its GPG signature
+                     combined into a single human readable file. Generated
+                     using ``gpg --armor --sign --clearsign``.
+    ===============  ==========================================================
+
+    For more details about the ``Release.gpg`` and ``InRelease`` files please
+    refer to the Debian wiki's section on secure-apt_.
+
+    .. _apt-ftparchive: https://manpages.debian.org/apt-ftparchive
+    .. _dpkg-scanpackages: https://manpages.debian.org/dpkg-scanpackages
+    .. _gpg: https://manpages.debian.org/gpg
+    .. _gzip: https://manpages.debian.org/gzip
+    .. _secure-apt: https://wiki.debian.org/SecureApt
     """
     with atomic_lock(directory):
         timer = Timer()
