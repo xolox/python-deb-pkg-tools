@@ -1,7 +1,7 @@
 # Makefile for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: July 9, 2017
+# Last Change: October 25, 2018
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 PACKAGE_NAME = deb-pkg-tools
@@ -36,7 +36,7 @@ install:
 	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --system-site-packages --quiet "$(VIRTUAL_ENV)"
 	@test -x "$(VIRTUAL_ENV)/bin/pip" || easy_install pip
 	@test -x "$(VIRTUAL_ENV)/bin/pip-accel" || pip install --quiet --ignore-installed pip-accel
-	@pip-accel install --quiet --requirement=requirements.txt
+	@pip-accel install --quiet --constraint=constraints.txt --requirement=requirements.txt
 	@pip uninstall --yes $(PACKAGE_NAME) &>/dev/null || true
 	@pip install --quiet --no-deps --ignore-installed .
 
@@ -46,16 +46,17 @@ reset:
 	$(MAKE) install
 
 check: install
-	@scripts/check-code-style.sh
+	@pip-accel install --upgrade --quiet --constraint=constraints.txt --requirement=requirements-checks.txt
+	@flake8
 
 test: install
-	@pip-accel install --quiet --requirement=requirements-tests.txt
+	@pip-accel install --quiet --constraint=constraints.txt --requirement=requirements-tests.txt
 	@py.test --cov
 	@coverage html
 	@coverage report --fail-under=90 &>/dev/null
 
 full-coverage: install
-	@pip-accel install --quiet --requirement=requirements-tests.txt
+	@pip-accel install --quiet --constraint=constraints.txt --requirement=requirements-tests.txt
 	@sudo "$(VIRTUAL_ENV)/bin/py.test" --cov
 	@sudo chown --recursive --reference=. .
 	@coverage report --fail-under=90 &>/dev/null
