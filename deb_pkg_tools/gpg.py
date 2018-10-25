@@ -179,9 +179,9 @@ class GPGKey(PropertyManager):
         self.generate_key_pair()
 
     def check_key_id(self):
-        """Raise :exc:`~exceptions.TypeError` when a key ID has been specified but the key pair doesn't exist."""
+        """Raise :exc:`~exceptions.EnvironmentError` when a key ID has been specified but the key pair doesn't exist."""
         if self.key_id and not self.existing_files:
-            raise TypeError(compact(
+            raise EnvironmentError(compact(
                 "The key ID {key_id} was specified but the configured key pair doesn't exist!",
                 key_id=self.key_id,
             ))
@@ -220,7 +220,7 @@ class GPGKey(PropertyManager):
         Raise an exception when we risk overwriting an existing public or secret key file.
 
         :returns: A list of filenames with existing files.
-        :raises: :exc:`~exceptions.TypeError` as described below.
+        :raises: :exc:`~exceptions.EnvironmentError` as described below.
 
         When GnuPG < 2.1 is installed :func:`check_old_files()` is called to
         ensure that when :attr:`public_key_file` and :attr:`secret_key_file`
@@ -398,6 +398,25 @@ class GPGKey(PropertyManager):
             candidates = (self.public_key_file, self.secret_key_file)
             filenames.extend(fn for fn in candidates if os.path.isfile(fn))
         return filenames
+
+    @cached_property
+    def fingerprint(self):
+        """
+        The fingerprint of the GPG key pair (a string).
+
+        This uses the ``gpg --list-keys --with-colons`` command to extract the
+        fingerprint of the GPG key pair. If no fingerprint can be extracted
+        :exc:`~exceptions.EnvironmentError` is raised.
+        """
+        command = ' '.join([self.gpg_command, '--list-keys', '--with-colons'])
+        listing = execute(command, capture=True)
+        for line in listing.splitlines():
+            fields = line.split(':')
+            # Refer to /usr/share/doc/gnupg/DETAILS.gz for details on this.
+            if len(fields) >= 10 and fields[0] == 'fpr' and fields[9].isalnum():
+                return fields[9]
+        msg = "Failed to get fingerprint of GPG key pair! (%s)"
+        raise EnvironmentError(msg % self)
 
     @property
     def gpg_command(self):
