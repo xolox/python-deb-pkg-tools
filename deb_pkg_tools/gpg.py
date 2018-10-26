@@ -382,17 +382,22 @@ class GPGKey(PropertyManager):
 
         The content of this list depends on the GnuPG version:
 
-        - On GnuPG < 2.1 :attr:`public_key_file` and :attr:`secret_key_file`
-          are returned (only if the files exist of course).
+        - On GnuPG >= 2.1 and/or when :attr:`directory` has been set (also on
+          GnuPG < 2.1) any files in or below :attr:`directory` are included.
 
-        - On GnuPG >= 2.1 any files in or below :attr:`directory` are returned.
+        - On GnuPG < 2.1 :attr:`public_key_file` and :attr:`secret_key_file`
+          are included (only if the properties are set and the files exist of
+          course).
         """
         filenames = []
-        if have_updated_gnupg():
+        if have_updated_gnupg() or self.new_usage:
+            # New usage is mandatory in combination with GnuPG >= 2.1 and
+            # optional but supported in combination with GnuPG < 2.1.
             if os.path.isdir(self.directory_effective):
                 for root, dirs, files in os.walk(self.directory_effective):
                     filenames.extend(os.path.join(root, fn) for fn in files)
-        else:
+        if self.old_usage and not have_updated_gnupg():
+            # Old usage is only possibly in combination with GnuPG < 2.1.
             candidates = (self.public_key_file, self.secret_key_file)
             filenames.extend(fn for fn in candidates if os.path.isfile(fn))
         return filenames
