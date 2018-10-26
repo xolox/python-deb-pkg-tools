@@ -11,6 +11,17 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 5.1.1`_ (2018-10-26)
+-----------------------------
+
+Bug fix for logic behind ``deb_pkg_tools.GPGKey.existing_files`` property: The
+configured ``directory`` wasn't being scanned in combination with GnuPG < 2.1
+even though the use of ``directory`` has become the preferred way to configure
+GnuPG < 2.1 as well as GnuPG >= 2.1 (due to the GnuPG bug mentioned in the
+release notes of release 5.1).
+
+.. _Release 5.1.1: https://github.com/xolox/python-deb-pkg-tools/compare/5.1...5.1.1
+
 `Release 5.1`_ (2018-10-26)
 ---------------------------
 
