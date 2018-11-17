@@ -11,6 +11,20 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 5.2`_ (2018-11-17)
+---------------------------
+
+Promote python-debian version constraint into a conditional dependency.
+
+Recently I constrained the version of python-debian to work around a Python 2.6
+incompatibility. This same incompatibility is now biting me in the `py2deb
+setup on Travis CI`_ and after fighting that situation for a while I decided it
+may be better (less convoluted) to fix this in deb-pkg-tools instead (at the
+source of the problem, so to speak).
+
+.. _Release 5.2: https://github.com/xolox/python-deb-pkg-tools/compare/5.1.1...5.2
+.. _py2deb setup on Travis CI: https://github.com/paylogic/py2deb/compare/4284a1db99699bab14bc5fb62a88256a5d1ae978...60ece9ffebbd5f1bdff7ea20fbf0eeb401a9da3f
+
 `Release 5.1.1`_ (2018-10-26)
 -----------------------------
 
