@@ -47,7 +47,7 @@ def get_install_requires():
     install_requires = get_requirements('requirements.txt')
     if 'bdist_wheel' not in sys.argv:
         # python-debian 0.1.33 drops Python 2.6 compatibility.
-        if sys.version_info[2:] <= (2, 6):
+        if sys.version_info[:2] <= (2, 6):
             install_requires.append('python-debian==0.1.32')
         else:
             install_requires.append('python-debian >= 0.1.32')
