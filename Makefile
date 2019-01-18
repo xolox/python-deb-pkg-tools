@@ -1,7 +1,7 @@
 # Makefile for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 25, 2018
+# Last Change: January 18, 2019
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 PACKAGE_NAME = deb-pkg-tools
@@ -35,8 +35,7 @@ install:
 	@test -d "$(VIRTUAL_ENV)" || mkdir -p "$(VIRTUAL_ENV)"
 	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --system-site-packages --quiet "$(VIRTUAL_ENV)"
 	@test -x "$(VIRTUAL_ENV)/bin/pip" || easy_install pip
-	@test -x "$(VIRTUAL_ENV)/bin/pip-accel" || pip install --quiet --ignore-installed pip-accel
-	@pip-accel install --quiet --constraint=constraints.txt --requirement=requirements.txt
+	@pip install --quiet --constraint=constraints.txt --requirement=requirements.txt
 	@pip uninstall --yes $(PACKAGE_NAME) &>/dev/null || true
 	@pip install --quiet --no-deps --ignore-installed .
 
@@ -46,29 +45,29 @@ reset:
 	$(MAKE) install
 
 check: install
-	@pip-accel install --upgrade --quiet --constraint=constraints.txt --requirement=requirements-checks.txt
+	@pip install --upgrade --quiet --constraint=constraints.txt --requirement=requirements-checks.txt
 	@flake8
 
 test: install
-	@pip-accel install --quiet --constraint=constraints.txt --requirement=requirements-tests.txt
+	@pip install --quiet --constraint=constraints.txt --requirement=requirements-tests.txt
 	@py.test --cov
 	@coverage html
 	@coverage report --fail-under=90 &>/dev/null
 
 full-coverage: install
-	@pip-accel install --quiet --constraint=constraints.txt --requirement=requirements-tests.txt
+	@pip install --quiet --constraint=constraints.txt --requirement=requirements-tests.txt
 	@sudo "$(VIRTUAL_ENV)/bin/py.test" --cov
 	@sudo chown --recursive --reference=. .
 	@coverage report --fail-under=90 &>/dev/null
 
 tox: install
-	@pip-accel install --quiet tox && tox
+	@pip install --quiet tox && tox
 
 readme: install
-	@pip-accel install --quiet cogapp && cog.py -r README.rst
+	@pip install --quiet cogapp && cog.py -r README.rst
 
 docs: readme
-	@pip-accel install --quiet sphinx
+	@pip install --quiet sphinx
 	@cd docs && sphinx-build -nb html -d build/doctrees . build/html
 
 stdeb.cfg: install
@@ -77,7 +76,7 @@ stdeb.cfg: install
 publish: stdeb.cfg
 	git push origin && git push --tags origin
 	$(MAKE) clean
-	pip-accel install --quiet twine wheel
+	pip install --quiet twine wheel
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 	$(MAKE) clean
