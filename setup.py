@@ -3,7 +3,7 @@
 # Setup script for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 17, 2018
+# Last Change: January 18, 2019
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -50,7 +50,7 @@ def get_install_requires():
         if sys.version_info[:2] <= (2, 6):
             install_requires.append('python-debian==0.1.32')
         else:
-            install_requires.append('python-debian >= 0.1.32')
+            install_requires.append('python-debian >= 0.1.34')
     return sorted(install_requires)
 
 
@@ -60,7 +60,7 @@ def get_extras_require():
     if have_environment_marker_support():
         # python-debian 0.1.33 drops Python 2.6 compatibility.
         extras_require[':python_version < "2.7"'] = ['python-debian==0.1.32']
-        extras_require[':python_version > "2.6"'] = ['python-debian >= 0.1.32']
+        extras_require[':python_version > "2.6"'] = ['python-debian >= 0.1.34']
     return extras_require
 
 
