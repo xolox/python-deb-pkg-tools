@@ -3,7 +3,7 @@
 # Setup script for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 18, 2019
+# Last Change: September 5, 2019
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -23,7 +23,6 @@ Setup script for the `deb-pkg-tools` package.
 import codecs
 import os
 import re
-import sys
 
 # De-facto standard solution for Python packaging.
 from setuptools import find_packages, setup
@@ -40,28 +39,6 @@ def get_version(*args):
     contents = get_contents(*args)
     metadata = dict(re.findall('__([a-z]+)__ = [\'"]([^\'"]+)', contents))
     return metadata['version']
-
-
-def get_install_requires():
-    """Add conditional dependencies (when creating source distributions)."""
-    install_requires = get_requirements('requirements.txt')
-    if 'bdist_wheel' not in sys.argv:
-        # python-debian 0.1.33 drops Python 2.6 compatibility.
-        if sys.version_info[:2] <= (2, 6):
-            install_requires.append('python-debian==0.1.32')
-        else:
-            install_requires.append('python-debian >= 0.1.34')
-    return sorted(install_requires)
-
-
-def get_extras_require():
-    """Add conditional dependencies (when creating wheel distributions)."""
-    extras_require = {}
-    if have_environment_marker_support():
-        # python-debian 0.1.33 drops Python 2.6 compatibility.
-        extras_require[':python_version < "2.7"'] = ['python-debian==0.1.32']
-        extras_require[':python_version > "2.6"'] = ['python-debian >= 0.1.34']
-    return extras_require
 
 
 def get_requirements(*args):
@@ -82,21 +59,6 @@ def get_absolute_path(*args):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), *args)
 
 
-def have_environment_marker_support():
-    """
-    Check whether setuptools has support for PEP-426 environment marker support.
-
-    Based on the ``setup.py`` script of the ``pytest`` package:
-    https://bitbucket.org/pytest-dev/pytest/src/default/setup.py
-    """
-    try:
-        from pkg_resources import parse_version
-        from setuptools import __version__
-        return parse_version(__version__) >= parse_version('0.7.2')
-    except Exception:
-        return False
-
-
 setup(name='deb-pkg-tools',
       version=get_version('deb_pkg_tools', '__init__.py'),
       description="Debian packaging tools",
@@ -106,8 +68,7 @@ setup(name='deb-pkg-tools',
       author_email='peter@peterodding.com',
       packages=find_packages(),
       test_suite='deb_pkg_tools.tests',
-      install_requires=get_install_requires(),
-      extras_require=get_extras_require(),
+      install_requires=get_requirements('requirements.txt'),
       entry_points=dict(console_scripts=[
           'deb-pkg-tools = deb_pkg_tools.cli:main',
       ]),
