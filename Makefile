@@ -7,6 +7,7 @@
 PACKAGE_NAME = deb-pkg-tools
 WORKON_HOME ?= $(HOME)/.virtualenvs
 VIRTUAL_ENV ?= $(WORKON_HOME)/$(PACKAGE_NAME)
+PYTHON ?= python3
 PATH := $(VIRTUAL_ENV)/bin:$(PATH)
 MAKE := $(MAKE) --no-print-directory
 SHELL = bash
@@ -33,7 +34,7 @@ default:
 
 install:
 	@test -d "$(VIRTUAL_ENV)" || mkdir -p "$(VIRTUAL_ENV)"
-	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --system-site-packages --quiet "$(VIRTUAL_ENV)"
+	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --python=$(PYTHON) --system-site-packages --quiet "$(VIRTUAL_ENV)"
 	@test -x "$(VIRTUAL_ENV)/bin/pip" || easy_install pip
 	@pip install --quiet --requirement=requirements.txt
 	@pip uninstall --yes $(PACKAGE_NAME) &>/dev/null || true
@@ -71,13 +72,13 @@ docs: readme
 	@cd docs && sphinx-build -nb html -d build/doctrees . build/html
 
 stdeb.cfg: install
-	python -c 'from deb_pkg_tools import generate_stdeb_cfg; generate_stdeb_cfg()' > stdeb.cfg
+	$(PYTHON) -c 'from deb_pkg_tools import generate_stdeb_cfg; generate_stdeb_cfg()' > stdeb.cfg
 
 publish: stdeb.cfg
 	git push origin && git push --tags origin
 	$(MAKE) clean
 	pip install --quiet twine wheel
-	python setup.py sdist bdist_wheel
+	$(PYTHON) setup.py sdist bdist_wheel
 	twine upload dist/*
 	$(MAKE) clean
 
