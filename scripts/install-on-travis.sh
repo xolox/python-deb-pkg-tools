@@ -10,6 +10,9 @@ sudo mknod -m 0666 /dev/random c 1 9
 echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
 sudo /etc/init.d/rng-tools restart
 
+# Make python-apt available in the Python virtual environment.
+python scripts/link-python-apt.py
+
 # Install the required Python packages.
 pip install --constraint=constraints.txt --requirement=requirements-travis.txt
 
