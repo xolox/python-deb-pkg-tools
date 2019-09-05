@@ -4,7 +4,7 @@
 # For more information about the nasty /dev/random hack, please see:
 # https://github.com/travis-ci/travis-ci/issues/1913#issuecomment-33891474
 sudo apt-get update -qq
-sudo apt-get install --yes dpkg-dev fakeroot lintian memcached python-apt rng-tools
+sudo apt-get install --yes dpkg-dev fakeroot lintian memcached python-apt python3-apt rng-tools
 sudo rm -f /dev/random
 sudo mknod -m 0666 /dev/random c 1 9
 echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
