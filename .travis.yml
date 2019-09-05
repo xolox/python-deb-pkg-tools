@@ -3,8 +3,9 @@ language: python
 dist: xenial
 matrix:
   include:
-    - python: 2.7
+    - python: "2.7_with_system_site_packages"
     - python: 3.4
+      dist: trusty
     - python: 3.5
     - python: 3.6
       dist: bionic
