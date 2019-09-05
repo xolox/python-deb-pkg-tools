@@ -11,7 +11,7 @@ echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
 sudo /etc/init.d/rng-tools restart
 
 # Install the required Python packages.
-pip install --requirement=requirements-travis.txt
+pip install --constraint=constraints.txt --requirement=requirements-travis.txt
 
 # Install the project itself, making sure that potential character encoding
 # and/or decoding errors in the setup script are caught as soon as possible.

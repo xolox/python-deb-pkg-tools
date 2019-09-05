@@ -1,0 +1,6 @@
+# This is a pip constraints file that's used to preserve
+# Python 2.7 and 3.4 compatibility (on Travis CI).
+
+# pytest 5.0 drops Python 2.7 and 3.4 compatibility:
+# https://docs.pytest.org/en/latest/py27-py34-deprecation.html
+pytest < 5.0 ; python_version < '3.5'
