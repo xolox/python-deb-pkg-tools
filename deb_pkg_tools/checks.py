@@ -1,7 +1,7 @@
 # Debian packaging tools: Static analysis of package archives.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 21, 2016
+# Last Change: September 5, 2019
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -142,15 +142,15 @@ def check_duplicate_files(dependency_set, cache=None):
     # Boring string formatting, trying to find a way to clearly present conflicts.
     summary = []
     for packages, information in sorted(duplicate_files.items()):
-            block = []
-            conflicts = pluralize(information['count'], 'conflict', 'conflicts')
-            block.append("Found %s between %i packages:\n" % (conflicts, len(packages)))
-            for i, package in enumerate(sorted(packages), start=1):
-                block.append("  %i. %s\n" % (i, package.filename))
-            block.append("These packages contain %s:\n" % conflicts)
-            for i, filename in enumerate(sorted(information['filenames']), start=1):
-                block.append("  %i. %s\n" % (i, filename))
-            summary.append(''.join(block))
+        block = []
+        conflicts = pluralize(information['count'], 'conflict', 'conflicts')
+        block.append("Found %s between %i packages:\n" % (conflicts, len(packages)))
+        for i, package in enumerate(sorted(packages), start=1):
+            block.append("  %i. %s\n" % (i, package.filename))
+        block.append("These packages contain %s:\n" % conflicts)
+        for i, filename in enumerate(sorted(information['filenames']), start=1):
+            block.append("  %i. %s\n" % (i, filename))
+        summary.append(''.join(block))
     if summary:
         archives_involved = set(itertools.chain.from_iterable(duplicate_files.keys()))
         files = pluralize(len(duplicate_files), 'duplicate file', 'duplicate files')
