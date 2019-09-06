@@ -11,13 +11,21 @@ echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
 sudo /etc/init.d/rng-tools restart
 
 # We ignore the Python virtual environment provided by Travis CI and instead
-# create our own virtual environment, based on a system wide Python version
-# provided by Ubuntu instead of Travis CI. While we're at it we also enable
-# access to the system-wide site-packages directory. This is intended to
-# enable importing of the apt_pkg module.
-INTERPRETER=$(python -c 'import sys; print("/usr/bin/python%i.%i" % sys.version_info[:2])')
+# create our own virtual environment, with the intention of making it possible
+# to import the apt_pkg module (which is installed system wide because it's
+# available via apt but not on PyPI).
+INTERPRETER=$(python -c 'import sys; print("python%i.%i" % sys.version_info[:2])')
+PREFERRED_PATH=/usr/bin/$INTERPRETER
+if [ -x $PREFERRED_PATH ]; then
+  # If possible we create the virtual environment based on a Python
+  # installation provided by Ubuntu instead of Travis CI. At the time of
+  # writing this works for Python 2.7, 3.4, 3.5 and 3.6 but not 3.7.
+  INTERPRETER=$PREFERRED_PATH
+fi
 echo "Recreating virtual environment ($VIRTUAL_ENV) using $INTERPRETER .."
 rm -r $VIRTUAL_ENV
+# Given that we're recreating the virtual environment we can
+# enable access to the system-wide site-packages directory.
 virtualenv --python=$INTERPRETER --system-site-packages $VIRTUAL_ENV
 
 # Install the required Python packages.
