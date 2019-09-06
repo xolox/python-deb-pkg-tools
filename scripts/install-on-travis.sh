@@ -10,8 +10,15 @@ sudo mknod -m 0666 /dev/random c 1 9
 echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
 sudo /etc/init.d/rng-tools restart
 
-# Make python-apt available in the Python virtual environment.
-python scripts/link-python-apt.py
+# We ignore the Python virtual environment provided by Travis CI and instead
+# create our own virtual environment, based on a system wide Python version
+# provided by Ubuntu instead of Travis CI. While we're at it we also enable
+# access to the system-wide site-packages directory. This is intended to
+# enable importing of the apt_pkg module.
+INTERPRETER=$(python -c 'import sys; print("/usr/bin/python%i.%i" % sys.version_info[:2])')
+echo "Recreating virtual environment ($VIRTUAL_ENV) using $INTERPRETER .."
+rm -r $VIRTUAL_ENV
+virtualenv --python=$INTERPRETER --system-site-packages $VIRTUAL_ENV
 
 # Install the required Python packages.
 pip install --constraint=constraints.txt --requirement=requirements-travis.txt
