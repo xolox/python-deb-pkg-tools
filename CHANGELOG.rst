@@ -11,6 +11,35 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 6.0`_ (2019-09-13)
+---------------------------
+
+- Enable compatibility with newer python-apt_ releases:
+
+  - The test suite has been modified to break on Travis CI when python-apt_
+    should be available but isn't (when the Python virtual environment is based
+    on a Python interpreter provided by Ubuntu, currently this applies to all
+    build environments except Python 3.7).
+
+  - The idea behind the test suite change is to verify that the conditional
+    import chain in ``version.py`` always succeeds (on Travis CI, where I
+    control the runtime environment).
+
+  - This was added when after much debugging I finally realized why the new
+    Ubuntu 18.04 build server I'd created was so awfully slow: The conditional
+    import chain had been "silently broken" without me realizing it, except for
+    the fact that using the fall back implementation based on ``dpkg
+    --compare-versions`` to sort through thousands of version numbers was
+    rather noticeably slow... 😇
+
+- Make python-memcached_ an optional dependency in response to `#13`_.
+
+- Dropped Python 2.6 compatibility.
+
+.. _Release 6.0: https://github.com/xolox/python-deb-pkg-tools/compare/5.2...6.0
+.. _python-memcached: https://pypi.org/project/python-memcached
+.. _#13: https://github.com/xolox/python-deb-pkg-tools/issues/13
+
 `Release 5.2`_ (2018-11-17)
 ---------------------------
 
@@ -143,10 +172,10 @@ The documentation has been updated to explain all of this, refer to the
     actually affected by this change, because of the low popularity of
     solutions like stdeb_ and py2deb_ 😇.
 
-  - Only the ``python-apt`` package remains as a strict dependency instead of a
+  - Only the python-apt_ package remains as a strict dependency instead of a
     recommended dependency, see 757286fc8ce_ for the rationale.
 
-- Removed python-apt intersphinx reference (`for now
+- Removed python-apt_ intersphinx reference (`for now
   <https://bugs.launchpad.net/ubuntu/+source/python-apt/+bug/1799807>`_).
 
 - Added this changelog to the repository and documentation.
@@ -155,6 +184,7 @@ The documentation has been updated to explain all of this, refer to the
 .. _stdeb: https://pypi.org/project/stdeb/
 .. _ephemeral home directory: https://www.gnupg.org/documentation/manuals/gnupg/Ephemeral-home-directories.html#Ephemeral-home-directories
 .. _757286fc8ce: https://github.com/xolox/python-deb-pkg-tools/commit/757286fc8ce
+.. _python-apt: https://packages.debian.org/python-apt
 
 `Release 4.5`_ (2018-02-25)
 ---------------------------

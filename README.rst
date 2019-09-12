@@ -51,6 +51,13 @@ system wide) and I have no intention of getting into that discussion here, so
 if this intimidates you then read up on your options before returning to these
 instructions ;-).
 
+When `deb-pkg-tools` is being used to scan thousands of ``*.deb`` archives a
+significant speedup may be achieved using memcached:
+
+.. code-block:: sh
+
+   $ pip install "deb-pkg-tools[memcached]"
+
 Under the hood `deb-pkg-tools` uses several programs provided by Debian, the
 details are available in the dependencies_ section. To install these programs::
 
