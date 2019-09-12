@@ -3,7 +3,7 @@
 # Setup script for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 5, 2019
+# Last Change: September 12, 2019
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -69,6 +69,9 @@ setup(name='deb-pkg-tools',
       packages=find_packages(),
       test_suite='deb_pkg_tools.tests',
       install_requires=get_requirements('requirements.txt'),
+      extras_require={
+          'memcached': ['python-memcached >= 1.58'],
+      },
       entry_points=dict(console_scripts=[
           'deb-pkg-tools = deb_pkg_tools.cli:main',
       ]),

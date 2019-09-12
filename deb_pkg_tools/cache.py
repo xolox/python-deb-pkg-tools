@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 20, 2018
+# Last Change: September 13, 2019
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -77,7 +77,6 @@ import os
 import time
 
 # External dependencies.
-import memcache
 from humanfriendly import Timer, format_timespan, pluralize
 from humanfriendly.decorators import cached
 from six.moves import cPickle as pickle
@@ -120,8 +119,7 @@ class PackageCache(object):
         """
         self.directory = directory
         self.entries = {}
-        self.memcached = memcache.Client(['127.0.0.1:11211'])
-        self.use_memcached = True
+        self.connect_memcached()
 
     def __getstate__(self):
         """
@@ -145,7 +143,17 @@ class PackageCache(object):
         """Load a :mod:`pickle` compatible :class:`PackageCache` representation."""
         self.__dict__.update(state)
         self.entries = {}
-        self.memcached = memcache.Client(['127.0.0.1:11211'])
+        self.connect_memcached()
+
+    def connect_memcached(self):
+        """Initialize a connection to the memcached daemon."""
+        try:
+            module = __import__('memcache')
+            self.memcached = module.Client(['127.0.0.1:11211'])
+        except Exception:
+            self.use_memcached = False
+        else:
+            self.use_memcached = True
 
     def get_entry(self, category, pathname):
         """
@@ -277,14 +285,15 @@ class CacheEntry(object):
         if self.up_to_date(self.in_memory):
             return self.in_memory['value']
         # Check for a value that was previously cached in memcached.
-        try:
-            from_mc = self.cache.memcached.get(self.cache_key)
-            if self.up_to_date(from_mc):
-                # Cache the value in memory.
-                self.in_memory = from_mc
-                return from_mc['value']
-        except Exception:
-            pass
+        if self.cache.use_memcached:
+            try:
+                from_mc = self.cache.memcached.get(self.cache_key)
+                if self.up_to_date(from_mc):
+                    # Cache the value in memory.
+                    self.in_memory = from_mc
+                    return from_mc['value']
+            except Exception:
+                pass
         # Check for a value that was previously cached on the filesystem.
         try:
             with open(self.cache_file, 'rb') as handle:
