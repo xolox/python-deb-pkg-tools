@@ -135,7 +135,7 @@ class PackageCache(object):
         state = self.__dict__.copy()
         # Avoid pickling the `entries' and `memcached' attributes.
         state.pop('entries')
-        state.pop('memcached')
+        state.pop('memcached', None)
         # Pickle the other attributes.
         return state
 
