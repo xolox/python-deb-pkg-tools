@@ -57,32 +57,31 @@ building a package. Used by :func:`clean_package_tree()` which is called by
 """
 
 FILES_TO_REMOVE = (
-    # Python byte code files, see http://lintian.debian.org/tags/package-installs-python-bytecode.html.
-    '*.pyc',
-    # Python optimized byte code files, see http://lintian.debian.org/tags/package-installs-python-bytecode.html.
-    '*.pyo',
-    # Emacs/Vim backup files, see http://lintian.debian.org/tags/backup-file-in-package.html.
-    '*~',
-    # Vim named swap files.
-    '.*.s??',
-    # Bazaar ignore files, see http://lintian.debian.org/tags/package-contains-vcs-control-file.html.
-    '.bzrignore',
-    # Mac OS X custom folder attributes, see http://lintian.debian.org/tags/macos-ds-store-file-in-package.html.
-    '.DS_Store',
-    '.DS_Store.gz',
-    # Mac OS X resource forks, see http://lintian.debian.org/tags/macos-resource-fork-file-in-package.html.
-    '._*',
-    # Git ignore files, see http://lintian.debian.org/tags/package-contains-vcs-control-file.html.
-    '.gitignore',
-    # Artefact of `hg archive', see http://lintian.debian.org/tags/package-contains-vcs-control-file.html.
-    '.hg_archival.txt',
-    # Mercurial ignore files, see http://lintian.debian.org/tags/package-contains-vcs-control-file.html.
-    '.hgignore',
-    # Mercurial tags files, see http://lintian.debian.org/tags/package-contains-vcs-control-file.html.
-    '.hgtags',
-    # Vim anonymous swap files
-    '.s??',
+    '*.pyc',             # Python byte code files.
+    '*.pyo',             # Python optimized byte code files.
+    '*~',                # Backups created by text editors (Emacs/Vim).
+    '.*.s??',            # Vim named swap files.
+    '.DS_Store',         # Mac OS X custom folder attributes.
+    '.DS_Store.gz',      # Mac OS X custom folder attributes.
+    '._*',               # Mac OS X resource forks.
+    '.bzrignore',        # Bazaar ignore files.
+    '.gitignore',        # Git ignore files.
+    '.hg_archival.txt',  # Artefact of `hg archive'.
+    '.hgignore',         # Mercurial ignore files.
+    '.hgtags',           # Mercurial tags files.
+    '.s??',              # Vim anonymous swap files.
 )
+"""
+A tuple of strings with :mod:`fnmatch` patterns of files to remove before
+building a package. Used by :func:`clean_package_tree()` which is called by
+:func:`build_package()`. Avoids the following Lintian warnings:
+
+- `backup-file-in-package <http://lintian.debian.org/tags/backup-file-in-package.html>`_
+- `macos-ds-store-file-in-package <http://lintian.debian.org/tags/macos-ds-store-file-in-package.html>`_
+- `macos-resource-fork-file-in-package <http://lintian.debian.org/tags/macos-resource-fork-file-in-package.html>`_
+- `package-contains-vcs-control-file <http://lintian.debian.org/tags/package-contains-vcs-control-file.html>`_
+- `package-installs-python-bytecode <http://lintian.debian.org/tags/package-installs-python-bytecode.html>`_
+"""
 
 # Enable power users to customize how packages are built in order to enable
 # limited use of deb-pkg-tools in non-Debian environments like Mac OS X.
