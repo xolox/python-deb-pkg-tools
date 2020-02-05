@@ -1,7 +1,7 @@
 # Debian packaging tools: Package manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 5, 2020
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Functions to build and inspect Debian binary package archives (``*.deb`` files)."""
@@ -40,15 +40,21 @@ BINARY_PACKAGE_ARCHIVE_EXTENSIONS = ('.deb', '.udeb')
 # The names of control file fields that specify dependencies.
 DEPENDENCY_FIELDS = ('Depends', 'Pre-Depends')
 
-# http://lintian.debian.org/tags/package-contains-vcs-control-dir.html
 DIRECTORIES_TO_REMOVE = (
-    '.bzr',  # Bazaar (version control system).
-    '.git',  # Git (version control system).
-    '.hg',   # Mercurial (version control system).
-    '.svn',  # SVN (version control system).
-    # Python 3 byte code files, see http://lintian.debian.org/tags/package-installs-python-pycache-dir.html.
-    '__pycache__',
+    '.bzr',         # Bazaar (version control system).
+    '.git',         # Git (version control system).
+    '.hg',          # Mercurial (version control system).
+    '.svn',         # SVN (version control system).
+    '__pycache__',  # Python 3 byte code files.
 )
+"""
+A tuple of strings with :mod:`fnmatch` patterns of directories to remove before
+building a package. Used by :func:`clean_package_tree()` which is called by
+:func:`build_package()`. Avoids the following Lintian warnings:
+
+- `package-contains-vcs-control-dir <http://lintian.debian.org/tags/package-contains-vcs-control-dir.html>`_
+- `package-installs-python-pycache-dir <http://lintian.debian.org/tags/package-installs-python-pycache-dir.html>`_
+"""
 
 FILES_TO_REMOVE = (
     # Python byte code files, see http://lintian.debian.org/tags/package-installs-python-bytecode.html.
