@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 25, 2018
+# Last Change: February 5, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -218,7 +218,7 @@ def update_repository(directory, release_fields={}, gpg_key=None, cache=None):
         gpg_key = gpg_key or select_gpg_key(directory)
         # Figure out when the repository contents were last updated.
         contents_last_updated = os.path.getmtime(directory)
-        for archive in find_package_archives(directory):
+        for archive in find_package_archives(directory, cache=cache):
             contents_last_updated = max(contents_last_updated, os.path.getmtime(archive.filename))
         # Figure out when the repository metadata was last updated.
         try:
