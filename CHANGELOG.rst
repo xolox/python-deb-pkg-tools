@@ -11,6 +11,35 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 6.1`_ (2020-02-05)
+---------------------------
+
+Implemented a feature requested from me via private email:
+
+**Problem:** When filename parsing of ``*.deb`` archives fails to recognize a
+package name, version and architecture encoded in the filename (delimited by
+underscores) then deb-pkg-tools reports an error and aborts:
+
+.. code-block:: none
+
+   ValueError: Filename doesn't have three underscore separated components!
+
+**Solution:** Setting the environment variable ``$DPT_PARSE_STRICT`` to
+``false`` changes this behavior so that the required information is extracted
+from the package metadata instead of reporting an error.
+
+For now the default remains the same (an error is reported) due to backwards
+compatibility and the principle of least surprise (for those who previously
+integrated deb-pkg-tools). This will likely change in the future.
+
+**Miscellaneous changes:**
+
+- Use 'console' highlighting in readme (prompt are now highlighted).
+- Added license=MIT to ``setup.py`` script.
+- Bumped copyright to 2020.
+
+.. _Release 6.1: https://github.com/xolox/python-deb-pkg-tools/compare/6.0...6.1
+
 `Release 6.0`_ (2019-09-13)
 ---------------------------
 
