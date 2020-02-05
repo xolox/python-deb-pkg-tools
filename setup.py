@@ -3,7 +3,7 @@
 # Setup script for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 12, 2019
+# Last Change: February 5, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -66,6 +66,7 @@ setup(name='deb-pkg-tools',
       url='https://deb-pkg-tools.readthedocs.io',
       author="Peter Odding",
       author_email='peter@peterodding.com',
+      license='MIT',
       packages=find_packages(),
       test_suite='deb_pkg_tools.tests',
       install_requires=get_requirements('requirements.txt'),
