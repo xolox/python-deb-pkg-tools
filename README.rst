@@ -41,7 +41,7 @@ Installation
 The `deb-pkg-tools` package is available on PyPI_ which means installation
 should be as simple as:
 
-.. code-block:: sh
+.. code-block:: console
 
    $ pip install deb-pkg-tools
 
@@ -54,12 +54,14 @@ instructions ;-).
 When `deb-pkg-tools` is being used to scan thousands of ``*.deb`` archives a
 significant speedup may be achieved using memcached:
 
-.. code-block:: sh
+.. code-block:: console
 
    $ pip install "deb-pkg-tools[memcached]"
 
 Under the hood `deb-pkg-tools` uses several programs provided by Debian, the
-details are available in the dependencies_ section. To install these programs::
+details are available in the dependencies_ section. To install these programs:
+
+.. code-block:: console
 
   $ sudo apt-get install dpkg-dev fakeroot lintian
 
@@ -157,7 +159,9 @@ Program                Package
 =====================  =============
 
 The majority of these programs/packages will already be installed on most
-Debian based systems so you should only need the following to get started::
+Debian based systems so you should only need the following to get started:
+
+.. code-block:: console
 
     $ sudo apt-get install dpkg-dev fakeroot lintian
 
