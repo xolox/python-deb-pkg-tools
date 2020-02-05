@@ -54,9 +54,15 @@ from deb_pkg_tools.package import find_package_archives, inspect_package_fields
 from deb_pkg_tools.utils import atomic_lock, find_installed_version, optimize_order, sha1
 from deb_pkg_tools.version import Version
 
-# Enable power users to disable the use of `sudo' (because it
-# may not be available in non-Debian build environments).
 ALLOW_SUDO = coerce_boolean(os.environ.get('DPT_SUDO', 'true'))
+"""
+:data:`True` to enable the use of ``sudo`` during operations that normally
+require elevated privileges (the default), :data:`False` to disable the use of
+``sudo``. This option is provided for power users to disable the use of
+``sudo`` because it may not be available in all build environments. The
+environment variable ``$DPT_SUDO`` can be used to control the value of this
+variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable values).
+"""
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
@@ -329,6 +335,8 @@ def activate_repository(directory, gpg_key=None):
 
                  This function will use ``sudo`` to gain ``root`` privileges
                  when it's not already running as ``root``.
+
+    .. seealso:: :data:`ALLOW_SUDO`
     """
     directory = os.path.realpath(directory)
     logger.debug("Activating repository: %s", format_path(directory))
@@ -371,6 +379,8 @@ def deactivate_repository(directory):
 
                  This function will use ``sudo`` to gain ``root`` privileges
                  when it's not already running as ``root``.
+
+    .. seealso:: :data:`ALLOW_SUDO`
     """
     directory = os.path.realpath(directory)
     logger.debug("Deactivating repository: %s", format_path(directory))
@@ -399,6 +409,8 @@ def with_repository(directory, *command, **kw):
     finally deactivates the repository again. Also deactivates the repository
     when the external command fails and :exc:`executor.ExternalCommandFailed`
     is raised.
+
+    .. seealso:: :data:`ALLOW_SUDO`
     """
     update_repository(directory=directory,
                       cache=kw.get('cache'))

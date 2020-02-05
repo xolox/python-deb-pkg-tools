@@ -191,7 +191,7 @@ Variable                        Default        Description
 ``DPT_ALLOW_FAKEROOT_OR_SUDO``  ``true``       Run commands using either
                                                fakeroot or sudo (depending on
                                                which is available).
-``DPT_SUDO``                    ``true``       Enable the usage of ``sudo``
+DPT_SUDO_                       ``true``       Enable the usage of ``sudo``
                                                during operations that normally
                                                require elevated privileges.
 ``DPT_HARD_LINKS``              ``true``       Allow the usage of hard links to
@@ -246,6 +246,7 @@ This software is licensed under the `MIT license`_.
 .. External references:
 .. _deb_pkg_tools.repo.select_gpg_key(): https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.repo.select_gpg_key
 .. _Debian binary packages: https://www.debian.org/doc/debian-policy/ch-binary.html
+.. _DPT_SUDO: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.repo.ALLOW_SUDO
 .. _GitHub: https://github.com/xolox/python-deb-pkg-tools
 .. _MIT license: http://en.wikipedia.org/wiki/MIT_License
 .. _per user site-packages directory: https://www.python.org/dev/peps/pep-0370/
