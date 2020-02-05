@@ -872,12 +872,11 @@ def clean_package_tree(directory, remove_dirs=DIRECTORIES_TO_REMOVE, remove_file
 
     :param directory: The pathname of the directory to clean (a string).
     :param remove_dirs: An iterable with filename patterns of directories that
-                        should not be included in the package (e.g. version
-                        control directories like ``.git`` and ``.hg``).
+                        should not be included in the package. Defaults to
+                        :data:`DIRECTORIES_TO_REMOVE`.
     :param remove_files: An iterable with filename patterns of files that
-                         should not be included in the package (e.g. version
-                         control files like ``.gitignore`` and
-                         ``.hgignore``).
+                         should not be included in the package. Defaults to
+                         :data:`FILES_TO_REMOVE`.
 
     Uses the :mod:`fnmatch` module for directory and filename matching.
     Matching is done on the base name of each directory and file. This function
