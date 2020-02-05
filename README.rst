@@ -198,6 +198,14 @@ Variable                        Default        Description
                                                speed up file copies between
                                                directories on the same file
                                                system.
+``DPT_PARSE_STRICT``            ``true``       If filename parsing of a
+                                               ``*.deb`` archive fails to
+                                               recognize the package name,
+                                               version and architecture
+                                               deb-pkg-tools will abort with an
+                                               error. Setting this variable to
+                                               ``false`` will make it fall back
+                                               to reading the package metadata.
 ``DPT_FORCE_ENTROPY``           ``false``      Force the system to generate
                                                entropy based on disk I/O.
 ``SHELL``                       ``/bin/bash``  Shell to use for the

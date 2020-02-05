@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 12, 2019
+# Last Change: February 5, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -26,7 +26,7 @@ from six import text_type
 from six.moves import StringIO
 
 # Modules included in our package.
-from deb_pkg_tools import version
+from deb_pkg_tools import package, version
 from deb_pkg_tools.cache import PackageCache
 from deb_pkg_tools.checks import (
     DuplicateFilesFound,
@@ -51,6 +51,7 @@ from deb_pkg_tools.deps import (
 )
 from deb_pkg_tools.gpg import GPGKey
 from deb_pkg_tools.package import (
+    build_package,
     collect_related_packages,
     copy_package_files,
     find_latest_version,
@@ -460,6 +461,29 @@ class DebPkgToolsTestCase(TestCase):
         # Test the unhappy paths.
         self.assertRaises(ValueError, parse_filename, 'python2.7_2.7.3-0ubuntu3.4_amd64.not-a-deb')
         self.assertRaises(ValueError, parse_filename, 'python2.7.deb')
+
+    def test_filename_parsing_fallback(self):
+        """Test filename parsing when :data:`~deb_pkg_tools.package.PARSE_STRICT` is :data:`False`."""
+        # Disable strict filename parsing.
+        with PatchedAttribute(package, 'PARSE_STRICT', False):
+            # Prepare some temporary directories.
+            with Context() as finalizers:
+                # Create a temporary *.deb archive for testing.
+                repository = finalizers.mkdtemp()
+                build_directory = finalizers.mkdtemp()
+                os.mkdir(os.path.join(build_directory, 'DEBIAN'))
+                with open(os.path.join(build_directory, 'DEBIAN', 'control'), 'wb') as handle:
+                    TEST_PACKAGE_FIELDS.dump(handle)
+                original_fn = build_package(build_directory, repository)
+                # Change the filename of the *.deb archive to trigger the fall back behavior.
+                modified_fn = os.path.join(repository, '%s.deb' % TEST_PACKAGE_NAME)
+                os.rename(original_fn, modified_fn)
+                # Test the fall back behavior.
+                components = parse_filename(modified_fn)
+                assert components.filename == modified_fn
+                assert components.name == TEST_PACKAGE_FIELDS['Package']
+                assert components.version == TEST_PACKAGE_FIELDS['Version']
+                assert components.architecture == TEST_PACKAGE_FIELDS['Architecture']
 
     def test_find_object_files(self):
         """Test the :func:`deb_pkg_tools.package.find_object_files()` function."""

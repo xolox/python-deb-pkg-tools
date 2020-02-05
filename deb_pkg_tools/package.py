@@ -1,7 +1,7 @@
 # Debian packaging tools: Package manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 25, 2018
+# Last Change: February 5, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Functions to build and inspect Debian binary package archives (``*.deb`` files)."""
@@ -85,12 +85,30 @@ ALLOW_FAKEROOT_OR_SUDO = coerce_boolean(os.environ.get('DPT_ALLOW_FAKEROOT_OR_SU
 ALLOW_HARD_LINKS = coerce_boolean(os.environ.get('DPT_HARD_LINKS', 'true'))
 ALLOW_RESET_SETGID = coerce_boolean(os.environ.get('DPT_RESET_SETGID', 'true'))
 
+PARSE_STRICT = coerce_boolean(os.environ.get('DPT_PARSE_STRICT', 'true'))
+"""
+If :data:`PARSE_STRICT` is :data:`True` then :func:`parse_filename()` expects
+filenames of ``*.deb`` archives to encode the package name, version and
+architecture delimited by underscores. This is the default behavior and
+backwards compatible with deb-pkg-tools 6.0 and older.
 
-def parse_filename(filename):
+If :data:`PARSE_STRICT` is :data:`False` then :func:`parse_filename()` will
+fall back to reading the package name, version and architecture from the
+metadata contained in the ``*.deb`` archive.
+
+The environment variable ``$DPT_PARSE_STRICT`` can be used to control the value
+of this variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable
+values).
+"""
+
+
+def parse_filename(filename, cache=None):
     """
     Parse the filename of a Debian binary package archive.
 
     :param filename: The pathname of a Debian binary package archive (a string).
+    :param cache: The :class:`.PackageCache` to use when :data:`PARSE_STRICT`
+                  is :data:`False` (defaults to :data:`None`).
     :returns: A :class:`PackageFile` object.
     :raises: :exc:`~exceptions.ValueError` when the given filename cannot be parsed.
 
@@ -117,12 +135,27 @@ def parse_filename(filename):
     if extension not in BINARY_PACKAGE_ARCHIVE_EXTENSIONS:
         raise ValueError("Refusing to parse filename with unknown extension! (%r)" % pathname)
     components = basename.split('_')
-    if len(components) != 3:
-        raise ValueError("Filename doesn't have three underscore separated components! (%r)" % pathname)
-    return PackageFile(name=components[0],
-                       version=Version(components[1]),
-                       architecture=components[2],
-                       filename=pathname)
+    if len(components) == 3:
+        return PackageFile(
+            name=components[0],
+            version=Version(components[1]),
+            architecture=components[2],
+            filename=pathname,
+        )
+    elif not PARSE_STRICT and os.path.isfile(pathname):
+        control_fields = inspect_package_fields(pathname, cache)
+        return PackageFile(
+            name=control_fields['Package'],
+            version=Version(control_fields['Version']),
+            architecture=control_fields.get('Architecture', ''),
+            filename=pathname,
+        )
+    else:
+        # Up to deb-pkg-tools 6.0 strict mode was the only supported behavior.
+        # For now it remains as the default behavior because of backwards
+        # compatibility concerns / the principle of least surprise.
+        msg = "Filename doesn't have three underscore separated components! (%r)"
+        raise ValueError(msg % pathname)
 
 
 class PackageFile(collections.namedtuple('PackageFile', 'name, version, architecture, filename')):
@@ -167,6 +200,11 @@ class PackageFile(collections.namedtuple('PackageFile', 'name, version, architec
     def other_versions(self):
         """A list of :class:`PackageFile` objects with other versions of the same package in the same directory."""
         archives = []
+        # TODO Inject cache given to parse_filename() by converting PackageFile
+        # from a named tuple to PropertyManager with key properties for the
+        # name, version and architecture fields? We'd lose indexing which means
+        # dropping backwards compatibility. All of this to avoid an edge case
+        # that could theoretically become a performance issue :-|.
         for other_archive in find_package_archives(self.directory):
             if self.name == other_archive.name and self.version != other_archive.version:
                 archives.append(other_archive)
@@ -182,11 +220,14 @@ class PackageFile(collections.namedtuple('PackageFile', 'name, version, architec
         return archives
 
 
-def find_package_archives(directory):
+def find_package_archives(directory, cache=None):
     """
     Find the Debian package archive(s) in the given directory.
 
     :param directory: The pathname of a directory (a string).
+    :param cache: The :class:`.PackageCache` that :ref:`parse_filename()`
+                  should use when :data:`PARSE_STRICT` is :data:`False`
+                  (defaults to :data:`None`).
     :returns: A list of :class:`PackageFile` objects.
     """
     archives = []
@@ -194,11 +235,11 @@ def find_package_archives(directory):
         if entry.endswith(BINARY_PACKAGE_ARCHIVE_EXTENSIONS):
             pathname = os.path.join(directory, entry)
             if os.path.isfile(pathname):
-                archives.append(parse_filename(pathname))
+                archives.append(parse_filename(pathname, cache))
     return archives
 
 
-def collect_related_packages(filename, cache=None, interactive=None):
+def collect_related_packages(filename, strict=None, cache=None, interactive=None):
     """
     Collect the package archive(s) related to the given package archive.
 
@@ -257,11 +298,11 @@ def collect_related_packages(filename, cache=None, interactive=None):
        Copy 5 package archives to /tmp? [Y/n] y
        2014-05-18 08:33:44 deb_pkg_tools.cli INFO Done! Copied 5 package archives to /tmp.
     """
-    given_archive = parse_filename(filename)
+    given_archive = parse_filename(filename, cache)
     logger.info("Collecting packages related to %s ..", format_path(given_archive.filename))
     # Group the related package archive candidates by name.
     candidate_archives = collections.defaultdict(list)
-    for archive in find_package_archives(given_archive.directory):
+    for archive in find_package_archives(given_archive.directory, cache):
         if archive.name != given_archive.name:
             candidate_archives[archive.name].append(archive)
     # Sort the related package archive candidates by descending versions
@@ -389,20 +430,22 @@ class CollectedPackagesConflict(Exception):
         self.conflicts = conflicts
 
 
-def find_latest_version(packages):
+def find_latest_version(packages, cache=None):
     """
     Find the package archive with the highest version number.
 
     :param packages: A list of filenames (strings) and/or
                      :class:`PackageFile` objects.
-    :returns: The :class:`PackageFile` with
-              the highest version number.
+    :param cache: The :class:`.PackageCache` that :ref:`parse_filename()`
+                  should use when :data:`PARSE_STRICT` is :data:`False`
+                  (defaults to :data:`None`).
+    :returns: The :class:`PackageFile` with the highest version number.
     :raises: :exc:`~exceptions.ValueError` when not all of the given package
              archives share the same package name.
 
     This function uses :class:`.Version` objects for version comparison.
     """
-    packages = sorted(map(parse_filename, packages))
+    packages = sorted(parse_filename(fn, cache) for fn in packages)
     names = set(p.name for p in packages)
     if len(names) > 1:
         msg = "Refusing to compare unrelated packages! (%s)"
@@ -410,20 +453,23 @@ def find_latest_version(packages):
     return packages[-1]
 
 
-def group_by_latest_versions(packages):
+def group_by_latest_versions(packages, cache=None):
     """
     Group package archives by name of package and find latest version of each.
 
     :param packages: A list of filenames (strings) and/or
                      :class:`PackageFile` objects.
+    :param cache: The :class:`.PackageCache` that :ref:`parse_filename()`
+                  should use when :data:`PARSE_STRICT` is :data:`False`
+                  (defaults to :data:`None`).
     :returns: A dictionary with package names as keys and
               :class:`PackageFile` objects as values.
     """
     grouped_packages = collections.defaultdict(set)
     for value in packages:
-        package = parse_filename(value)
+        package = parse_filename(value, cache)
         grouped_packages[package.name].add(package)
-    return dict((n, find_latest_version(p)) for n, p in grouped_packages.items())
+    return dict((n, find_latest_version(p, cache)) for n, p in grouped_packages.items())
 
 
 def inspect_package(archive, cache=None):
