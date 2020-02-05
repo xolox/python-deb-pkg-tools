@@ -244,7 +244,7 @@ This software is licensed under the `MIT license`_.
 © 2020 Peter Odding.
 
 .. External references:
-.. _deb_pkg_tools.repo.select_gpg_key(): https://deb-pkg-tools.readthedocs.org/en/latest/#deb_pkg_tools.repo.select_gpg_key
+.. _deb_pkg_tools.repo.select_gpg_key(): https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.repo.select_gpg_key
 .. _Debian binary packages: https://www.debian.org/doc/debian-policy/ch-binary.html
 .. _GitHub: https://github.com/xolox/python-deb-pkg-tools
 .. _MIT license: http://en.wikipedia.org/wiki/MIT_License
@@ -252,5 +252,5 @@ This software is licensed under the `MIT license`_.
 .. _peter@peterodding.com: peter@peterodding.com
 .. _PyPI: https://pypi.python.org/pypi/deb-pkg-tools
 .. _python-debian: https://pypi.python.org/pypi/python-debian
-.. _Read the Docs: https://deb-pkg-tools.readthedocs.org
+.. _Read the Docs: https://deb-pkg-tools.readthedocs.io
 .. _virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
