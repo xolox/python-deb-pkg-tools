@@ -83,9 +83,16 @@ building a package. Used by :func:`clean_package_tree()` which is called by
 - `package-installs-python-bytecode <http://lintian.debian.org/tags/package-installs-python-bytecode.html>`_
 """
 
-# Enable power users to customize how packages are built in order to enable
-# limited use of deb-pkg-tools in non-Debian environments like Mac OS X.
 ALLOW_CHOWN = coerce_boolean(os.environ.get('DPT_CHOWN_FILES', 'true'))
+"""
+:data:`True` to allow :func:`build_package()` to normalize file ownership by
+running :man:`chown`, :data:`False` to disallow usage of :man:`chown`.
+
+The environment variable ``$DPT_CHOWN_FILES`` can be used to control the value
+of this variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable
+values).
+"""
+
 ALLOW_FAKEROOT_OR_SUDO = coerce_boolean(os.environ.get('DPT_ALLOW_FAKEROOT_OR_SUDO', 'true'))
 ALLOW_HARD_LINKS = coerce_boolean(os.environ.get('DPT_HARD_LINKS', 'true'))
 ALLOW_RESET_SETGID = coerce_boolean(os.environ.get('DPT_RESET_SETGID', 'true'))
