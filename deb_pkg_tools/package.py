@@ -25,17 +25,18 @@ from executor import CommandNotFound, ExternalCommandFailed, execute
 from humanfriendly import coerce_boolean, concatenate, format_path, pluralize, Spinner, Timer
 
 # Modules included in our package.
-from deb_pkg_tools.control import (deb822_from_string,
-                                   parse_control_fields,
-                                   patch_control_file)
+from deb_pkg_tools.control import deb822_from_string, parse_control_fields, patch_control_file
 from deb_pkg_tools.utils import makedirs
 from deb_pkg_tools.version import Version
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 
-# The filename extensions of Debian binary package archives.
 BINARY_PACKAGE_ARCHIVE_EXTENSIONS = ('.deb', '.udeb')
+"""
+A tuple of strings with supported filename extensions of Debian binary package
+archives. Used by :func:`find_package_archives()` and :func:`parse_filename()`.
+"""
 
 # The names of control file fields that specify dependencies.
 DEPENDENCY_FIELDS = ('Depends', 'Pre-Depends')
@@ -169,7 +170,13 @@ def parse_filename(filename, cache=None):
     :param cache: The :class:`.PackageCache` to use when :data:`PARSE_STRICT`
                   is :data:`False` (defaults to :data:`None`).
     :returns: A :class:`PackageFile` object.
-    :raises: :exc:`~exceptions.ValueError` when the given filename cannot be parsed.
+    :raises: :exc:`~exceptions.ValueError` in the following circumstances:
+
+             - The filename extension doesn't match any of the known
+               :data:`BINARY_PACKAGE_ARCHIVE_EXTENSIONS`.
+
+             - The filename doesn't have three underscore separated components
+               (and :ref:`PARSE_STRICT` is :data:`True`).
 
     This function parses the filename of a Debian binary package archive into
     three fields: the name of the package, its version and its architecture.
