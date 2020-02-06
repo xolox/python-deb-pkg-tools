@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 26, 2018
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -87,6 +87,22 @@ from deb_pkg_tools.version import Version
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)
+
+FORCE_ENTROPY = coerce_boolean(os.environ.get('DPT_FORCE_ENTROPY', 'false'))
+"""
+:data:`True` to allow :func:`GPGKey.generate_key_pair()` to force the system to
+generate entropy based on disk I/O , :data:`False` to disallow this behavior
+(the default).
+
+This was added to facilitate the deb-pkg-tools test suite running on Travis CI.
+It is assumed that this rather obscure functionality will only ever be useful
+in the same context: Running a test suite in a virtualization environment with
+very low entropy.
+
+The environment variable ``$DPT_FORCE_ENTROPY`` can be used to control the
+value of this variable (see :func:`~humanfriendly.coerce_boolean()` for
+acceptable values).
+"""
 
 GPG_AGENT_VARIABLE = 'GPG_AGENT_INFO'
 """The name of the environment variable used to communicate between the GPG agent and ``gpg`` processes (a string)."""
