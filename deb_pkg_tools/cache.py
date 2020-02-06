@@ -84,6 +84,15 @@ from six.moves import cPickle as pickle
 # Modules included in our package.
 from deb_pkg_tools.utils import makedirs, sha1
 
+# Public identifiers that require documentation.
+__all__ = (
+    "CACHE_FORMAT_REVISION",
+    "CacheEntry",
+    "PackageCache",
+    "get_default_cache",
+    "logger",
+)
+
 CACHE_FORMAT_REVISION = 2
 """The version number of the cache format (an integer)."""
 

@@ -1,7 +1,7 @@
 # Debian packaging tools: Relationship parsing and evaluation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 2, 2017
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -54,6 +54,22 @@ from six import string_types, text_type
 # Modules included in our package.
 from deb_pkg_tools.compat import str_compatible
 from deb_pkg_tools.version import compare_versions
+
+# Public identifiers that require documentation.
+__all__ = (
+    "ARCHITECTURE_RESTRICTIONS_MESSAGE",
+    "AbstractRelationship",
+    "AlternativeRelationship",
+    "EXPRESSION_PATTERN",
+    "Relationship",
+    "RelationshipSet",
+    "VersionedRelationship",
+    "cache_matches",
+    "logger",
+    "parse_alternatives",
+    "parse_depends",
+    "parse_relationship",
+)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

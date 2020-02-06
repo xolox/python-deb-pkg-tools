@@ -1,7 +1,7 @@
 # Debian packaging tools: Control file manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 25, 2018
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -31,6 +31,23 @@ from six.moves import StringIO
 # Modules included in our package.
 from deb_pkg_tools.deps import parse_depends, RelationshipSet
 from deb_pkg_tools.utils import makedirs
+
+# Public identifiers that require documentation.
+__all__ = (
+    "DEFAULT_CONTROL_FIELDS",
+    "DEPENDS_LIKE_FIELDS",
+    "MANDATORY_BINARY_CONTROL_FIELDS",
+    "check_mandatory_fields",
+    "create_control_file",
+    "deb822_from_string",
+    "load_control_file",
+    "logger",
+    "merge_control_fields",
+    "normalize_control_field_name",
+    "parse_control_fields",
+    "patch_control_file",
+    "unparse_control_fields",
+)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

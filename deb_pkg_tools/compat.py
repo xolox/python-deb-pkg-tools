@@ -1,7 +1,7 @@
 # Debian packaging tools: Compatibility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 27, 2017
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -14,6 +14,11 @@ that is compatible with Python 2.6 up to 3.5, filling in some missing bits that
 
 # External dependencies.
 from six import PY2
+
+# Public identifiers that require documentation.
+__all__ = (
+    "str_compatible",
+)
 
 
 def str_compatible(cls):

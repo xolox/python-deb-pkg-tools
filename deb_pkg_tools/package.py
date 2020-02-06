@@ -29,6 +29,46 @@ from deb_pkg_tools.control import deb822_from_string, parse_control_fields, patc
 from deb_pkg_tools.utils import makedirs
 from deb_pkg_tools.version import Version
 
+# Public identifiers that require documentation.
+__all__ = (
+    "ALLOW_CHOWN",
+    "ALLOW_FAKEROOT_OR_SUDO",
+    "ALLOW_HARD_LINKS",
+    "ALLOW_RESET_SETGID",
+    "ArchiveEntry",
+    "BINARY_PACKAGE_ARCHIVE_EXTENSIONS",
+    "CollectedPackagesConflict",
+    "DEPENDENCY_FIELDS",
+    "DIRECTORIES_TO_REMOVE",
+    "FILES_TO_REMOVE",
+    "OBJECT_FILE_EXCLUDES",
+    "PARSE_STRICT",
+    "PackageFile",
+    "ROOT_GROUP",
+    "ROOT_USER",
+    "build_package",
+    "clean_package_tree",
+    "collect_related_packages",
+    "collect_related_packages_helper",
+    "copy_package_files",
+    "determine_package_archive",
+    "find_latest_version",
+    "find_object_files",
+    "find_package_archives",
+    "find_system_dependencies",
+    "group_by_latest_versions",
+    "inspect_package",
+    "inspect_package_contents",
+    "inspect_package_fields",
+    "is_binary_file",
+    "logger",
+    "match_relationships",
+    "parse_filename",
+    "strip_object_files",
+    "update_conffiles",
+    "update_installed_size",
+)
+
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 

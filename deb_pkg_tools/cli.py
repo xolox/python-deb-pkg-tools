@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: October 20, 2018
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -119,12 +119,32 @@ from humanfriendly.terminal import (
 from deb_pkg_tools.cache import get_default_cache
 from deb_pkg_tools.checks import check_package
 from deb_pkg_tools.control import patch_control_file
-from deb_pkg_tools.package import (build_package, collect_related_packages,
-                                   inspect_package, parse_filename)
-from deb_pkg_tools.repo import (update_repository,
-                                activate_repository,
-                                deactivate_repository,
-                                with_repository)
+from deb_pkg_tools.package import (
+    build_package,
+    collect_related_packages,
+    inspect_package,
+    parse_filename,
+)
+from deb_pkg_tools.repo import (
+    activate_repository,
+    deactivate_repository,
+    update_repository,
+    with_repository,
+)
+
+# Public identifiers that require documentation.
+__all__ = (
+    "check_directory",
+    "collect_packages",
+    "collect_packages_worker",
+    "highlight",
+    "logger",
+    "main",
+    "say",
+    "show_package_metadata",
+    "smart_copy",
+    "with_repository_wrapper",
+)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

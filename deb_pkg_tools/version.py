@@ -1,7 +1,7 @@
 # Debian packaging tools: Version comparison.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: August 7, 2019
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -21,6 +21,16 @@ import logging
 
 # External dependencies.
 from executor import execute
+
+# Public identifiers that require documentation.
+__all__ = (
+    "Version",
+    "compare_versions",
+    "compare_versions_with_dpkg",
+    "compare_versions_with_python_apt",
+    "have_python_apt",
+    "logger",
+)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

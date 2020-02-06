@@ -1,7 +1,7 @@
 # Debian packaging tools: Static analysis of package archives.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 5, 2019
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -25,6 +25,17 @@ from humanfriendly.text import compact
 # Modules included in our package.
 from deb_pkg_tools.package import collect_related_packages, inspect_package, parse_filename
 from deb_pkg_tools.utils import optimize_order
+
+# Public identifiers that require documentation.
+__all__ = (
+    "BrokenPackage",
+    "DuplicateFilesFound",
+    "VersionConflictFound",
+    "check_duplicate_files",
+    "check_package",
+    "check_version_conflicts",
+    "logger",
+)
 
 # Initialize a logger.
 logger = logging.getLogger(__name__)

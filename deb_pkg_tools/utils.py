@@ -25,6 +25,19 @@ import time
 from executor import execute, ExternalCommandFailed
 from humanfriendly import Spinner, Timer, compact
 
+# Public identifiers that require documentation.
+__all__ = (
+    "ResourceLockedException",
+    "atomic_lock",
+    "compact",
+    "find_debian_architecture",
+    "find_installed_version",
+    "logger",
+    "makedirs",
+    "optimize_order",
+    "sha1",
+)
+
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 # Debian packaging tools: Configuration defaults.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 22, 2016
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Configuration defaults for the `deb-pkg-tools` package."""
@@ -11,6 +11,16 @@ import os
 
 # External dependencies.
 from humanfriendly import parse_path
+
+# Public identifiers that require documentation.
+__all__ = (
+    "package_cache_directory",
+    "repo_config_file",
+    "system_cache_directory",
+    "system_config_directory",
+    "user_cache_directory",
+    "user_config_directory",
+)
 
 system_config_directory = '/etc/deb-pkg-tools'
 """The pathname of the global (system wide) configuration directory used by `deb-pkg-tools` (a string)."""

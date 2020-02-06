@@ -85,6 +85,19 @@ from property_manager import PropertyManager, cached_property, mutable_property
 from deb_pkg_tools.utils import find_installed_version, makedirs
 from deb_pkg_tools.version import Version
 
+# Public identifiers that require documentation.
+__all__ = (
+    "EntropyGenerator",
+    "FORCE_ENTROPY",
+    "GPGKey",
+    "GPG_AGENT_VARIABLE",
+    "create_directory",
+    "generate_entropy",
+    "have_updated_gnupg",
+    "initialize_gnupg",
+    "logger",
+)
+
 # Initialize a logger.
 logger = logging.getLogger(__name__)
 

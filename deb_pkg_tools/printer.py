@@ -1,7 +1,7 @@
 # Debian packaging tools: Custom pretty printer.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: November 22, 2016
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -25,6 +25,11 @@ from deb_pkg_tools.deps import RelationshipSet
 
 # External dependencies.
 from debian.deb822 import Deb822
+
+# Public identifiers that require documentation.
+__all__ = (
+    "CustomPrettyPrinter",
+)
 
 
 class CustomPrettyPrinter(pprint.PrettyPrinter):

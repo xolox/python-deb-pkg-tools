@@ -54,6 +54,21 @@ from deb_pkg_tools.package import find_package_archives, inspect_package_fields
 from deb_pkg_tools.utils import atomic_lock, find_installed_version, optimize_order, sha1
 from deb_pkg_tools.version import Version
 
+# Public identifiers that require documentation.
+__all__ = (
+    "ALLOW_SUDO",
+    "activate_repository",
+    "apt_supports_trusted_option",
+    "deactivate_repository",
+    "get_packages_entry",
+    "load_config",
+    "logger",
+    "scan_packages",
+    "select_gpg_key",
+    "update_repository",
+    "with_repository",
+)
+
 ALLOW_SUDO = coerce_boolean(os.environ.get('DPT_SUDO', 'true'))
 """
 :data:`True` to enable the use of :man:`sudo` during operations that normally
