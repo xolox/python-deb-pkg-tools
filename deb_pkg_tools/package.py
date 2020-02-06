@@ -140,6 +140,26 @@ of this variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable
 values).
 """
 
+ROOT_USER = os.environ.get('DPT_ROOT_USER', 'root')
+"""
+The name of the system user that is used by :func:`build_package() when it
+normalizes file ownership using :man:`chown` (controlled by
+:data:`ALLOW_CHOWN`).
+
+The environment variable ``$DPT_ROOT_USER`` can be used to control the value
+of this variable.
+"""
+
+ROOT_GROUP = os.environ.get('DPT_ROOT_GROUP', 'root')
+"""
+The name of the system group that is used by :func:`build_package() when it
+normalizes file ownership using :man:`chown` (controlled by
+:data:`ALLOW_CHOWN`).
+
+The environment variable ``$DPT_ROOT_GROUP`` can be used to control the value
+of this variable.
+"""
+
 
 def parse_filename(filename, cache=None):
     """
@@ -759,9 +779,7 @@ def build_package(directory, repository=None, check_package=True, copy_files=Tru
         if ALLOW_CHOWN:
             # Make sure all files included in the package are owned by `root'
             # (the only account guaranteed to exist on all systems).
-            root_user = os.environ.get('DPT_ROOT_USER', 'root')
-            root_group = os.environ.get('DPT_ROOT_GROUP', 'root')
-            user_spec = '%s:%s' % (root_user, root_group)
+            user_spec = '%s:%s' % (ROOT_USER, ROOT_GROUP)
             logger.debug("Resetting file ownership (to %s) ..", user_spec)
             execute('chown', '-R', user_spec, build_directory,
                     fakeroot=ALLOW_FAKEROOT_OR_SUDO, logger=logger)
