@@ -87,6 +87,33 @@ building a package. Used by :func:`clean_package_tree()` which is called by
 - `package-installs-python-bytecode <http://lintian.debian.org/tags/package-installs-python-bytecode.html>`_
 """
 
+OBJECT_FILE_EXCLUDES = (
+    '*.eot',
+    '*.gif',
+    '*.ico',
+    '*.jpeg',
+    '*.jpg',
+    '*.mo',
+    '*.mp3',
+    '*.otf',
+    '*.pdf',
+    '*.png',
+    '*.ttf',
+    '*.woff',
+    '*.woff2',
+    '*.xls',
+    '*.xlsx',
+)
+"""
+A tuple of strings with :mod:`fnmatch` patterns of common file types to be
+ignored by :func:`find_object_files()` even if the files in question have the
+executable bit set and contain binary data.
+
+This option was added to minimize harmless but possibly confusing warnings from
+:func:`strip_object_files()` and/or :func:`find_system_dependencies()` caused
+by binary files that happen to (incorrectly) have their executable bit set.
+"""
+
 ALLOW_CHOWN = coerce_boolean(os.environ.get('DPT_CHOWN_FILES', 'true'))
 """
 :data:`True` to allow :func:`build_package()` to normalize file ownership by
@@ -1054,9 +1081,10 @@ def find_object_files(directory):
     binaries = []
     for root, dirs, files in os.walk(directory):
         for filename in files:
-            pathname = os.path.join(root, filename)
-            if filename.endswith('.so') or (os.access(pathname, os.X_OK) and is_binary_file(pathname)):
-                binaries.append(pathname)
+            if not any(fnmatch.fnmatch(filename, p) for p in OBJECT_FILE_EXCLUDES):
+                pathname = os.path.join(root, filename)
+                if filename.endswith('.so') or (os.access(pathname, os.X_OK) and is_binary_file(pathname)):
+                    binaries.append(pathname)
     return binaries
 
 
