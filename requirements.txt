@@ -4,7 +4,7 @@
 
 coloredlogs >= 0.4.6
 executor >= 19.0
-humanfriendly >= 4.17
+humanfriendly >= 5.0
 property-manager >= 2.1
 python-debian >= 0.1.34
 six >= 1.10.0
