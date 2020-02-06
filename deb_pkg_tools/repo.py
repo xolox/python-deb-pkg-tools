@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 5, 2020
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -56,10 +56,10 @@ from deb_pkg_tools.version import Version
 
 ALLOW_SUDO = coerce_boolean(os.environ.get('DPT_SUDO', 'true'))
 """
-:data:`True` to enable the use of ``sudo`` during operations that normally
+:data:`True` to enable the use of :man:`sudo` during operations that normally
 require elevated privileges (the default), :data:`False` to disable the use of
-``sudo``. This option is provided for power users to disable the use of
-``sudo`` because it may not be available in all build environments. The
+:man:`sudo`. This option is provided for power users to disable the use of
+:man:`sudo` because it may not be available in all build environments. The
 environment variable ``$DPT_SUDO`` can be used to control the value of this
 variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable values).
 """
@@ -75,8 +75,8 @@ def scan_packages(repository, packages_file=None, cache=None):
     Updates a ``Packages`` file based on the Debian package archive(s) found in
     the given directory. Uses :class:`.PackageCache` to (optionally) speed
     up the process significantly by caching package metadata and hashes on
-    disk. This explains why this function can be much faster than
-    ``dpkg-scanpackages -m``.
+    disk. This explains why this function can be much faster than the
+    :man:`dpkg-scanpackages` program.
 
     :param repository: The pathname of a directory containing Debian
                        package archives (a string).
@@ -324,8 +324,8 @@ def activate_repository(directory, gpg_key=None):
 
     This function sets everything up so that a trivial Debian package
     repository can be used to install packages without a webserver. This uses
-    the ``file://`` URL scheme to point ``apt-get`` to a directory on the local
-    file system.
+    the ``file://`` URL scheme to point :man:`apt-get` to a directory on the
+    local file system.
 
     .. warning:: This function requires ``root`` privileges to:
 
@@ -333,7 +333,7 @@ def activate_repository(directory, gpg_key=None):
                  2. create a ``*.list`` file in ``/etc/apt/sources.list.d`` and
                  3. run ``apt-get update``.
 
-                 This function will use ``sudo`` to gain ``root`` privileges
+                 This function will use :man:`sudo` to gain ``root`` privileges
                  when it's not already running as ``root``.
 
     .. seealso:: :data:`ALLOW_SUDO`
@@ -377,7 +377,7 @@ def deactivate_repository(directory):
                  1. delete a ``*.list`` file in ``/etc/apt/sources.list.d`` and
                  2. run ``apt-get update``.
 
-                 This function will use ``sudo`` to gain ``root`` privileges
+                 This function will use :man:`sudo` to gain ``root`` privileges
                  when it's not already running as ``root``.
 
     .. seealso:: :data:`ALLOW_SUDO`

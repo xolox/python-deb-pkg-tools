@@ -725,8 +725,8 @@ def build_package(directory, repository=None, check_package=True, copy_files=Tru
        :func:`update_installed_size()`).
     3. Sets the owner and group of all files to ``root`` because this is the
        only user account guaranteed to always be available. This uses the
-       ``fakeroot`` command so you don't actually need ``root`` access to use
-       :func:`build_package()`.
+       :man:`fakeroot` command so you don't actually need ``root`` access to
+       use :func:`build_package()`.
     4. Runs the command ``fakeroot dpkg-deb --build`` to generate a Debian
        package from the files in the build directory.
     5. Runs Lintian_ to check the resulting package archive for possible
@@ -951,7 +951,7 @@ def clean_package_tree(directory, remove_dirs=DIRECTORIES_TO_REMOVE, remove_file
 
 def strip_object_files(object_files):
     """
-    Use strip_ to make object files smaller.
+    Use :man:`strip` to make object files smaller.
 
     :param object_files: An iterable of strings with filenames of object files.
 
@@ -959,16 +959,14 @@ def strip_object_files(object_files):
     files to make them as small as possible. To find the object files you can
     use :func:`find_object_files()`.
 
-    If the strip_ program is not installed a `debug` message is logged but no
-    exceptions are raised. When the strip_ program fails a `warning` message is
-    logged but again, no exceptions are raised.
+    If the :man:`strip` program is not installed a `debug` message is logged
+    but no exceptions are raised. When the :man:`strip` program fails a
+    `warning` message is logged but again, no exceptions are raised.
 
     One reason not to propagate these error conditions as exceptions is that
     :func:`find_object_files()` will match files with binary contents that
     have their executable bit set, regardless of whether those files are
     actually valid object files.
-
-    .. _strip: https://manpages.debian.org/strip
     """
     for filename in object_files:
         try:
@@ -983,16 +981,16 @@ def strip_object_files(object_files):
 
 def find_system_dependencies(object_files):
     """
-    Use dpkg-shlibdeps_ to find dependencies on system packages.
+    Use :man:`dpkg-shlibdeps` to find dependencies on system packages.
 
     :param object_files: An iterable of strings with filenames of object files.
     :returns: A list of strings in the format of the entries on the
               ``Depends:`` line of a binary package control file.
 
-    This function uses the dpkg-shlibdeps_ program to find dependencies
-    on system packages by analyzing the given object files (binary
-    executables and/or ``*.so`` files). To find the object files
-    you can use :func:`find_object_files()`.
+    This function uses the :man:`dpkg-shlibdeps` program to find dependencies
+    on system packages by analyzing the given object files (binary executables
+    and/or ``*.so`` files). To find the object files you can use
+    :func:`find_object_files()`.
 
     Here's an example to make things a bit more concrete:
 
@@ -1004,8 +1002,6 @@ def find_system_dependencies(object_files):
      'zlib1g (>= 1:1.1.4)']
 
     Very advanced magic! :-)
-
-    .. _dpkg-shlibdeps: https://manpages.debian.org/dpkg-shlibdeps
     """
     logger.debug("Using `dpkg-shlibdeps' to find dependencies on system packages ..")
     # Create a fake source package because `dpkg-shlibdeps' requires it.

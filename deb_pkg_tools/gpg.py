@@ -105,7 +105,7 @@ acceptable values).
 """
 
 GPG_AGENT_VARIABLE = 'GPG_AGENT_INFO'
-"""The name of the environment variable used to communicate between the GPG agent and ``gpg`` processes (a string)."""
+"""The name of the environment variable used to communicate between the GPG agent and :man:`gpg` processes (a string)."""
 
 
 def create_directory(pathname):
@@ -357,7 +357,7 @@ class GPGKey(PropertyManager):
 
     @mutable_property
     def command_name(self):
-        """The name of the GnuPG program (a string, defaults to ``gpg``)."""
+        """The name of the GnuPG program (a string, defaults to :man:`gpg`)."""
         return 'gpg'
 
     @mutable_property

@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 13, 2019
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -64,8 +64,8 @@ locking and corruption issues, but when the filesystem cache is cold (for
 example because you've just run a couple of heavy builds) it's still damn slow
 to scan the package metadata of a full repository with hundreds of archives...
 
-As a pragmatic performance optimization memcached was added to the mix. Any
-errors involving memcached are silently ignored which means memcached isn't
+As a pragmatic performance optimization :man:`memcached` was added to the mix.
+Any errors involving memcached are silently ignored which means memcached isn't
 required to use the cache; it's an optional optimization.
 """
 

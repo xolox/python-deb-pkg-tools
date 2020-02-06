@@ -1,7 +1,7 @@
 # Debian packaging tools: Utility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: January 27, 2017
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -108,7 +108,7 @@ def find_debian_architecture():
     the ``dpkg-dev`` package). This command is not used by default because:
 
     1. deb-pkg-tools doesn't have a strict dependency on ``dpkg-dev``.
-    2. The ``dpkg-architecture`` program enables callers to set the current
+    2. The :man:`dpkg-architecture` program enables callers to set the current
        architecture and the exact semantics of this are unclear to me at the
        time of writing (it can't automagically provide a cross compilation
        environment, so what exactly does it do?).
@@ -116,8 +116,8 @@ def find_debian_architecture():
     :returns: The Debian architecture (a string like ``i386``, ``amd64``,
               ``armhf``, etc).
     :raises: :exc:`~executor.ExternalCommandFailed` when the
-             ``dpkg-architecture`` program is not available or reports an
-             error.
+             :man:`dpkg-architecture` program is not available
+             or reports an error.
 
     .. _machine architecture labels: https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Architecture
     .. _more architectures: https://www.debian.org/ports/index.en.html#portlist-released
@@ -137,11 +137,12 @@ def find_installed_version(package_name):
     """
     Find the installed version of a Debian system package.
 
-    Uses the ``dpkg-query --show --showformat='${Version}' ...`` command.
-
     :param package_name: The name of the package (a string).
     :returns: The installed version of the package (a string) or :data:`None` if
               the version can't be found.
+
+    This function uses the ``dpkg-query --show --showformat='${Version}' ...``
+    command (see the :man:`dpkg-query` documentation for details).
     """
     try:
         return execute('dpkg-query', '--show', '--showformat=${Version}', package_name, capture=True, silent=True)
