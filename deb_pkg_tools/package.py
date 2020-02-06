@@ -742,6 +742,11 @@ def build_package(directory, repository=None, check_package=True, copy_files=Tru
                        to a temporary directory before being modified. You can
                        set this to :data:`False` if you're already working on a
                        copy and don't want yet another copy to be made.
+    :param update_conffiles: If :data:`True` (the default) files in ``/etc``
+                             will be added to ``DEBIAN/conffiles``
+                             automatically using :func:`update_conffiles()`,
+                             otherwise it is up to the caller whether to do
+                             this or not.
     :param strip_object_files: If :data:`True` (not the default) then
                                :func:`strip_object_files()` will be used.
     :param find_system_dependencies: If :data:`True` (not the default) then
@@ -791,7 +796,9 @@ def build_package(directory, repository=None, check_package=True, copy_files=Tru
             build_directory = directory
         control_file = os.path.join(build_directory, 'DEBIAN', 'control')
         clean_package_tree(build_directory)
-        update_conffiles(build_directory)
+        # Automatically mark configuration files?
+        if options.get('update_conffiles', True):
+            update_conffiles(build_directory)
         # Process binary executables and *.so files?
         if any(map(options.get, ('find_system_dependencies', 'strip_object_files'))):
             object_files = find_object_files(build_directory)

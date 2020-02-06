@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 5, 2020
+# Last Change: February 6, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -18,7 +18,7 @@ import tempfile
 # External dependencies.
 from capturer import CaptureOutput
 from debian.deb822 import Deb822
-from executor import execute
+from executor import ExternalCommandFailed, execute
 from humanfriendly import coerce_boolean
 from humanfriendly.testing import PatchedAttribute, TestCase, run_cli, touch
 from humanfriendly.text import dedent
@@ -562,6 +562,30 @@ class DebPkgToolsTestCase(TestCase):
                 assert '/tmp/.gitignore' not in contents
                 return package_file
 
+    def test_update_conffiles(self):
+        """Test ``build_package(update_conffiles=True)`` (the default)."""
+        with Context() as finalizers:
+            repository = finalizers.mkdtemp()
+            build_directory = finalizers.mkdtemp()
+            os.mkdir(os.path.join(build_directory, 'DEBIAN'))
+            with open(os.path.join(build_directory, 'DEBIAN', 'control'), 'wb') as handle:
+                TEST_PACKAGE_FIELDS.dump(handle)
+            touch(os.path.join(build_directory, 'etc', 'implicit-conffile'))
+            package_archive = build_package(build_directory, repository, update_conffiles=True)
+            assert get_conffiles(package_archive) == ['/etc/implicit-conffile']
+
+    def test_update_conffiles_optional(self):
+        """Test ``build_package(update_conffiles=False)`` (not the default)."""
+        with Context() as finalizers:
+            repository = finalizers.mkdtemp()
+            build_directory = finalizers.mkdtemp()
+            os.mkdir(os.path.join(build_directory, 'DEBIAN'))
+            with open(os.path.join(build_directory, 'DEBIAN', 'control'), 'wb') as handle:
+                TEST_PACKAGE_FIELDS.dump(handle)
+            touch(os.path.join(build_directory, 'etc', 'not-a-conffile'))
+            package_archive = build_package(build_directory, repository, update_conffiles=False)
+            assert get_conffiles(package_archive) == []
+
     def test_command_line_interface(self):
         """Test the command line interface."""
         if SKIP_SLOW_TESTS:
@@ -916,6 +940,15 @@ class DebPkgToolsTestCase(TestCase):
                 os.unlink(options['public_key_file'])
                 touch(options['secret_key_file'])
                 self.assertRaises(EnvironmentError, GPGKey, **options)
+
+
+def get_conffiles(package_archive):
+    """Use ``dpkg --info ... conffiles`` to inspect marked configuration files."""
+    try:
+        listing = execute('dpkg', '--info', package_archive, 'conffiles', capture=True, silent=True)
+        return listing.splitlines()
+    except ExternalCommandFailed:
+        return []
 
 
 def match(pattern, lines):
