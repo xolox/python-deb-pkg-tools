@@ -94,6 +94,16 @@ values).
 """
 
 ALLOW_FAKEROOT_OR_SUDO = coerce_boolean(os.environ.get('DPT_ALLOW_FAKEROOT_OR_SUDO', 'true'))
+"""
+:data:`True` to allow :func:`build_package()` to use :man:`fakeroot` (when
+available) or :man:`sudo` (when :man:`fakeroot` is not available),
+:data:`False` to disallow this behavior.
+
+The environment variable ``$DPT_ALLOW_FAKEROOT_OR_SUDO`` can be used to control
+the value of this variable (see :func:`~humanfriendly.coerce_boolean()` for
+acceptable values).
+"""
+
 ALLOW_HARD_LINKS = coerce_boolean(os.environ.get('DPT_HARD_LINKS', 'true'))
 ALLOW_RESET_SETGID = coerce_boolean(os.environ.get('DPT_RESET_SETGID', 'true'))
 
