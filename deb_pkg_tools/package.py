@@ -105,6 +105,15 @@ acceptable values).
 """
 
 ALLOW_HARD_LINKS = coerce_boolean(os.environ.get('DPT_HARD_LINKS', 'true'))
+"""
+:data:`True` to allow :func:`copy_package_files()` to use hard links to
+optimize file copying, :data:`False` to disallow this behavior.
+
+The environment variable ``$DPT_HARD_LINKS`` can be used to control the value
+of this variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable
+values).
+"""
+
 ALLOW_RESET_SETGID = coerce_boolean(os.environ.get('DPT_RESET_SETGID', 'true'))
 
 PARSE_STRICT = coerce_boolean(os.environ.get('DPT_PARSE_STRICT', 'true'))

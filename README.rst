@@ -194,7 +194,7 @@ DPT_ALLOW_FAKEROOT_OR_SUDO_     ``true``       Run commands using either
 DPT_SUDO_                       ``true``       Enable the usage of ``sudo``
                                                during operations that normally
                                                require elevated privileges.
-``DPT_HARD_LINKS``              ``true``       Allow the usage of hard links to
+DPT_HARD_LINKS_                 ``true``       Allow the usage of hard links to
                                                speed up file copies between
                                                directories on the same file
                                                system.
@@ -248,6 +248,7 @@ This software is licensed under the `MIT license`_.
 .. _Debian binary packages: https://www.debian.org/doc/debian-policy/ch-binary.html
 .. _DPT_ALLOW_FAKEROOT_OR_SUDO: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.ALLOW_FAKEROOT_OR_SUDO
 .. _DPT_CHOWN_FILES: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.ALLOW_CHOWN
+.. _DPT_HARD_LINKS: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.ALLOW_HARD_LINKS
 .. _DPT_SUDO: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.repo.ALLOW_SUDO
 .. _GitHub: https://github.com/xolox/python-deb-pkg-tools
 .. _MIT license: http://en.wikipedia.org/wiki/MIT_License
