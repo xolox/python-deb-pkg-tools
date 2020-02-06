@@ -115,6 +115,14 @@ values).
 """
 
 ALLOW_RESET_SETGID = coerce_boolean(os.environ.get('DPT_RESET_SETGID', 'true'))
+"""
+:data:`True` to allow :func:`build_package()` to remove the sticky bit from
+directories, :data:`False` to disallow this behavior.
+
+The environment variable ``$DPT_RESET_SETGID`` can be used to control the value
+of this variable (see :func:`~humanfriendly.coerce_boolean()` for acceptable
+values).
+"""
 
 PARSE_STRICT = coerce_boolean(os.environ.get('DPT_PARSE_STRICT', 'true'))
 """

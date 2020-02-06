@@ -185,7 +185,7 @@ DPT_CHOWN_FILES_                ``true``       Normalize ownership of files
 ``DPT_ROOT_GROUP``              ``root``       During package builds the
                                                ownership of all directories and
                                                files is reset to this group.
-``DPT_RESET_SETGID``            ``true``       Reset sticky bit on directories
+DPT_RESET_SETGID_               ``true``       Reset sticky bit on directories
                                                inside package templates before
                                                building.
 DPT_ALLOW_FAKEROOT_OR_SUDO_     ``true``       Run commands using either
@@ -250,6 +250,7 @@ This software is licensed under the `MIT license`_.
 .. _DPT_CHOWN_FILES: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.ALLOW_CHOWN
 .. _DPT_HARD_LINKS: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.ALLOW_HARD_LINKS
 .. _DPT_PARSE_STRICT: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.PARSE_STRICT
+.. _DPT_RESET_SETGID: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.package.ALLOW_RESET_SETGID
 .. _DPT_SUDO: https://deb-pkg-tools.readthedocs.io/en/latest/#deb_pkg_tools.repo.ALLOW_SUDO
 .. _GitHub: https://github.com/xolox/python-deb-pkg-tools
 .. _MIT license: http://en.wikipedia.org/wiki/MIT_License
