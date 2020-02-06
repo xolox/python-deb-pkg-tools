@@ -38,8 +38,11 @@ A tuple of strings with supported filename extensions of Debian binary package
 archives. Used by :func:`find_package_archives()` and :func:`parse_filename()`.
 """
 
-# The names of control file fields that specify dependencies.
 DEPENDENCY_FIELDS = ('Depends', 'Pre-Depends')
+"""
+A tuple of strings with names of control file fields that specify dependencies,
+used by :func:`collect_related_packages()` to analyze dependency trees.
+"""
 
 DIRECTORIES_TO_REMOVE = (
     '.bzr',         # Bazaar (version control system).
