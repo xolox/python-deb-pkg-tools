@@ -1124,6 +1124,15 @@ def find_object_files(directory):
 
     :param directory: The pathname of the directory to search (a string).
     :returns: A list of filenames of object files (strings).
+
+    This function is used by :func:`build_package()` to find files to process
+    with :func:`find_system_dependencies()` and :func:`strip_object_files()`.
+    It works by inspecting all of the files in the given `directory`:
+
+    - If the filename matches ``*.so`` it is considered an object file.
+    - If the file is marked executable and it contains binary data it is also
+      considered an object file, unless the filename matches one of the
+      patterns in :data:`OBJECT_FILE_EXCLUDES`.
     """
     binaries = []
     for root, dirs, files in os.walk(directory):
