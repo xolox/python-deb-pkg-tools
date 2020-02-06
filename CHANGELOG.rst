@@ -11,6 +11,70 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 7.0`_ (2020-02-07)
+---------------------------
+
+**Code changes:**
+
+- Make :func:`~deb_pkg_tools.package.update_conffiles()` optional (requested in
+  `#19`_) in the Python API.
+
+- Make :func:`~deb_pkg_tools.package.find_object_files()` use a builtin exclude
+  list of filename patterns to ignore.
+
+- Start using ``__all__`` to control what is exported:
+
+  - This change is backwards incompatible in the sense that until now imports
+    were exposed to the outside world, however for anyone to actually use this
+    would imply not having read the documentation, so this doesn't really
+    bother me.
+
+  - In theory this change could be backwards incompatible in a bad way if I
+    omitted ``__all__`` entries that should have been exported. I did double
+    check but of course I can't be 100% sure (the ``deb_pkg_tools.*`` modules
+    currently span almost 6000 lines including whitespace and comments).
+
+  - I decided to bump the major version number because of the potential for
+    import errors caused by the introduction of ``__all__``.
+
+**Documentation updates:**
+
+- Simplified the overview of environment variables in the readme by properly
+  documenting individual options and linking to their documentation entries.
+  Over the years I've picked up the habit of treating my documentation just
+  like my code: Make sure everything is defined in a single place (DRY), as
+  close as possible to the place where it is used. Properly documenting all of
+  the module variables that are based on environment variables and linking to
+  those from the readme frees me from the burden of explaining things in more
+  than one place. This is good because multiple explanations increase the
+  chance of documentation becoming outdated or contradictoring itself, which
+  are definitely problems to be avoided whenever possible.
+- Started using ``:man:`` role to link to Linux manual pages.
+- Changed Read the Docs URL (``s/\.org$/.io/g``).
+
+**Documented variables:**
+
+.. csv-table::
+   :header-rows: 1
+
+   Module variable,Environment variable
+   :data:`deb_pkg_tools.gpg.FORCE_ENTROPY`,``$DPT_FORCE_ENTROPY``
+   :data:`deb_pkg_tools.package.ALLOW_CHOWN`,``$DPT_CHOWN_FILES``
+   :data:`deb_pkg_tools.package.ALLOW_FAKEROOT_OR_SUDO`,``$DPT_ALLOW_FAKEROOT_OR_SUDO``
+   :data:`deb_pkg_tools.package.ALLOW_HARD_LINKS`,``$DPT_HARD_LINKS``
+   :data:`deb_pkg_tools.package.ALLOW_RESET_SETGID`,``$DPT_RESET_SETGID``
+   :data:`deb_pkg_tools.package.BINARY_PACKAGE_ARCHIVE_EXTENSIONS`
+   :data:`deb_pkg_tools.package.DEPENDENCY_FIELDS`
+   :data:`deb_pkg_tools.package.DIRECTORIES_TO_REMOVE`
+   :data:`deb_pkg_tools.package.FILES_TO_REMOVE`
+   :data:`deb_pkg_tools.package.PARSE_STRICT`,``$DPT_PARSE_STRICT``
+   :data:`deb_pkg_tools.package.ROOT_GROUP`,``$DPT_ROOT_GROUP``
+   :data:`deb_pkg_tools.package.ROOT_USER`,``$DPT_ROOT_USER``
+   :data:`deb_pkg_tools.repo.ALLOW_SUDO`,``$DPT_SUDO``
+
+.. _Release 7.0: https://github.com/xolox/python-deb-pkg-tools/compare/6.1...7.0
+.. _#19: https://github.com/xolox/python-deb-pkg-tools/issues/19
+
 `Release 6.1`_ (2020-02-05)
 ---------------------------
 
