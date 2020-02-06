@@ -213,7 +213,7 @@ values).
 
 ROOT_USER = os.environ.get('DPT_ROOT_USER', 'root')
 """
-The name of the system user that is used by :func:`build_package() when it
+The name of the system user that is used by :func:`build_package()` when it
 normalizes file ownership using :man:`chown` (controlled by
 :data:`ALLOW_CHOWN`).
 
@@ -223,7 +223,7 @@ of this variable.
 
 ROOT_GROUP = os.environ.get('DPT_ROOT_GROUP', 'root')
 """
-The name of the system group that is used by :func:`build_package() when it
+The name of the system group that is used by :func:`build_package()` when it
 normalizes file ownership using :man:`chown` (controlled by
 :data:`ALLOW_CHOWN`).
 
@@ -246,7 +246,7 @@ def parse_filename(filename, cache=None):
                :data:`BINARY_PACKAGE_ARCHIVE_EXTENSIONS`.
 
              - The filename doesn't have three underscore separated components
-               (and :ref:`PARSE_STRICT` is :data:`True`).
+               (and :data:`PARSE_STRICT` is :data:`True`).
 
     This function parses the filename of a Debian binary package archive into
     three fields: the name of the package, its version and its architecture.
@@ -361,7 +361,7 @@ def find_package_archives(directory, cache=None):
     Find the Debian package archive(s) in the given directory.
 
     :param directory: The pathname of a directory (a string).
-    :param cache: The :class:`.PackageCache` that :ref:`parse_filename()`
+    :param cache: The :class:`.PackageCache` that :func:`parse_filename()`
                   should use when :data:`PARSE_STRICT` is :data:`False`
                   (defaults to :data:`None`).
     :returns: A list of :class:`PackageFile` objects.
@@ -572,7 +572,7 @@ def find_latest_version(packages, cache=None):
 
     :param packages: A list of filenames (strings) and/or
                      :class:`PackageFile` objects.
-    :param cache: The :class:`.PackageCache` that :ref:`parse_filename()`
+    :param cache: The :class:`.PackageCache` that :func:`parse_filename()`
                   should use when :data:`PARSE_STRICT` is :data:`False`
                   (defaults to :data:`None`).
     :returns: The :class:`PackageFile` with the highest version number.
@@ -595,7 +595,7 @@ def group_by_latest_versions(packages, cache=None):
 
     :param packages: A list of filenames (strings) and/or
                      :class:`PackageFile` objects.
-    :param cache: The :class:`.PackageCache` that :ref:`parse_filename()`
+    :param cache: The :class:`.PackageCache` that :func:`parse_filename()`
                   should use when :data:`PARSE_STRICT` is :data:`False`
                   (defaults to :data:`None`).
     :returns: A dictionary with package names as keys and
