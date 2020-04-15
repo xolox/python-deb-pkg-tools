@@ -716,7 +716,13 @@ def inspect_package_contents(archive, cache=None):
         fields = line.split(None, 5)
         permissions = fields[0]
         owner, group = fields[1].split('/')
-        size = int(fields[2])
+
+        try:
+            size = int(fields[2])
+        except ValueError:
+            # Device nodes show device ID info instead of size - set to zero
+            size = 0
+
         modified = fields[3] + ' ' + fields[4]
         pathname = re.sub('^./', '/', fields[5])
         pathname, _, target = pathname.partition(' -> ')
