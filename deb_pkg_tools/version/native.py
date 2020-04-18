@@ -73,7 +73,7 @@ def compare_strings(version1, version2):
         # found it is returned. The lexical comparison is a comparison of ASCII values
         # modified so that all the letters sort earlier than all the non-letters and so
         # that a tilde sorts before anything, even the end of a part. For example, the
-        # following parts are in sorted order: ‘~~’, ‘~~a’, ‘~’, the empty part, ‘a’.
+        # following parts are in sorted order: '~~', '~~a', '~', the empty part, 'a'.
         p1 = get_non_digit_prefix(v1)
         p2 = get_non_digit_prefix(v2)
         if p1 != p2:
