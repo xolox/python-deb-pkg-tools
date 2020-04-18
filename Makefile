@@ -1,7 +1,7 @@
 # Makefile for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: September 6, 2019
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 PACKAGE_NAME = deb-pkg-tools
@@ -28,14 +28,9 @@ default:
 	@echo '    make clean      cleanup all temporary files'
 	@echo
 
-# The `virtualenv --system-site-packages' command is used to enable access to
-# the python-apt binding which isn't available on PyPI (AFAIK) and so can't
-# easily be installed inside of a Python virtual environment.
-
 install:
 	@test -d "$(VIRTUAL_ENV)" || mkdir -p "$(VIRTUAL_ENV)"
-	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --python=$(PYTHON) --system-site-packages --quiet "$(VIRTUAL_ENV)"
-	@test -x "$(VIRTUAL_ENV)/bin/pip" || easy_install pip
+	@test -x "$(VIRTUAL_ENV)/bin/python" || virtualenv --python=$(PYTHON) --quiet "$(VIRTUAL_ENV)"
 	@pip install --quiet --constraint=constraints.txt --requirement=requirements.txt
 	@pip uninstall --yes $(PACKAGE_NAME) &>/dev/null || true
 	@pip install --quiet --no-deps --ignore-installed .

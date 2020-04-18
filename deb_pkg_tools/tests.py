@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -266,47 +266,13 @@ class DebPkgToolsTestCase(TestCase):
             assert str(patched_fields['Depends']) == 'another-dependency, some-dependency'
 
     def test_version_comparison_internal(self):
-        """
-        Test the comparison of version objects (using the python-apt binding).
-
-        The test suite will fail on Travis CI when the python-apt binding isn't
-        available. The idea behind this is to verify that the conditional
-        import chain in ``version.py`` always succeeds (on Travis CI, where I
-        control the runtime environment).
-
-        This was added when after much debugging I finally realized why the new
-        Ubuntu 18.04 build server I'd created was so awfully slow: The
-        conditional import chain had been "silently broken" without me
-        realizing it, except for the fact that using the fall back
-        implementation based on ``dpkg --compare-versions`` to sort through
-        thousands of version numbers was rather noticeably slow...
-        """
-        message = "python-apt binding isn't available"
-        if not version.have_python_apt:
-            if IS_TRAVIS and self.python_apt_expected:
-                raise Exception(message)
-            else:
-                return self.skipTest(message)
-        # Run the version comparison tests.
-        self.version_comparison_helper()
-
-    @property
-    def python_apt_expected(self):
-        """
-        :data:`True` if ``python-apt`` is expected to be available, :data:`False` otherwise.
-
-        To make sense of this please refer to ``install-on-travis.sh``.
-        """
-        current_interpreter = "python%i.%i" % sys.version_info[:2]
-        preferred_executable = os.path.join('/usr/bin', current_interpreter)
-        return os.path.exists(preferred_executable)
+        """Test the comparison of version objects (using the pure Python implementation)."""
+        with PatchedAttribute(version, 'PREFER_DPKG', False):
+            self.version_comparison_helper()
 
     def test_version_comparison_external(self):
         """Test the comparison of version objects (by running ``dpkg --compare-versions``)."""
-        with PatchedAttribute(version, 'have_python_apt', False):
-            # Sanity check that the monkey patching worked.
-            self.assertRaises(NotImplementedError, version.compare_versions_with_python_apt, '0.1', '<<', '0.2')
-            # Run the version comparison tests.
+        with PatchedAttribute(version, 'PREFER_DPKG', True):
             self.version_comparison_helper()
 
     def version_comparison_helper(self):
@@ -320,31 +286,33 @@ class DebPkgToolsTestCase(TestCase):
         # Check each individual operator (to make sure the two implementations
         # agree). We use the Version() class for this so that we test both
         # compare_versions() and the Version() wrapper.
-        # Test `>'.
+        # Test the Debian '>>' operator.
         assert V('1.0') > V('0.5')      # usual semantics
         assert V('1:0.5') > V('2.0')    # unusual semantics
         assert not V('0.5') > V('2.0')  # sanity check
-        # Test `>='.
+        # Test the Debian '>=' operator.
         assert V('0.75') >= V('0.5')     # usual semantics
         assert V('0.50') >= V('0.5')     # usual semantics
         assert V('1:0.5') >= V('5.0')    # unusual semantics
         assert not V('0.2') >= V('0.5')  # sanity check
-        # Test `<'.
+        # Test the Debian '<<' operator.
         assert V('0.5') < V('1.0')      # usual semantics
         assert V('2.0') < V('1:0.5')    # unusual semantics
         assert not V('2.0') < V('0.5')  # sanity check
-        # Test `<='.
+        # Test the Debian '<=' operator.
         assert V('0.5') <= V('0.75')     # usual semantics
         assert V('0.5') <= V('0.50')     # usual semantics
         assert V('5.0') <= V('1:0.5')    # unusual semantics
         assert not V('0.5') <= V('0.2')  # sanity check
-        # Test `=='.
+        # Test the Debian '=' operator.
         assert V('42') == V('42')        # usual semantics
         assert V('0.5') == V('0:0.5')    # unusual semantics
         assert not V('0.5') == V('1.0')  # sanity check
-        # Test `!='.
+        # Test the Python '!=' operator.
         assert V('1') != V('0')            # usual semantics
         assert not V('0.5') != V('0:0.5')  # unusual semantics
+        # Test the handling of the '~' token.
+        assert V("1.3~rc2") < V("1.3")
 
     def test_relationship_parsing(self):
         """Test the parsing of Debian package relationship declarations."""

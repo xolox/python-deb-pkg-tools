@@ -1,7 +1,7 @@
 # Debian packaging tools.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 7, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -22,7 +22,6 @@ debian_package_dependencies = (
     'fakeroot',   # fakeroot
     'gnupg',      # gpg
     'lintian',    # lintian
-    'python-apt',
 )
 """A tuple of strings with required Debian packages."""
 
@@ -38,6 +37,5 @@ def generate_stdeb_cfg():
     .. _py2deb: https://pypi.python.org/pypi/py2deb
     """
     print('[deb-pkg-tools]')
-    print('Depends: python-apt')
-    print('Recommends: %s' % ', '.join(pkg for pkg in debian_package_dependencies if pkg != 'python-apt'))
+    print('Recommends: %s' % ', '.join(debian_package_dependencies))
     print('Suggests: memcached')
