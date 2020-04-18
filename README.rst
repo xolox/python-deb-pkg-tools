@@ -14,7 +14,7 @@ primary use case is to automate builds.
 Some of the functionality is exposed in the command line interface (documented below)
 because it's very convenient to use in shell scripts, while other functionality
 is meant to be used as a Python API. The package is currently tested on cPython
-2.7, 3.4, 3.5, 3.6, 3.7 and PyPy (2.7).
+2.7, 3.5+ and PyPy (2.7).
 
 Please note that `deb-pkg-tools` is quite opinionated about how Debian binary
 packages should be built and it enforces some of these opinions on its users.
