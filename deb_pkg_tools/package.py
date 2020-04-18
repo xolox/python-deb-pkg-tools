@@ -1,7 +1,7 @@
 # Debian packaging tools: Package manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Functions to build and inspect Debian binary package archives (``*.deb`` files)."""
@@ -22,7 +22,9 @@ import tempfile
 # External dependencies.
 from debian.deb822 import Deb822
 from executor import CommandNotFound, ExternalCommandFailed, execute
-from humanfriendly import coerce_boolean, concatenate, format_path, pluralize, Spinner, Timer
+from humanfriendly import coerce_boolean, format_path, Timer
+from humanfriendly.text import concatenate, pluralize
+from humanfriendly.terminal.spinners import Spinner
 
 # Modules included in our package.
 from deb_pkg_tools.control import deb822_from_string, parse_control_fields, patch_control_file

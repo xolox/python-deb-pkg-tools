@@ -1,7 +1,7 @@
 # Debian packaging tools: Utility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -23,7 +23,9 @@ import time
 
 # External dependencies.
 from executor import execute, ExternalCommandFailed
-from humanfriendly import Spinner, Timer, compact
+from humanfriendly import Timer
+from humanfriendly.text import compact
+from humanfriendly.terminal.spinners import Spinner
 
 # Public identifiers that require documentation.
 __all__ = (

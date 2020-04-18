@@ -1,7 +1,7 @@
 # Debian packaging tools: GPG key pair generation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -77,8 +77,9 @@ import tempfile
 
 # External dependencies.
 from executor import execute, quote
-from humanfriendly import Timer, coerce_boolean, compact, parse_path
+from humanfriendly import Timer, coerce_boolean, parse_path
 from humanfriendly.decorators import cached
+from humanfriendly.text import compact
 from property_manager import PropertyManager, cached_property, mutable_property
 
 # Modules included in our package.

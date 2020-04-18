@@ -1,7 +1,7 @@
 # Debian packaging tools: Trivial repository management.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -42,8 +42,10 @@ import tempfile
 
 # External dependencies.
 from executor import execute, ExternalCommandFailed
-from humanfriendly import coerce_boolean, concatenate, format_path, Spinner, Timer
+from humanfriendly import coerce_boolean, format_path, Timer
 from humanfriendly.decorators import cached
+from humanfriendly.text import concatenate
+from humanfriendly.terminal.spinners import Spinner
 from six.moves import configparser
 
 # Modules included in our package.

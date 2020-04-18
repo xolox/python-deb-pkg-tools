@@ -1,7 +1,7 @@
 # Debian packaging tools: Static analysis of package archives.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -19,8 +19,9 @@ import itertools
 import logging
 
 # External dependencies.
-from humanfriendly import format_path, pluralize, Spinner, Timer
-from humanfriendly.text import compact
+from humanfriendly import format_path, Timer
+from humanfriendly.text import compact, pluralize
+from humanfriendly.terminal.spinners import Spinner
 
 # Modules included in our package.
 from deb_pkg_tools.package import collect_related_packages, inspect_package, parse_filename

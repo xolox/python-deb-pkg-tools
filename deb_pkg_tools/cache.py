@@ -1,7 +1,7 @@
 # Debian packaging tools: Caching of package metadata.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -77,8 +77,9 @@ import os
 import time
 
 # External dependencies.
-from humanfriendly import Timer, format_timespan, pluralize
+from humanfriendly import Timer, format_timespan
 from humanfriendly.decorators import cached
+from humanfriendly.text import pluralize
 from six.moves import cPickle as pickle
 
 # Modules included in our package.

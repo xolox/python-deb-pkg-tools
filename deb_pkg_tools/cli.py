@@ -1,7 +1,7 @@
 # Debian packaging tools: Command line interface
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 18, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -104,9 +104,9 @@ import tempfile
 
 # External dependencies.
 import coloredlogs
-from humanfriendly import AutomaticSpinner, format_path, format_size, parse_path
-from humanfriendly.text import compact, format, pluralize
+from humanfriendly import format_path, format_size, parse_path
 from humanfriendly.prompts import prompt_for_confirmation
+from humanfriendly.terminal.spinners import AutomaticSpinner
 from humanfriendly.terminal import (
     HIGHLIGHT_COLOR,
     ansi_wrap,
@@ -114,6 +114,7 @@ from humanfriendly.terminal import (
     usage,
     warning,
 )
+from humanfriendly.text import compact, format, pluralize
 
 # Modules included in our package.
 from deb_pkg_tools.cache import get_default_cache
