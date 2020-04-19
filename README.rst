@@ -235,6 +235,5 @@ This software is licensed under the `MIT license`_.
 .. _per user site-packages directory: https://www.python.org/dev/peps/pep-0370/
 .. _peter@peterodding.com: peter@peterodding.com
 .. _PyPI: https://pypi.python.org/pypi/deb-pkg-tools
-.. _python-debian: https://pypi.python.org/pypi/python-debian
 .. _Read the Docs: https://deb-pkg-tools.readthedocs.io
 .. _virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/

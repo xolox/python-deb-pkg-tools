@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 18, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -17,7 +17,6 @@ import tempfile
 
 # External dependencies.
 from capturer import CaptureOutput
-from debian.deb822 import Deb822
 from executor import ExternalCommandFailed, execute
 from humanfriendly import coerce_boolean
 from humanfriendly.testing import PatchedAttribute, TestCase, run_cli, touch
@@ -37,12 +36,12 @@ from deb_pkg_tools.checks import (
 from deb_pkg_tools.cli import main
 from deb_pkg_tools.control import (
     create_control_file,
-    deb822_from_string,
     load_control_file,
     merge_control_fields,
     parse_control_fields,
     unparse_control_fields,
 )
+from deb_pkg_tools.deb822 import Deb822, parse_deb822
 from deb_pkg_tools.deps import (
     Relationship,
     RelationshipSet,
@@ -77,13 +76,15 @@ SKIP_SLOW_TESTS = coerce_boolean(os.environ.get('SKIP_SLOW_TESTS', 'false'))
 
 # Configuration defaults.
 TEST_PACKAGE_NAME = 'deb-pkg-tools-demo-package'
-TEST_PACKAGE_FIELDS = Deb822(dict(Architecture='all',
-                                  Description='Nothing to see here, move along',
-                                  Maintainer='Peter Odding <peter@peterodding.com>',
-                                  Package=TEST_PACKAGE_NAME,
-                                  Version='0.1',
-                                  Section='misc',
-                                  Priority='optional'))
+TEST_PACKAGE_FIELDS = Deb822(
+    Architecture='all',
+    Description='Nothing to see here, move along',
+    Maintainer='Peter Odding <peter@peterodding.com>',
+    Package=TEST_PACKAGE_NAME,
+    Version='0.1',
+    Section='misc',
+    Priority='optional',
+)
 TEST_REPO_ORIGIN = 'DebPkgToolsTestCase'
 TEST_REPO_DESCRIPTION = 'Description of test repository'
 
@@ -188,16 +189,21 @@ class DebPkgToolsTestCase(TestCase):
 
     def test_control_field_parsing(self):
         """Test the parsing of control file fields."""
-        deb822_package = Deb822(['Package: python-py2deb',
-                                 'Depends: python-deb-pkg-tools, python-pip, python-pip-accel',
-                                 'Installed-Size: 42'])
+        deb822_package = parse_deb822('''
+            Package: python-py2deb
+            Depends: python-deb-pkg-tools, python-pip, python-pip-accel
+            Installed-Size: 42
+        ''')
         parsed_info = parse_control_fields(deb822_package)
-        assert parsed_info == {'Package': 'python-py2deb',
-                               'Depends': RelationshipSet(
-                                   Relationship(name=u'python-deb-pkg-tools'),
-                                   Relationship(name=u'python-pip'),
-                                   Relationship(name=u'python-pip-accel')),
-                               'Installed-Size': 42}
+        assert parsed_info == Deb822([
+            ('Package', 'python-py2deb'),
+            ('Depends', RelationshipSet(
+                Relationship(name=u'python-deb-pkg-tools'),
+                Relationship(name=u'python-pip'),
+                Relationship(name=u'python-pip-accel')
+            )),
+            ('Installed-Size', 42),
+        ])
         # Test backwards compatibility with the old interface where `Depends'
         # like fields were represented as a list of strings (shallow parsed).
         parsed_info['Depends'] = [text_type(r) for r in parsed_info['Depends']]
@@ -208,20 +214,23 @@ class DebPkgToolsTestCase(TestCase):
 
     def test_control_field_merging(self):
         """Test the merging of control file fields."""
-        defaults = Deb822(['Package: python-py2deb',
-                           'Depends: python-deb-pkg-tools',
-                           'Architecture: all'])
+        defaults = parse_deb822('''
+            Package: python-py2deb
+            Depends: python-deb-pkg-tools
+            Architecture: all
+        ''')
         # The field names of the dictionary with overrides are lower case on
         # purpose; control file merging should work properly regardless of
         # field name casing.
-        overrides = Deb822(dict(version='1.0',
-                                depends='python-pip, python-pip-accel',
-                                architecture='amd64'))
-        assert merge_control_fields(defaults, overrides) == \
-            Deb822(['Package: python-py2deb',
-                    'Version: 1.0',
-                    'Depends: python-deb-pkg-tools, python-pip, python-pip-accel',
-                    'Architecture: amd64'])
+        overrides = dict(architecture='amd64', depends='python-pip, python-pip-accel', version='1.0')
+        merged = merge_control_fields(defaults, overrides)
+        expected = parse_deb822('''
+            Package: python-py2deb
+            Version: 1.0
+            Depends: python-deb-pkg-tools, python-pip, python-pip-accel
+            Architecture: amd64
+        ''')
+        assert merged == expected
 
     def test_control_file_creation(self):
         """Test control file creation."""
@@ -248,8 +257,10 @@ class DebPkgToolsTestCase(TestCase):
 
     def test_control_file_patching_and_loading(self):
         """Test patching and loading of control files."""
-        deb822_package = Deb822(['Package: unpatched-example',
-                                 'Depends: some-dependency'])
+        deb822_package = parse_deb822('''
+            Package: unpatched-example
+            Depends: some-dependency
+        ''')
         with Context() as finalizers:
             control_file = tempfile.mktemp()
             finalizers.register(os.unlink, control_file)
@@ -394,10 +405,10 @@ class DebPkgToolsTestCase(TestCase):
         assert list(relationship_set.names) == ['python']
 
     def test_custom_pretty_printer(self):
-        """Test pretty printing of deb822 objects and parsed relationships."""
+        """Test pretty printing of control file fields and parsed relationships."""
         printer = CustomPrettyPrinter()
-        # Test pretty printing of debian.deb822.Deb822 objects.
-        deb822_object = deb822_from_string('''
+        # Test pretty printing of control file fields.
+        deb822_object = parse_deb822('''
             Package: pretty-printed-control-fields
             Version: 1.0
             Architecture: all
@@ -841,7 +852,7 @@ class DebPkgToolsTestCase(TestCase):
             assert os.path.isfile(os.path.join(repo_dir, 'Packages.gz'))
             assert os.path.isfile(os.path.join(repo_dir, 'Release'))
             with open(os.path.join(repo_dir, 'Release')) as handle:
-                fields = Deb822(handle)
+                fields = parse_deb822(handle.read())
                 assert fields['Origin'] == TEST_REPO_ORIGIN
                 assert fields['Description'] == TEST_REPO_DESCRIPTION
             if not apt_supports_trusted_option():
@@ -859,7 +870,7 @@ class DebPkgToolsTestCase(TestCase):
         assert returncode == 0
         try:
             handle = os.popen('apt-cache show %s' % TEST_PACKAGE_NAME)
-            fields = Deb822(handle)
+            fields = parse_deb822(handle.read())
             assert fields['Package'] == TEST_PACKAGE_NAME
         finally:
             returncode, output = run_cli(main, '-vv', '--deactivate-repo=%s' % repository)

@@ -1,7 +1,7 @@
 # Debian packaging tools: Package manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 18, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Functions to build and inspect Debian binary package archives (``*.deb`` files)."""
@@ -20,14 +20,14 @@ import shutil
 import tempfile
 
 # External dependencies.
-from debian.deb822 import Deb822
 from executor import CommandNotFound, ExternalCommandFailed, execute
 from humanfriendly import coerce_boolean, format_path, Timer
 from humanfriendly.text import concatenate, pluralize
 from humanfriendly.terminal.spinners import Spinner
 
 # Modules included in our package.
-from deb_pkg_tools.control import deb822_from_string, parse_control_fields, patch_control_file
+from deb_pkg_tools.deb822 import parse_deb822
+from deb_pkg_tools.control import parse_control_fields, patch_control_file
 from deb_pkg_tools.utils import makedirs
 from deb_pkg_tools.version import Version
 
@@ -665,7 +665,7 @@ def inspect_package_fields(archive, cache=None):
         if value is not None:
             return value
     listing = execute('dpkg-deb', '-f', archive, logger=logger, capture=True)
-    fields = parse_control_fields(deb822_from_string(listing))
+    fields = parse_control_fields(parse_deb822(listing))
     if cache:
         entry.set_value(fields)
     return fields
@@ -937,7 +937,7 @@ def determine_package_archive(directory):
     ``dpkg-deb --build``. See also :func:`parse_filename()`.
     """
     with open(os.path.join(directory, 'DEBIAN', 'control')) as control_file:
-        fields = Deb822(control_file)
+        fields = parse_deb822(control_file.read())
     components = [fields['Package'], fields['Version']]
     architecture = fields.get('Architecture', '').strip()
     if architecture:

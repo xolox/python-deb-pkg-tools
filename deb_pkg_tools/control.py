@@ -1,7 +1,7 @@
 # Debian packaging tools: Control file manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -9,28 +9,23 @@ Functions to manipulate Debian control files.
 
 The functions in the :mod:`deb_pkg_tools.control` module can be used to
 manipulate Debian control files. It was developed specifically for control
-files of binary packages, however the code is very generic. This module builds
-on top of the :class:`debian.deb822.Deb822` class from the python-debian_
-package.
-
-.. _python-debian: https://pypi.python.org/pypi/python-debian
+files of binary packages, however the code is very generic.
 """
 
 # Standard library modules.
 import logging
 import os
-import textwrap
 
 # External dependencies.
-from debian.deb822 import Deb822
 from humanfriendly import format_path
+from humanfriendly.deprecation import define_aliases
 from humanfriendly.text import compact, concatenate, pluralize
 from six import string_types, text_type
-from six.moves import StringIO
 
 # Modules included in our package.
 from deb_pkg_tools.deps import parse_depends, RelationshipSet
 from deb_pkg_tools.utils import makedirs
+from deb_pkg_tools.deb822 import Deb822, parse_deb822
 
 # Public identifiers that require documentation.
 __all__ = (
@@ -39,7 +34,6 @@ __all__ = (
     "MANDATORY_BINARY_CONTROL_FIELDS",
     "check_mandatory_fields",
     "create_control_file",
-    "deb822_from_string",
     "load_control_file",
     "logger",
     "merge_control_fields",
@@ -112,7 +106,8 @@ def load_control_file(control_file):
     :returns: A dictionary created by :func:`parse_control_fields()`.
     """
     with open(control_file) as handle:
-        return parse_control_fields(Deb822(handle))
+        shallow_parsed = parse_deb822(handle.read())
+        return parse_control_fields(shallow_parsed)
 
 
 def create_control_file(control_file, control_fields):
@@ -172,7 +167,7 @@ def patch_control_file(control_file, overrides):
     logger.debug("Patching control file: %s", format_path(control_file))
     # Read the control file.
     with open(control_file) as handle:
-        defaults = Deb822(handle)
+        defaults = parse_deb822(handle.read())
     # Apply the patches.
     patched = merge_control_fields(defaults, overrides)
     # Break the hard link chain.
@@ -186,21 +181,24 @@ def merge_control_fields(defaults, overrides):
     """
     Merge the fields of two Debian control files.
 
-    :param defaults: A dictionary with existing control field name/value pairs
-                     (may be an instance of :class:`debian.deb822.Deb822`
-                     but doesn't have to be).
+    :param defaults: A dictionary with existing control field name/value pairs.
     :param overrides: A dictionary with fields that should override default
                       name/value pairs. Values of the fields `Depends`,
                       `Provides`, `Replaces` and `Conflicts` are merged
                       while values of other fields are overwritten.
-    :returns: An instance of :class:`debian.deb822.Deb822` that contains the
+    :returns: An instance of :class:`Deb822` that contains the
               merged control field name/value pairs.
     """
+    merged = Deb822()
     defaults = parse_control_fields(defaults)
     overrides = parse_control_fields(overrides)
     logger.debug("Merging control files (%i default fields, %i override fields)", len(defaults), len(overrides))
-    merged = {}
-    for name in (set(defaults.keys()) | set(overrides.keys())):
+    # Merge the field names while preserving their order.
+    field_names = list(defaults.keys())
+    for name in overrides.keys():
+        if name not in field_names:
+            field_names.append(name)
+    for name in field_names:
         if name in DEPENDS_LIKE_FIELDS:
             # Dependencies are merged instead of overridden.
             relationships = set()
@@ -224,15 +222,12 @@ def parse_control_fields(input_fields):
     r"""
     Parse Debian control file fields.
 
-    :param input_fields: The dictionary to convert (may be an instance of
-                         :class:`debian.deb822.Deb822` but doesn't have
-                         to be).
-    :returns: A :class:`dict` object with the converted fields.
+    :param input_fields: The dictionary to convert.
+    :returns: A :class:`Deb822` object with the converted fields.
 
-    The :class:`debian.deb822.Deb822` class can be used to parse Debian control
-    files but the result is a simple :class:`dict` with string name/value
-    pairs. This function takes an existing :class:`debian.deb822.Deb822`
-    instance and converts the following fields into friendlier formats:
+    This function takes the result of the shallow parsing of control fields
+    performed by :func:`.parse_deb822()` and massages the data into a
+    friendlier format:
 
     - The values of the fields given by :data:`DEPENDS_LIKE_FIELDS` are parsed
       into Python data structures using :func:`.parse_depends()`.
@@ -242,8 +237,8 @@ def parse_control_fields(input_fields):
     Let's look at an example. We start with the raw control file contents so
     you can see the complete input:
 
-    >>> from deb_pkg_tools.control import deb822_from_string
-    >>> unparsed_fields = deb822_from_string('''
+    >>> from deb_pkg_tools.deb822 import parse_deb822
+    >>> unparsed_fields = parse_deb822('''
     ... Package: python3.4-minimal
     ... Version: 3.4.0-1+precise1
     ... Architecture: amd64
@@ -255,8 +250,7 @@ def parse_control_fields(input_fields):
     ... Conflicts: binfmt-support (<< 1.1.2)
     ... ''')
 
-    Here are the control file fields as parsed by the
-    :class:`debian.deb822` module:
+    Here are the control file fields as parsed by :func:`.parse_deb822()`:
 
     >>> print(repr(unparsed_fields))
     {'Architecture': u'amd64',
@@ -293,8 +287,8 @@ def parse_control_fields(input_fields):
     For more information about fields like `Depends` and `Suggests` please
     refer to the documentation of :func:`.parse_depends()`.
     """
+    output_fields = Deb822()
     logger.debug("Parsing %i control fields ..", len(input_fields))
-    output_fields = {}
     for name, unparsed_value in input_fields.items():
         name = normalize_control_field_name(name)
         if name in DEPENDS_LIKE_FIELDS:
@@ -314,16 +308,16 @@ def unparse_control_fields(input_fields):
 
     :param input_fields: A :class:`dict` object previously returned by
                          :func:`parse_control_fields()`.
-    :returns: A :class:`debian.deb822.Deb822` object.
+    :returns: A :class:`Deb822` object.
 
     This function converts dictionaries created by
-    :func:`parse_control_fields()` back into :class:`debian.deb822.Deb822`
-    objects. Fields with an empty value are omitted. This makes it possible to
-    delete fields from a control file with :func:`patch_control_file()` by
-    setting the value of a field to :data:`None` in the overrides...
+    :func:`parse_control_fields()` back into shallow dictionaries of strings.
+    Fields with an empty value are omitted. This makes it possible to delete
+    fields from a control file with :func:`patch_control_file()` by setting the
+    value of a field to :data:`None` in the overrides...
     """
-    logger.debug("Unparsing %i control fields ..", len(input_fields))
     output_fields = Deb822()
+    logger.debug("Unparsing %i control fields ..", len(input_fields))
     for name, parsed_value in input_fields.items():
         name = normalize_control_field_name(name)
         if name in DEPENDS_LIKE_FIELDS:
@@ -375,11 +369,11 @@ def normalize_control_field_name(name):
     return '-'.join(special_cases.get(w.lower(), w.capitalize()) for w in name.split('-'))
 
 
-def deb822_from_string(string):
-    """
-    Create a :class:`debian.deb822.Deb822` object from a string.
-
-    :param string: The string containing the control fields to parse.
-    :returns: A :class:`debian.deb822.Deb822` object.
-    """
-    return Deb822(StringIO(textwrap.dedent(string).strip()))
+# Define aliases for backwards compatibility.
+define_aliases(
+    module_name=__name__,
+    # In deb-pkg-tools 8.0 the python-debian integration was removed and
+    # the required functionality was implemented as part of deb-pkg-tools.
+    deb822_from_string='deb_pkg_tools.deb822.parse_deb822',
+    Deb822='deb_pkg_tools.deb822.Deb822',
+)

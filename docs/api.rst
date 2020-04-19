@@ -11,68 +11,74 @@ of the `deb-pkg-tools` package. The following modules are available:
    programs. If these programs fail unexpectedly (end with a nonzero exit code)
    :exc:`executor.ExternalCommandFailed` is raised.
 
-Package metadata cache
-----------------------
+:mod:`deb_pkg_tools.cache`
+--------------------------
 
 .. automodule:: deb_pkg_tools.cache
    :members:
 
-Static analysis of package archives
------------------------------------
+:mod:`deb_pkg_tools.checks`
+---------------------------
 
 .. automodule:: deb_pkg_tools.checks
    :members:
 
-Command line interface
-----------------------
+:mod:`deb_pkg_tools.cli`
+------------------------
 
 .. automodule:: deb_pkg_tools.cli
    :members:
 
-Configuration defaults
-----------------------
+:mod:`deb_pkg_tools.config`
+---------------------------
 
 .. automodule:: deb_pkg_tools.config
    :members:
 
-Control file manipulation
--------------------------
+:mod:`deb_pkg_tools.control`
+----------------------------
 
 .. automodule:: deb_pkg_tools.control
    :members:
 
-Relationship parsing and evaluation
------------------------------------
+:mod:`deb_pkg_tools.deb822`
+---------------------------
+
+.. automodule:: deb_pkg_tools.deb822
+   :members:
+
+:mod:`deb_pkg_tools.deps`
+-------------------------
 
 .. automodule:: deb_pkg_tools.deps
    :members:
 
-GPG key pair handling
----------------------
+:mod:`deb_pkg_tools.gpg`
+------------------------
 
 .. automodule:: deb_pkg_tools.gpg
    :members:
 
-Package manipulation
---------------------
+:mod:`deb_pkg_tools.package`
+----------------------------
 
 .. automodule:: deb_pkg_tools.package
    :members:
 
-Repository management
----------------------
+:mod:`deb_pkg_tools.repo`
+-------------------------
 
 .. automodule:: deb_pkg_tools.repo
    :members:
 
-Miscellaneous functions
------------------------
+:mod:`deb_pkg_tools.utils`
+--------------------------
 
 .. automodule:: deb_pkg_tools.utils
    :members:
 
-Version comparison
-------------------
+:mod:`deb_pkg_tools.version`
+----------------------------
 
 .. automodule:: deb_pkg_tools.version
    :members:

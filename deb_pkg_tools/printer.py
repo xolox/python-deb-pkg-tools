@@ -1,15 +1,15 @@
 # Debian packaging tools: Custom pretty printer.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
 Custom pretty printer for parsed control files and package relationships.
 
 The :class:`PrettyPrinter` class in the :mod:`deb_pkg_tools.print` module can
-be used to pretty print Python expressions containing :class:`debian.deb822.Deb822`
-and/or :class:`deb_pkg_tools.deps.RelationshipSet` objects.
+be used to pretty print Python expressions containing :class:`.Deb822` and/or
+:class:`.RelationshipSet` objects.
 
 The custom pretty printer is useful during testing and documenting, for example
 the :mod:`doctest` fragments spread throughout the :mod:`deb_pkg_tools`
@@ -21,10 +21,8 @@ representations.
 import pprint
 
 # Modules included in our package.
+from deb_pkg_tools.deb822 import Deb822
 from deb_pkg_tools.deps import RelationshipSet
-
-# External dependencies.
-from debian.deb822 import Deb822
 
 # Public identifiers that require documentation.
 __all__ = (

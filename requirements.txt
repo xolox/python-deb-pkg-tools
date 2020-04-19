@@ -1,10 +1,7 @@
-# The installation requirements of deb-pkg-tools. Note that the python-debian
-# requirement is handled in setup.py because it's conditional on the Python
-# version.
+# The installation requirements of deb-pkg-tools.
 
-python-debian >= 0.1.34
 coloredlogs >= 14.0
 executor >= 22.0
-humanfriendly >= 8.1
+humanfriendly >= 8.2
 property-manager >= 3.0
 six >= 1.10.0
