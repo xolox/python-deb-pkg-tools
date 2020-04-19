@@ -10,6 +10,18 @@ Functions to manipulate Debian control files.
 The functions in the :mod:`deb_pkg_tools.control` module can be used to
 manipulate Debian control files. It was developed specifically for control
 files of binary packages, however the code is very generic.
+
+This module makes extensive use of case insensitivity provided by the
+:mod:`humanfriendly.case` module:
+
+- The dictionaries returned by this module are case insensitive.
+- The enumerations :data:`MANDATORY_BINARY_CONTROL_FIELDS` and
+  :data:`DEPENDS_LIKE_FIELDS` contain case insensitive strings.
+
+Case insensitivity was originally added to this module by virtue of its
+integration with :pypi:`python-debian`. Since then this dependency was
+removed but the case insensitive behavior was preserved for the sake
+of backwards compatibility.
 """
 
 # Standard library modules.
@@ -18,6 +30,7 @@ import os
 
 # External dependencies.
 from humanfriendly import format_path
+from humanfriendly.case import CaseInsensitiveDict, CaseInsensitiveKey
 from humanfriendly.deprecation import define_aliases
 from humanfriendly.text import compact, concatenate, pluralize
 from six import string_types, text_type
@@ -32,6 +45,7 @@ __all__ = (
     "DEFAULT_CONTROL_FIELDS",
     "DEPENDS_LIKE_FIELDS",
     "MANDATORY_BINARY_CONTROL_FIELDS",
+    "SPECIAL_CASES",
     "check_mandatory_fields",
     "create_control_file",
     "load_control_file",
@@ -47,54 +61,61 @@ __all__ = (
 logger = logging.getLogger(__name__)
 
 MANDATORY_BINARY_CONTROL_FIELDS = (
-    'Architecture',
-    'Description',
-    'Maintainer',
-    'Package',
-    'Version',
+    CaseInsensitiveKey('Architecture'),
+    CaseInsensitiveKey('Description'),
+    CaseInsensitiveKey('Maintainer'),
+    CaseInsensitiveKey('Package'),
+    CaseInsensitiveKey('Version'),
 )
 """
-A tuple of strings with the canonical names of the mandatory binary control
-file fields as defined by the `Debian policy manual
-<https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-binarycontrolfiles>`_.
+A tuple of strings (actually :class:`.CaseInsensitiveKey` objects) with the
+canonical names of the mandatory binary control file fields as defined by the
+`Debian policy manual <https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-binarycontrolfiles>`_.
 """
 
-DEFAULT_CONTROL_FIELDS = {
-    'Architecture': 'all',
-    'Priority': 'optional',
-    'Section': 'misc',
-}
+DEFAULT_CONTROL_FIELDS = CaseInsensitiveDict(Architecture='all', Priority='optional', Section='misc')
 """
-A dictionary with string key/value pairs. Each key is the canonical name of a
-binary control file field and each value is the default value given to that
-field by :func:`create_control_file()` when the caller hasn't defined a value
-for the field.
+A case insensitive dictionary with string key/value pairs. Each key is the
+canonical name of a binary control file field and each value is the default
+value given to that field by :func:`create_control_file()` when the caller
+hasn't defined a value for the field.
 """
 
 DEPENDS_LIKE_FIELDS = (
     # Binary control file fields.
-    'Breaks',
-    'Conflicts',
-    'Depends',
-    'Enhances',
-    'Pre-Depends',
-    'Provides',
-    'Recommends',
-    'Replaces',
-    'Suggests',
+    CaseInsensitiveKey('Breaks'),
+    CaseInsensitiveKey('Conflicts'),
+    CaseInsensitiveKey('Depends'),
+    CaseInsensitiveKey('Enhances'),
+    CaseInsensitiveKey('Pre-Depends'),
+    CaseInsensitiveKey('Provides'),
+    CaseInsensitiveKey('Recommends'),
+    CaseInsensitiveKey('Replaces'),
+    CaseInsensitiveKey('Suggests'),
     # Source control file fields.
-    'Build-Conflicts',
-    'Build-Conflicts-Arch',
-    'Build-Conflicts-Indep',
-    'Build-Depends',
-    'Build-Depends-Arch',
-    'Build-Depends-Indep',
-    'Built-Using',
+    CaseInsensitiveKey('Build-Conflicts'),
+    CaseInsensitiveKey('Build-Conflicts-Arch'),
+    CaseInsensitiveKey('Build-Conflicts-Indep'),
+    CaseInsensitiveKey('Build-Depends'),
+    CaseInsensitiveKey('Build-Depends-Arch'),
+    CaseInsensitiveKey('Build-Depends-Indep'),
+    CaseInsensitiveKey('Built-Using'),
 )
 """
 A tuple of strings with the canonical names of control file fields that are
 similar to the ``Depends`` field (in the sense that they contain a comma
 separated list of package names with optional version specifications).
+"""
+
+INSTALLED_SIZE_FIELD = CaseInsensitiveKey('Installed-Size')
+"""A case insensitive string to match the "Installed-Size" field name."""
+
+SPECIAL_CASES = dict(md5sum='MD5sum', sha1='SHA1', sha256='SHA256')
+"""
+A dictionary with string key/value pairs of non-default casing for words that
+are part of control field names. The keys are intentionally normalized to
+lowercase, whereas the values contain the proper casing. Used by
+:func:`normalize_control_field_name()`.
 """
 
 
@@ -186,8 +207,7 @@ def merge_control_fields(defaults, overrides):
                       name/value pairs. Values of the fields `Depends`,
                       `Provides`, `Replaces` and `Conflicts` are merged
                       while values of other fields are overwritten.
-    :returns: An instance of :class:`Deb822` that contains the
-              merged control field name/value pairs.
+    :returns: A dictionary of the type :class:`.Deb822`.
     """
     merged = Deb822()
     defaults = parse_control_fields(defaults)
@@ -223,7 +243,7 @@ def parse_control_fields(input_fields):
     Parse Debian control file fields.
 
     :param input_fields: The dictionary to convert.
-    :returns: A :class:`Deb822` object with the converted fields.
+    :returns: A dictionary of the type :class:`.Deb822`.
 
     This function takes the result of the shallow parsing of control fields
     performed by :func:`.parse_deb822()` and massages the data into a
@@ -293,7 +313,7 @@ def parse_control_fields(input_fields):
         name = normalize_control_field_name(name)
         if name in DEPENDS_LIKE_FIELDS:
             parsed_value = parse_depends(unparsed_value)
-        elif name == 'Installed-Size':
+        elif name == INSTALLED_SIZE_FIELD:
             parsed_value = int(unparsed_value)
         else:
             parsed_value = unparsed_value
@@ -308,7 +328,7 @@ def unparse_control_fields(input_fields):
 
     :param input_fields: A :class:`dict` object previously returned by
                          :func:`parse_control_fields()`.
-    :returns: A :class:`Deb822` object.
+    :returns: A dictionary of the type :class:`.Deb822`.
 
     This function converts dictionaries created by
     :func:`parse_control_fields()` back into shallow dictionaries of strings.
@@ -326,12 +346,12 @@ def unparse_control_fields(input_fields):
                 unparsed_value = text_type(parsed_value)
             elif not isinstance(parsed_value, string_types):
                 # Backwards compatibility  with old interface (list of strings).
-                unparsed_value = ', '.join(parsed_value)
+                unparsed_value = u', '.join(parsed_value)
             else:
                 # Compatibility with callers that set one of the Depends-like
                 # fields to a string value (which is fine).
                 unparsed_value = parsed_value
-        elif name == 'Installed-Size':
+        elif name == INSTALLED_SIZE_FIELD:
             unparsed_value = str(parsed_value)
         else:
             unparsed_value = parsed_value
@@ -346,7 +366,7 @@ def normalize_control_field_name(name):
     Normalize the case of a field name in a Debian control file.
 
     :param name: The name of a control file field (a string).
-    :returns: The normalized name (a string).
+    :returns: The normalized name (a string of the type :class:`.CaseInsensitiveKey`).
 
     Normalization of control file field names is useful to simplify control
     file manipulation and in particular the merging of control files.
@@ -365,8 +385,7 @@ def normalize_control_field_name(name):
 
     .. _Syntax of control files: http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-controlsyntax
     """
-    special_cases = dict(md5sum='MD5sum', sha1='SHA1', sha256='SHA256')
-    return '-'.join(special_cases.get(w.lower(), w.capitalize()) for w in name.split('-'))
+    return CaseInsensitiveKey(u'-'.join(SPECIAL_CASES.get(w.lower(), w.capitalize()) for w in name.split(u'-')))
 
 
 # Define aliases for backwards compatibility.
