@@ -62,6 +62,9 @@ def parse_deb822(text):
     parsed_fields = []
     while input_lines:
         line = input_lines.pop(0)
+        # Completely ignore comment lines (even nested between "continuation lines").
+        if line.startswith(u"#"):
+            continue
         # Guard against empty lines that end the current "paragraph".
         if is_empty_line(line):
             # Check whether any input text remains.
