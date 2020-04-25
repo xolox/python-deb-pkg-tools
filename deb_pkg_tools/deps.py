@@ -1,7 +1,7 @@
 # Debian packaging tools: Relationship parsing and evaluation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: February 6, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -11,7 +11,7 @@ The :mod:`deb_pkg_tools.deps` module provides functions to parse and evaluate
 Debian package relationship declarations as defined in `chapter 7`_ of the
 Debian policy manual. The most important function is :func:`parse_depends()`
 which returns a :class:`RelationshipSet` object. The
-:func:`RelationshipSet.matches()` function can be used to evaluate relationship
+:func:`RelationshipSet.matches()` method can be used to evaluate relationship
 expressions. The relationship parsing is implemented in pure Python (no
 external dependencies) but relationship evaluation uses the external command
 ``dpkg --compare-versions`` to ensure compatibility with Debian's package
@@ -368,9 +368,10 @@ class VersionedRelationship(Relationship):
                     invalidates the match,
 
                   - :data:`None` if the name doesn't match at all.
-        :raises: :exc:`~exceptions.NotImplementedError` when :attr:`architectures`
-                 is not empty (because evaluation of architecture restrictions
-                 hasn't been implemented).
+        :raises: :exc:`~exceptions.NotImplementedError` when
+                 :attr:`~Relationship.architectures` is not empty (because
+                 evaluation of architecture restrictions hasn't been
+                 implemented).
 
         Uses the external command ``dpkg --compare-versions`` to ensure
         compatibility with Debian's package version comparison algorithm.

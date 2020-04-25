@@ -1,7 +1,7 @@
 # Debian packaging tools: Version comparison and sorting.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 18, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -67,6 +67,8 @@ acceptable values).
           implementation that -although tested- definitely has the potential to
           cause regressions. If regressions do surface this option provides an
           easy to use "escape hatch" to restore compatibility.
+
+.. _python-apt: https://packages.debian.org/python-apt
 """
 
 DPKG_COMPARISON_CACHE = {}
@@ -161,7 +163,7 @@ def compare_versions_native(version1, operator, version2):
     :param version2: The version on the right side of the comparison (a string).
     :returns: :data:`True` if the comparison succeeds, :data:`False` if it fails.
 
-    .. seealso:: :data:`NATIVE_COMPARISON_CACHE` and :func:`compare_version_objects()`
+    .. seealso:: :data:`NATIVE_COMPARISON_CACHE` and :func:`.compare_version_objects()`
     """
     # Compare the two version numbers and remember the result so that
     # we don't have to compare two version numbers more than once.

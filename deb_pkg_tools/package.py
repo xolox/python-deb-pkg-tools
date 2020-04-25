@@ -384,7 +384,7 @@ def collect_related_packages(filename, strict=None, cache=None, interactive=None
     :param filename: The filename of an existing ``*.deb`` archive (a string).
     :param cache: The :class:`.PackageCache` to use (defaults to :data:`None`).
     :param interactive: :data:`True` to draw an interactive spinner on the
-                        terminal (see :class:`~humanfriendly.Spinner`),
+                        terminal (see :class:`~humanfriendly.terminal.spinners.Spinner`),
                         :data:`False` to skip the interactive spinner or
                         :data:`None` to detect whether we're connected to an
                         interactive terminal.

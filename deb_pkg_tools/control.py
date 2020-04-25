@@ -68,9 +68,10 @@ MANDATORY_BINARY_CONTROL_FIELDS = (
     CaseInsensitiveKey('Version'),
 )
 """
-A tuple of strings (actually :class:`.CaseInsensitiveKey` objects) with the
-canonical names of the mandatory binary control file fields as defined by the
-`Debian policy manual <https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-binarycontrolfiles>`_.
+A tuple of strings (actually :class:`~humanfriendly.case.CaseInsensitiveKey`
+objects) with the canonical names of the mandatory binary control file fields
+as defined by the `Debian policy manual
+<https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-binarycontrolfiles>`_.
 """
 
 DEFAULT_CONTROL_FIELDS = CaseInsensitiveDict(Architecture='all', Priority='optional', Section='misc')
@@ -366,7 +367,7 @@ def normalize_control_field_name(name):
     Normalize the case of a field name in a Debian control file.
 
     :param name: The name of a control file field (a string).
-    :returns: The normalized name (a string of the type :class:`.CaseInsensitiveKey`).
+    :returns: The normalized name (a string of the type :class:`~humanfriendly.case.CaseInsensitiveKey`).
 
     Normalization of control file field names is useful to simplify control
     file manipulation and in particular the merging of control files.

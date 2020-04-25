@@ -82,3 +82,10 @@ of the `deb-pkg-tools` package. The following modules are available:
 
 .. automodule:: deb_pkg_tools.version
    :members:
+
+
+:mod:`deb_pkg_tools.version.native`
+-----------------------------------
+
+.. automodule:: deb_pkg_tools.version.native
+   :members:

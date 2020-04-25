@@ -1,7 +1,7 @@
 # Debian packaging tools: Version comparison and sorting.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 18, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -21,7 +21,7 @@ already started researching how to implement a binary "speedup" module. Imagine
 my surprise when I started running benchmarks and found that my pure Python
 implementation was (just slightly) faster than python-apt_!
 
-.. _python-apt: http://apt.alioth.debian.org/python-apt-doc/
+.. _python-apt: https://packages.debian.org/python-apt
 .. _issue #20: https://github.com/xolox/python-deb-pkg-tools/issues/20
 """
 
@@ -113,19 +113,19 @@ def compare_strings(version1, version2):
 
 def compare_version_objects(version1, version2):
     """
-    Compare two :class:`Version` objects.
+    Compare two :class:`.Version` objects.
 
-    :param version1: The version on the left side of the comparison (a :class:`Version` object).
-    :param version2: The version on the right side of the comparison (a :class:`Version` object).
+    :param version1: The version on the left side of the comparison (a :class:`.Version` object).
+    :param version2: The version on the right side of the comparison (a :class:`.Version` object).
     :returns: One of the following integer numbers:
 
               - -1 means version1 sorts before version2
               - 0 means version1 and version2 are equal
               - 1 means version1 sorts after version2
 
-    This function is used by :func:`compare_versions_native()` to perform the
-    comparison of Debian version strings, after which the operator is
-    interpreted by :func:`compare_versions_native()`.
+    This function is used by :func:`~deb_pkg_tools.version.compare_versions_native()`
+    to perform the comparison of Debian version strings, after which the operator is
+    interpreted by :func:`~deb_pkg_tools.version.compare_versions_native()`.
     """
     logger.debug("Comparing Debian version numbers %r and %r ..", version1, version2)
     # Handle differences in the "epoch".
@@ -153,7 +153,7 @@ def get_digit_prefix(characters):
     :returns: An integer number (defaults to zero).
 
     Used by :func:`compare_strings()` as part of the implementation of
-    :func:`compare_versions_native()`.
+    :func:`~deb_pkg_tools.version.compare_versions_native()`.
     """
     value = 0
     while characters and characters[0].isdigit():
@@ -169,7 +169,7 @@ def get_non_digit_prefix(characters):
     :returns: A list of leading non-digit characters (may be empty).
 
     Used by :func:`compare_strings()` as part of the implementation of
-    :func:`compare_versions_native()`.
+    :func:`~deb_pkg_tools.version.compare_versions_native()`.
     """
     prefix = []
     while characters and not characters[0].isdigit():
@@ -185,7 +185,7 @@ def get_order_mapping():
     :returns: A dictionary with string keys and integer values.
 
     Used by :func:`compare_strings()` as part of the implementation of
-    :func:`compare_versions_native()`.
+    :func:`~deb_pkg_tools.version.compare_versions_native()`.
     """
     ordered = []
     # The tilde sorts before everything.

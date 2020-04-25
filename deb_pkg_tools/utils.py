@@ -1,7 +1,7 @@
 # Debian packaging tools: Utility functions.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 18, 2020
+# Last Change: April 19, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -85,8 +85,9 @@ def optimize_order(package_archives):
 
     Usually when scanning a large group of package archives, it really doesn't
     matter in which order we scan them. However the progress reported using
-    :class:`humanfriendly.Spinner` can be more accurate when we shuffle the
-    order. Why would that happen? When the following conditions are met:
+    :class:`~humanfriendly.terminal.spinners.Spinner` can be more accurate when
+    we shuffle the order. Why would that happen? When the following conditions
+    are met:
 
     1. The package repository contains multiple versions of the same packages;
     2. The package repository contains both small and (very) big packages.
