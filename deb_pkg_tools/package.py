@@ -1,7 +1,7 @@
 # Debian packaging tools: Package manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 19, 2020
+# Last Change: April 25, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Functions to build and inspect Debian binary package archives (``*.deb`` files)."""
@@ -717,21 +717,30 @@ def inspect_package_contents(archive, cache=None):
         # lrwxrwxrwx root/root 0 2013-09-26 22:29 ./usr/bin/pdb2.7 -> ../lib/python2.7/pdb.py
         fields = line.split(None, 5)
         permissions = fields[0]
-        owner, group = fields[1].split('/')
-        size = int(fields[2])
+        owner, _, group = fields[1].partition('/')
+        # The third field (index 2) is normally the file size, but for device
+        # files it gives the comma separated device type major / minor numbers.
+        # More details: https://github.com/xolox/python-deb-pkg-tools/pull/22
+        if fields[2].isdigit():
+            device_type = 0, 0
+            size = int(fields[2])
+        else:
+            major_nr, _, minor_nr = fields[2].partition(',')
+            device_type = int(major_nr), int(minor_nr)
+            size = 0
         modified = fields[3] + ' ' + fields[4]
         pathname = re.sub('^./', '/', fields[5])
         pathname, _, target = pathname.partition(' -> ')
         if not target:
             pathname, _, target = pathname.partition(' link to ')
             target = re.sub('^./', '/', target)
-        contents[pathname] = ArchiveEntry(permissions, owner, group, size, modified, target)
+        contents[pathname] = ArchiveEntry(permissions, owner, group, size, modified, target, device_type)
     if cache:
         entry.set_value(contents)
     return contents
 
 
-class ArchiveEntry(collections.namedtuple('ArchiveEntry', 'permissions, owner, group, size, modified, target')):
+class ArchiveEntry(collections.namedtuple('ArchiveEntry', 'permissions, owner, group, size, modified, target, device_type')):
 
     """
     A named tuple with the result of :func:`inspect_package()`.
@@ -759,6 +768,23 @@ class ArchiveEntry(collections.namedtuple('ArchiveEntry', 'permissions, owner, g
     .. :attribute:: modified
 
        A string like ``2013-09-26 22:28``.
+
+    .. :attribute:: target
+
+       If the entry represents a symbolic link this field gives the pathname of
+       the target of the symbolic link. Defaults to an empty string.
+
+    .. :attribute:: device_type
+
+       If the entry represents a device file this field gives the device type
+       major and minor numbers as a tuple of two integers. Defaults to a tuple
+       with two zeros.
+
+       .. note:: This defaults to a tuple with two zeros so that
+                 :class:`ArchiveEntry` tuples can be reliably sorted just like
+                 regular tuples (i.e. without getting
+                 :exc:`~exceptions.TypeError` exceptions due to comparisons
+                 between incompatible value types).
     """
 
 

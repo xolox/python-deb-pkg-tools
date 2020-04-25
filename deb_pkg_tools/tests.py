@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 19, 2020
+# Last Change: April 25, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -59,6 +59,7 @@ from deb_pkg_tools.package import (
     find_system_dependencies,
     group_by_latest_versions,
     inspect_package,
+    inspect_package_contents,
     parse_filename,
 )
 from deb_pkg_tools.printer import CustomPrettyPrinter
@@ -151,6 +152,35 @@ class DebPkgToolsTestCase(TestCase):
                     os.utime(package_file, None)
                 else:
                     self.load_package_cache()
+
+    def test_inspect_contents(self):
+        """Test inspection of package contents."""
+        if os.getuid() != 0:
+            self.skipTest("need superuser privileges")
+        with Context() as finalizers:
+            build_directory = finalizers.mkdtemp()
+            create_control_file(os.path.join(build_directory, 'DEBIAN', 'control'), {
+                'Description': 'Bogus value for mandatory field',
+                'Maintainer': 'Peter Odding',
+                'Package': 'deb-pkg-tools-contents-test',
+                'Version': '1',
+            })
+            # Create a regular file entry.
+            touch(os.path.join(build_directory, 'regular-file-test'))
+            # Create a device file entry.
+            execute('cp', '-a', '/dev/null', os.path.join(build_directory, 'device-file-test'))
+            # Build the package and inspect its contents.
+            repository_directory = finalizers.mkdtemp()
+            package_file = build_package(build_directory, repository_directory)
+            contents = inspect_package_contents(package_file)
+            # Make sure the device type field is populated for the device file entry.
+            device_file_entry = contents['/device-file-test']
+            assert device_file_entry.device_type[0] > 0
+            assert device_file_entry.device_type[1] > 0
+            # Make sure the device type field is not populated for the regular entry.
+            regular_file_entry = contents['/regular-file-test']
+            assert regular_file_entry.device_type[0] == 0
+            assert regular_file_entry.device_type[1] == 0
 
     def test_architecture_determination(self):
         """Make sure discovery of the current build architecture works properly."""
