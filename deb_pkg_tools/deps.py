@@ -43,6 +43,7 @@ object tree and the :class:`str` output is the dependency line.
 """
 
 # Standard library modules.
+import functools
 import logging
 import re
 
@@ -219,6 +220,7 @@ def cache_matches(f):
     total runtime of 8 seconds the other caching decorators would get
     something like 40 seconds...
     """
+    @functools.wraps(f)
     def decorator(self, package, version=None):
         # Get or create the cache.
         try:
