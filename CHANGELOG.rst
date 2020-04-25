@@ -11,6 +11,52 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 8.0`_ (2020-04-25)
+---------------------------
+
+**Dropped GPL2 dependencies**
+ The main purpose of this release was to resolve `issue #20`_ by dropping two
+ GPL2 dependencies to avoid having to change the :pypi:`deb-pkg-tools` license
+ from MIT to GPL2:
+
+ python-apt_
+  This dependency was previously used for Debian version comparison. This
+  functionality has now been implemented in pure Python, for more details
+  please refer to the new :mod:`deb_pkg_tools.version.native` module.
+
+  .. note:: If this change introduces regressions for you, take a look at the
+            :data:`deb_pkg_tools.version.PREFER_DPKG` variable, it may help as
+            a temporary workaround. Also please report the regression 😇.
+
+ :pypi:`python-debian`
+  This dependency was previously used for Debian binary control file parsing.
+  This functionality has now been implemented in pure Python, for more details
+  please refer to the new :mod:`deb_pkg_tools.deb822` module.
+
+**Updated Python compatibility**
+ Python 3.8 is now officially supported, 3.4 is no longer supported.
+
+**Fixed deprecation warnings**
+ Fixed :pypi:`humanfriendly` 8.0 deprecation warnings and bumped requirements I
+ authored that went through the same process. Also defined the first
+ deprecated aliases in the :pypi:`deb-pkg-tools` code base (in the process of
+ implementing the functionality required to drop the GPL2 dependencies).
+
+**Quality boost for deb_pkg_tools.control module**
+ The :mod:`deb_pkg_tools.control` module saw a lot of small changes to make the
+ handling of case insensitivity and byte strings versus Unicode strings more
+ consistent. The most important changes:
+
+ - All functions that return dictionaries now return the same type of case
+   insensitive dictionaries (see :class:`~deb_pkg_tools.deb822.Deb822`).
+
+ - The complete module now expects and uses Unicode strings internally.
+   Character encoding and decoding is only done when control files are
+   read from and written to disk.
+
+.. _Release 8.0: https://github.com/xolox/python-deb-pkg-tools/compare/7.0...8.0
+.. _issue #20: https://github.com/xolox/python-deb-pkg-tools/issues/20
+
 `Release 7.0`_ (2020-02-07)
 ---------------------------
 
