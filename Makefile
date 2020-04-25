@@ -1,7 +1,7 @@
 # Makefile for the `deb-pkg-tools' package.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 18, 2020
+# Last Change: April 25, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 PACKAGE_NAME = deb-pkg-tools
@@ -64,7 +64,7 @@ readme: install
 
 docs: readme
 	@pip install --quiet sphinx
-	@cd docs && sphinx-build -nb html -d build/doctrees . build/html
+	@cd docs && sphinx-build -nWb html -d build/doctrees . build/html
 
 stdeb.cfg: install
 	$(PYTHON) -c 'from deb_pkg_tools import generate_stdeb_cfg; generate_stdeb_cfg()' > stdeb.cfg
