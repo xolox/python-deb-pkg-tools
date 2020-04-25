@@ -305,19 +305,19 @@ class PackageFile(collections.namedtuple('PackageFile', 'name, version, architec
     archive's filename as a :class:`PackageFile` object (a named tuple).
     Here are the fields supported by these named tuples:
 
-    .. :attribute:: name
+    .. attribute:: name
 
        The name of the package (a string).
 
-    .. :attribute:: version
+    .. attribute:: version
 
        The version of the package (a :class:`.Version` object).
 
-    .. :attribute:: architecture
+    .. attribute:: architecture
 
        The architecture of the package (a string).
 
-    .. :attribute:: filename
+    .. attribute:: filename
 
        The absolute pathname of the package archive (a string).
 
@@ -749,32 +749,32 @@ class ArchiveEntry(collections.namedtuple('ArchiveEntry', 'permissions, owner, g
     archives as a dictionary containing named tuples. Here are the fields
     supported by those named tuples:
 
-    .. :attribute:: permissions
+    .. attribute:: permissions
 
        The entry type and permission bits just like ``ls -l`` prints them (a string like `drwxr-xr-x`).
 
-    .. :attribute:: owner
+    .. attribute:: owner
 
        The username of the owner of the entry (a string).
 
-    .. :attribute:: group
+    .. attribute:: group
 
        The group name of group owning the entry (a string).
 
-    .. :attribute:: size
+    .. attribute:: size
 
        The size of the entry in bytes (an integer).
 
-    .. :attribute:: modified
+    .. attribute:: modified
 
        A string like ``2013-09-26 22:28``.
 
-    .. :attribute:: target
+    .. attribute:: target
 
        If the entry represents a symbolic link this field gives the pathname of
        the target of the symbolic link. Defaults to an empty string.
 
-    .. :attribute:: device_type
+    .. attribute:: device_type
 
        If the entry represents a device file this field gives the device type
        major and minor numbers as a tuple of two integers. Defaults to a tuple
