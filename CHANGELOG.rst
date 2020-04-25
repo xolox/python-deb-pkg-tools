@@ -11,6 +11,22 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 8.1`_ (2020-04-25)
+---------------------------
+
+- Merged `pull request #22`_ which avoids a :exc:`~exceptions.ValueError`
+  exception in the :func:`.inspect_package_contents()` function when a device
+  file entry is parsed.
+
+- Enhanced the :func:`.inspect_package_contents()` function to properly parse
+  device file type information exposed via the new
+  :attr:`.ArchiveEntry.device_type` attribute.
+
+- Added a regression test for device file type parsing.
+
+.. _Release 8.1: https://github.com/xolox/python-deb-pkg-tools/compare/8.0...8.1
+.. _pull request #22: https://github.com/xolox/python-deb-pkg-tools/pull/22
+
 `Release 8.0`_ (2020-04-25)
 ---------------------------
 

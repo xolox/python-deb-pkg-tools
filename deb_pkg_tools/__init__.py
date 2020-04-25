@@ -13,7 +13,7 @@ the `deb-pkg-tools` package.
 """
 
 # Semi-standard module versioning.
-__version__ = '8.0'
+__version__ = '8.1'
 
 debian_package_dependencies = (
     'apt',        # apt-get
