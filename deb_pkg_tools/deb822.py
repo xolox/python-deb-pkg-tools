@@ -1,7 +1,7 @@
 # Debian packaging tools: Control file manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 19, 2020
+# Last Change: May 2, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Parsing and formatting of Debian control fields in the :man:`deb822` format."""
@@ -34,10 +34,16 @@ def dump_deb822(fields):
     for key, value in fields.items():
         # Check for multi-line values.
         if "\n" in value:
-            # Replace empty lines with a dot.
-            value = u"\n".join(line or "." for line in value.splitlines())
-            # Make sure continuation lines are indented.
-            value = textwrap.indent(value, " ").strip()
+            input_lines = value.splitlines()
+            output_lines = [input_lines.pop(0)]
+            for line in input_lines:
+                if line and not line.isspace():
+                    # Make sure continuation lines are indented.
+                    output_lines.append(u" " + line)
+                else:
+                    # Encode empty continuation lines as a dot (indented).
+                    output_lines.append(u" .")
+            value = u"\n".join(output_lines)
         lines.append(u"%s: %s\n" % (key, value))
     return u"".join(lines)
 
