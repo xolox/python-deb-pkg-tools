@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 25, 2020
+# Last Change: May 2, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -41,7 +41,7 @@ from deb_pkg_tools.control import (
     parse_control_fields,
     unparse_control_fields,
 )
-from deb_pkg_tools.deb822 import Deb822, parse_deb822
+from deb_pkg_tools.deb822 import Deb822, dump_deb822, parse_deb822
 from deb_pkg_tools.deps import (
     Relationship,
     RelationshipSet,
@@ -305,6 +305,27 @@ class DebPkgToolsTestCase(TestCase):
             patched_fields = load_control_file(control_file)
             assert patched_fields['Package'] == 'patched-example'
             assert str(patched_fields['Depends']) == 'another-dependency, some-dependency'
+
+    def test_multiline_control_file_value(self):
+        """Test against regression of a Python 2 incompatibility involving textwrap.indent()."""
+        multiline_value = "\n".join([
+            "Short description.",
+            "",
+            "First line of long description,",
+            "Second line of long description.",
+        ])
+        datastructure = dict(Description=multiline_value)
+        # Test dumping of a multi line value.
+        dumped = dump_deb822(datastructure)
+        assert dumped.strip() == dedent("""
+            Description: Short description.
+             .
+             First line of long description,
+             Second line of long description.
+        """).strip()
+        # Test parsing of a multi line value.
+        parsed = parse_deb822(dumped)
+        assert parsed["Description"] == multiline_value
 
     def test_version_comparison_internal(self):
         """Test the comparison of version objects (using the pure Python implementation)."""
