@@ -11,6 +11,18 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 8.2`_ (2020-05-02)
+---------------------------
+
+Removed :func:`textwrap.indent()` usage from :mod:`deb_pkg_tools.deb822` module
+because this function isn't available on Python 2.7 which :pypi:`deb-pkg-tools`
+still supports. Also added a regression test.
+
+.. note:: While I definitely intend to drop Python 2 support in my open source
+          projects at some point, right now is not the time for that just yet.
+
+.. _Release 8.2: https://github.com/xolox/python-deb-pkg-tools/compare/8.1...8.2
+
 `Release 8.1`_ (2020-04-25)
 ---------------------------
 
