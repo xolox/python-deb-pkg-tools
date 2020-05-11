@@ -11,6 +11,25 @@ to `semantic versioning`_.
 .. _Keep a Changelog: http://keepachangelog.com/
 .. _semantic versioning: http://semver.org/
 
+`Release 8.3`_ (2020-05-11)
+---------------------------
+
+Minor improvements to the :mod:`deb_pkg_tools.deb822` module:
+
+**Slightly relax deb822 parsing**
+ Leading and trailing comment blocks and empty lines that directly precede or
+ follow a paragraph of control fields are now silently ignored. This is
+ intended to improve compatibility with :pypi:`python-debian`.
+
+**Improve deb822 parse errors**
+ Shortly after I started using deb-pkg-tools 8.0 it became apparent that
+ :func:`deb_pkg_tools.deb822.parse_deb822()` is quite a bit more strict than
+ the previous usage of :pypi:`python-debian`. While I don't necessarily
+ consider this a bad thing, it definitely highlighted a weak spot: The error
+ messages didn't include filenames or line numbers. This is now fixed.
+
+.. _Release 8.3: https://github.com/xolox/python-deb-pkg-tools/compare/8.2...8.3
+
 `Release 8.2`_ (2020-05-02)
 ---------------------------
 
