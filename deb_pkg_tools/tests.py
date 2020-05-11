@@ -1,7 +1,7 @@
 # Debian packaging tools: Automated tests.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 2, 2020
+# Last Change: May 11, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Test suite for the `deb-pkg-tools` package."""
@@ -305,6 +305,34 @@ class DebPkgToolsTestCase(TestCase):
             patched_fields = load_control_file(control_file)
             assert patched_fields['Package'] == 'patched-example'
             assert str(patched_fields['Depends']) == 'another-dependency, some-dependency'
+
+    def test_control_file_parsing_leading_comments(self):
+        """Test tolerance for leading comments and empty lines in control file parsing."""
+        control_fields = parse_deb822(
+            """
+            # This is a leading comment that spans multiple lines and is
+            # delimited from the control fields with an empty line, which
+            # should be tolerated by our deb822 parser.
+
+            Package: leading-comment-test
+            """
+        )
+        assert len(control_fields) == 1
+        assert control_fields['Package'] == 'leading-comment-test'
+
+    def test_control_file_parsing_trailing_comments(self):
+        """Test tolerance for trailing comments and empty lines in control file parsing."""
+        control_fields = parse_deb822(
+            """
+            Package: trailing-comment-test
+
+            # This is a trailing comment that spans multiple lines and is
+            # delimited from the control fields with an empty line, which
+            # should be tolerated by our deb822 parser.
+            """
+        )
+        assert len(control_fields) == 1
+        assert control_fields['Package'] == 'trailing-comment-test'
 
     def test_multiline_control_file_value(self):
         """Test against regression of a Python 2 incompatibility involving textwrap.indent()."""

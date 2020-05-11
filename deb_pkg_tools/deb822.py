@@ -1,7 +1,7 @@
 # Debian packaging tools: Control file manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: May 2, 2020
+# Last Change: May 11, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Parsing and formatting of Debian control fields in the :man:`deb822` format."""
@@ -73,18 +73,26 @@ def parse_deb822(text):
             continue
         # Guard against empty lines that end the current "paragraph".
         if is_empty_line(line):
-            # Check whether any input text remains.
-            remainder = u"\n".join(input_lines)
-            if not is_empty_line(remainder):
-                raise ValueError(
-                    compact(
-                        """
-                        Failed to parse control fields: Encountered end of
-                        paragraph before end of input! (remaining text is %r)
-                        """,
-                        remainder,
+            # If we haven't parsed any control fields yet, we're dealing with
+            # a combination of leading comment lines and empty lines. We'll
+            # silently ignore these until we see the first control field.
+            if not parsed_fields:
+                continue
+            # Once we have parsed at least one control field, an empty line
+            # indicates the end of the "paragraph". Check to make sure that
+            # no content follows the empty line.
+            for line in input_lines:
+                if not is_empty_line(line) and not line.startswith(u"#"):
+                    raise ValueError(
+                        compact(
+                            """
+                            Failed to parse control fields: Encountered end of
+                            paragraph before end of input! (remaining text is %r)
+                            """,
+                            u"\n".join(input_lines),
+                        )
                     )
-                )
+            # Stop the 'while' loop.
             break
         # Check for "continuation lines".
         if line.startswith((u" ", u"\t")) and not line.isspace():
@@ -122,8 +130,8 @@ def parse_deb822(text):
                 )
             # We succeeded! Store the resulting tokens.
             parsed_fields.append((key.strip(), [value.strip()]))
-    # Convert the data structure we've built up to a dictionary.
-    return Deb822((key, "\n".join(lines)) for key, lines in parsed_fields)
+    # Convert the data structure we've built up to a case insensitive dictionary.
+    return Deb822((key, u"\n".join(lines)) for key, lines in parsed_fields)
 
 
 class Deb822(CaseInsensitiveDict):
