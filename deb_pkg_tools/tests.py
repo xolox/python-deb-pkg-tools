@@ -292,8 +292,7 @@ class DebPkgToolsTestCase(TestCase):
             Depends: some-dependency
         ''')
         with Context() as finalizers:
-            control_file = tempfile.mktemp()
-            finalizers.register(os.unlink, control_file)
+            control_file = finalizers.mktemp()
             with open(control_file, 'wb') as handle:
                 deb822_package.dump(handle)
             returncode, output = run_cli(
@@ -382,12 +381,21 @@ class DebPkgToolsTestCase(TestCase):
         parsed = parse_deb822(dumped)
         assert parsed["Description"] == multiline_value
 
-    def test_unicode_control_file_parsing(self):
-        """Test support for Unicode characters in control file parsing."""
+    def test_unicode_control_field_parsing(self):
+        """Test support for Unicode characters in control field parsing."""
         parsed = parse_deb822(u"Description: \u2603\n")
         assert parsed['Description'] == u"\u2603"
         dumped = dump_deb822(parsed)
         assert dumped == u"Description: \u2603\n"
+
+    def test_unicode_control_file_parsing(self):
+        """Test support for Unicode characters in control file parsing."""
+        with Context() as finalizers:
+            control_file = finalizers.mktemp()
+            with open(control_file, "wb") as handle:
+                handle.write(u"Description: \u2603\n".encode("UTF-8"))
+            control_fields = load_control_file(control_file)
+            assert control_fields['Description'] == u"\u2603"
 
     def test_version_comparison_internal(self):
         """Test the comparison of version objects (using the pure Python implementation)."""
@@ -1090,3 +1098,9 @@ class Context(object):
         directory = tempfile.mkdtemp(*args, **kw)
         self.register(shutil.rmtree, directory)
         return directory
+
+    def mktemp(self):
+        """Create a temporary file that will be cleaned up when the context ends."""
+        filename = tempfile.mktemp()
+        self.register(os.unlink, filename)
+        return filename
