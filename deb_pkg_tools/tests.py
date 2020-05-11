@@ -382,6 +382,13 @@ class DebPkgToolsTestCase(TestCase):
         parsed = parse_deb822(dumped)
         assert parsed["Description"] == multiline_value
 
+    def test_unicode_control_file_parsing(self):
+        """Test support for Unicode characters in control file parsing."""
+        parsed = parse_deb822(u"Description: \u2603\n")
+        assert parsed['Description'] == u"\u2603"
+        dumped = dump_deb822(parsed)
+        assert dumped == u"Description: \u2603\n"
+
     def test_version_comparison_internal(self):
         """Test the comparison of version objects (using the pure Python implementation)."""
         with PatchedAttribute(version, 'PREFER_DPKG', False):
