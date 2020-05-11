@@ -306,6 +306,33 @@ class DebPkgToolsTestCase(TestCase):
             assert patched_fields['Package'] == 'patched-example'
             assert str(patched_fields['Depends']) == 'another-dependency, some-dependency'
 
+    def test_control_file_parsing_inline_comments(self):
+        """Test tolerance for inline comments in control file parsing."""
+        # Test an inline comment in between two control fields.
+        control_fields = parse_deb822(
+            """
+            Package: inline-comment-test
+            # This is an inline comment.
+            Description: Testing inline comments.
+            """
+        )
+        assert len(control_fields) == 2
+        assert control_fields['Package'] == 'inline-comment-test'
+        assert control_fields['Description'] == 'Testing inline comments.'
+        # Test an inline comment in between continuation lines.
+        control_fields = parse_deb822(
+            """
+            Description: Short description.
+            # This is an inline comment.
+             This is the long description.
+            """
+        )
+        assert len(control_fields) == 1
+        assert control_fields['Description'] == "\n".join([
+            "Short description.",
+            "This is the long description.",
+        ])
+
     def test_control_file_parsing_leading_comments(self):
         """Test tolerance for leading comments and empty lines in control file parsing."""
         control_fields = parse_deb822(
