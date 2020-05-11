@@ -1,7 +1,7 @@
 # Debian packaging tools: Control file manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 19, 2020
+# Last Change: May 11, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """
@@ -128,7 +128,7 @@ def load_control_file(control_file):
     :returns: A dictionary created by :func:`parse_control_fields()`.
     """
     with open(control_file) as handle:
-        shallow_parsed = parse_deb822(handle.read())
+        shallow_parsed = parse_deb822(handle.read(), filename=control_file)
         return parse_control_fields(shallow_parsed)
 
 
@@ -189,7 +189,7 @@ def patch_control_file(control_file, overrides):
     logger.debug("Patching control file: %s", format_path(control_file))
     # Read the control file.
     with open(control_file) as handle:
-        defaults = parse_deb822(handle.read())
+        defaults = parse_deb822(handle.read(), filename=control_file)
     # Apply the patches.
     patched = merge_control_fields(defaults, overrides)
     # Break the hard link chain.

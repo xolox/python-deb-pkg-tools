@@ -1,7 +1,7 @@
 # Debian packaging tools: Package manipulation.
 #
 # Author: Peter Odding <peter@peterodding.com>
-# Last Change: April 25, 2020
+# Last Change: May 11, 2020
 # URL: https://github.com/xolox/python-deb-pkg-tools
 
 """Functions to build and inspect Debian binary package archives (``*.deb`` files)."""
@@ -665,7 +665,7 @@ def inspect_package_fields(archive, cache=None):
         if value is not None:
             return value
     listing = execute('dpkg-deb', '-f', archive, logger=logger, capture=True)
-    fields = parse_control_fields(parse_deb822(listing))
+    fields = parse_control_fields(parse_deb822(listing, filename=archive))
     if cache:
         entry.set_value(fields)
     return fields
@@ -962,8 +962,9 @@ def determine_package_archive(directory):
     will be generated from a directory tree suitable for packaging with
     ``dpkg-deb --build``. See also :func:`parse_filename()`.
     """
-    with open(os.path.join(directory, 'DEBIAN', 'control')) as control_file:
-        fields = parse_deb822(control_file.read())
+    control_file = os.path.join(directory, 'DEBIAN', 'control')
+    with open(control_file) as handle:
+        fields = parse_deb822(handle.read(), filename=control_file)
     components = [fields['Package'], fields['Version']]
     architecture = fields.get('Architecture', '').strip()
     if architecture:

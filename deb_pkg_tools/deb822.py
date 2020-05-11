@@ -13,7 +13,7 @@ import textwrap
 
 # External dependencies.
 from humanfriendly.case import CaseInsensitiveDict
-from humanfriendly.text import compact, is_empty_line
+from humanfriendly.text import compact, format, is_empty_line
 from six import text_type
 
 # Public identifiers that require documentation.
@@ -48,11 +48,14 @@ def dump_deb822(fields):
     return u"".join(lines)
 
 
-def parse_deb822(text):
+def parse_deb822(text, filename=None):
     """
     Parse Debian control fields into a :class:`Deb822` object.
 
     :param text: A string containing the control fields to parse.
+    :param filename: An optional string with the filename of the source file
+                     from which the control fields were extracted (only used
+                     for the purpose of error reporting).
     :returns: A :class:`Deb822` object.
     """
     # Make sure we're dealing with Unicode text.
@@ -64,10 +67,10 @@ def parse_deb822(text):
     # in the future.
     text = textwrap.dedent(text).strip()
     # Get ready to parse the control fields.
-    input_lines = text.splitlines()
+    input_lines = list(enumerate(text.splitlines(), start=1))
     parsed_fields = []
     while input_lines:
-        line = input_lines.pop(0)
+        line_number, line = input_lines.pop(0)
         # Completely ignore comment lines (even nested between "continuation lines").
         if line.startswith(u"#"):
             continue
@@ -81,15 +84,21 @@ def parse_deb822(text):
             # Once we have parsed at least one control field, an empty line
             # indicates the end of the "paragraph". Check to make sure that
             # no content follows the empty line.
-            for line in input_lines:
+            end_of_paragraph = line_number
+            for line_number, line in input_lines:
                 if not is_empty_line(line) and not line.startswith(u"#"):
                     raise ValueError(
-                        compact(
+                        render_error(
+                            filename,
+                            line_number,
                             """
-                            Failed to parse control fields: Encountered end of
-                            paragraph before end of input! (remaining text is %r)
+                            Encountered end of paragraph at line {eop_lnum}
+                            however more input ({more_text}) follows at line
+                            {more_lnum}!
                             """,
-                            u"\n".join(input_lines),
+                            eop_lnum=end_of_paragraph,
+                            more_text=repr(line),
+                            more_lnum=line_number,
                         )
                     )
             # Stop the 'while' loop.
@@ -99,12 +108,14 @@ def parse_deb822(text):
             # Make sure the continuation line follows a key.
             if not parsed_fields:
                 raise ValueError(
-                    compact(
+                    render_error(
+                        filename,
+                        line_number,
                         """
-                        Failed to parse control fields: Got continuation
-                        line without leading key! (current line is %r)
+                        Got continuation line without leading key!
+                        (current line is {line_text})
                         """,
-                        line,
+                        line_text=repr(line),
                     )
                 )
             # Continuation lines containing only a dot are converted to empty lines.
@@ -120,18 +131,31 @@ def parse_deb822(text):
             # (the value may be empty so we can't check that).
             if not (key and delimiter):
                 raise ValueError(
-                    compact(
+                    render_error(
+                        filename,
+                        line_number,
                         """
-                        Failed to parse control fields: Line not recognized as
-                        key/value pair or continuation line! (current line is %r)
+                        Line not recognized as key/value pair or continuation
+                        line! (current line is {line_text})
                         """,
-                        line,
+                        line_text=repr(line),
                     )
                 )
             # We succeeded! Store the resulting tokens.
             parsed_fields.append((key.strip(), [value.strip()]))
     # Convert the data structure we've built up to a case insensitive dictionary.
     return Deb822((key, u"\n".join(lines)) for key, lines in parsed_fields)
+
+
+def render_error(filename, line_number, text, *args, **kw):
+    """Render an error message including line number and optional filename."""
+    message = []
+    if filename and line_number:
+        message.append(format("Control file parsing error in %s at line %i:", filename, line_number))
+    else:
+        message.append(format("Failed to parse control field at line %i:", line_number))
+    message.append(compact(text, *args, **kw))
+    return u" ".join(message)
 
 
 class Deb822(CaseInsensitiveDict):
